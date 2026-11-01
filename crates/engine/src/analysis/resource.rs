@@ -8098,6 +8098,7 @@ fn project_out_player_consumables(p: &mut Player) {
         life_gained_this_turn,
         life_lost_this_turn,
         cards_drawn_this_turn,
+        dilemmas_faced_this_turn,
         cards_drawn_this_step,
         cards_drawn_last_turn,
         opponent_spells_cast_since_own_last_turn,
@@ -8145,6 +8146,7 @@ fn project_out_player_consumables(p: &mut Player) {
     *life_gained_this_turn = 0;
     *life_lost_this_turn = 0;
     *cards_drawn_this_turn = 0;
+    *dilemmas_faced_this_turn = 0;
     *cards_drawn_this_step = 0;
     // The last-turn draw count is the window-shifted this-turn count: at a
     // cycle boundary the pre-cycle turn's draws never match the in-cycle
@@ -8420,6 +8422,7 @@ fn projected_player_axes(p: &Player) -> Vec<i64> {
         life_gained_this_turn,
         life_lost_this_turn,
         cards_drawn_this_turn,
+        dilemmas_faced_this_turn,
         cards_drawn_this_step,
         life: _,
         mana_pool: _,
@@ -8459,6 +8462,7 @@ fn projected_player_axes(p: &Player) -> Vec<i64> {
         *life_gained_this_turn as i64,
         *life_lost_this_turn as i64,
         *cards_drawn_this_turn as i64,
+        *dilemmas_faced_this_turn as i64,
         *cards_drawn_this_step as i64,
     ]
 }
@@ -8483,6 +8487,7 @@ fn projected_player_maps(
         life_gained_this_turn: _,
         life_lost_this_turn: _,
         cards_drawn_this_turn: _,
+        dilemmas_faced_this_turn: _,
         cards_drawn_this_step: _,
         id: _,
         library: _,
@@ -15504,12 +15509,12 @@ mod tests {
     }
 
     /// `_projected_player_axes_is_total` (compiler-total guard): `Player::default()`
-    /// has empty `player_counters` ⇒ 6 scalar axes. Breaks if a projected scalar is
+    /// has empty `player_counters` ⇒ 7 scalar axes. Breaks if a projected scalar is
     /// added to `project_out_player_consumables` without a matching `vec![]` entry.
     /// Mirror of `_gamestate_partition_is_total`'s convention.
     #[test]
     fn _projected_player_axes_is_total() {
-        assert_eq!(projected_player_axes(&Player::default()).len(), 6);
+        assert_eq!(projected_player_axes(&Player::default()).len(), 7);
     }
 
     /// carry a (`_projected_player_maps_is_total`, compiler-total guard): `Player::default()`

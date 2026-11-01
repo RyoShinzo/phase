@@ -788,6 +788,9 @@ pub(crate) fn candidate_player_scalar(p: &Player, attr: &QuantityRef) -> Option<
         QuantityRef::CardsDrawnThisTurn { .. } => {
             Some(u32_to_i32_saturating(p.cards_drawn_this_turn))
         }
+        QuantityRef::DilemmasFacedThisTurn { .. } => {
+            Some(u32_to_i32_saturating(p.dilemmas_faced_this_turn))
+        }
         // CR 121.1 + CR 603.4: cards drawn during the previous turn, read
         // from the turn-start snapshot per candidate player.
         QuantityRef::CardsDrawnLastTurn { .. } => {

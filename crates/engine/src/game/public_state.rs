@@ -592,6 +592,7 @@ pub fn mark_public_state_from_events(state: &mut GameState, events: &[GameEvent]
             | GameEvent::PhysicalContestResolved { .. }
             | GameEvent::VoteCast { .. }
             | GameEvent::CardNamed { .. }
+            | GameEvent::DilemmaFaced { .. }
             | GameEvent::VoteResolved { .. }
             | GameEvent::PowerToughnessChanged { .. }
             | GameEvent::CascadeMissed { .. }

@@ -8103,8 +8103,18 @@ fn parse_history_window(input: &str) -> OracleResult<'_, HistoryWindow> {
     .parse(input)
 }
 
+/// CR 700.2: "you faced a dilemma this turn" (The Caretaker).
+fn parse_you_faced_a_dilemma(input: &str) -> OracleResult<'_, StaticCondition> {
+    let (rest, _) = tag("you faced a dilemma this turn").parse(input)?;
+    let qty = QuantityRef::DilemmasFacedThisTurn {
+        player: PlayerScope::Controller,
+    };
+    Ok((rest, make_quantity_ge(qty, 1)))
+}
+
 fn parse_spell_history_condition(input: &str) -> OracleResult<'_, StaticCondition> {
     alt((
+        parse_you_faced_a_dilemma,
         parse_you_drew_cards_in_window,
         parse_opponent_drew_cards_this_turn,
         // "you cast another spell this turn" / "you cast a [type] spell this turn"

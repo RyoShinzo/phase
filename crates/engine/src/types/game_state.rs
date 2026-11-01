@@ -34733,6 +34733,7 @@ impl GameState {
                 | GameEvent::PhysicalContestResolved { .. }
                 | GameEvent::VoteCast { .. }
                 | GameEvent::CardNamed { .. }
+                | GameEvent::DilemmaFaced { .. }
                 | GameEvent::VoteResolved { .. }
                 | GameEvent::PowerToughnessChanged { .. }
                 | GameEvent::CascadeMissed { .. }

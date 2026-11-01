@@ -75,7 +75,7 @@ pub(crate) fn handle_select_modes(
     // opponent for "an opponent chooses —"). Used only by the dispatch-layer
     // authorization check in `engine.rs`; all spell control/cost/targeting
     // here uses `controller` derived from the pending cast.
-    _mode_chooser: PlayerId,
+    mode_chooser: PlayerId,
     indices: Vec<usize>,
     events: &mut Vec<GameEvent>,
 ) -> Result<WaitingFor, EngineError> {
@@ -159,6 +159,8 @@ pub(crate) fn handle_select_modes(
     // finish_pending_cast_cost_or_pay, deferred-X and deferred-target-selection via
     // PendingCast::new), so the top-level context carries the count to finalize.
     resolved.context.chosen_modes = sorted_indices.clone();
+    // CR 700.2: published with `SpellCast`, as the cast can still be cancelled here.
+    resolved.context.mode_chooser = (!sorted_indices.is_empty()).then_some(mode_chooser);
 
     if pending.activation_ability_index.is_none()
         && pending.additional_cost_flow.is_none()

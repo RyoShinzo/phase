@@ -3499,6 +3499,13 @@ fn parse_for_each_clause_with_they_controller(
         return Some(qty);
     }
 
+    // CR 700.2: "for each dilemma you've faced this turn" (Captain Benjamin Sisko).
+    if lower == "dilemma you've faced this turn" {
+        return Some(QuantityRef::DilemmasFacedThisTurn {
+            player: PlayerScope::Controller,
+        });
+    }
+
     if let Ok((rest, qty)) = nom_quantity::parse_for_each_clause_ref_with_context(
         clause,
         &for_each_anaphor_context(ctx, &antecedents),

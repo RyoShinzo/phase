@@ -2075,6 +2075,7 @@ pub fn start_next_turn(state: &mut GameState, events: &mut Vec<GameEvent>) {
         // turn" conditions, mirroring the life-lost snapshot above.
         player.cards_drawn_last_turn = player.cards_drawn_this_turn;
         player.cards_drawn_this_turn = 0;
+        player.dilemmas_faced_this_turn = 0;
         // CR 121.1 + CR 504.1: Per-step counter is also reset at turn start so
         // a fresh turn always begins with `cards_drawn_this_step == 0` (the
         // step-transition reset in `advance_phase` covers within-turn step

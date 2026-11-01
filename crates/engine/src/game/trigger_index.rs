@@ -386,6 +386,7 @@ pub(crate) fn keys_from_trigger_def(def: &TriggerDefinition) -> (Keys, bool) {
 
         // --- Vote ---
         TriggerMode::Vote => push(TriggerEventKey::Voted),
+        TriggerMode::DilemmaFaced => push(TriggerEventKey::DilemmaFaced),
 
         // --- Renown / monstrous ---
         TriggerMode::BecomeRenowned => push(TriggerEventKey::Renowned),
@@ -758,6 +759,7 @@ pub(crate) fn keys_from_event(event: &GameEvent, state: &GameState) -> Keys {
         | GameEvent::PlayerCounterChanged { .. } => push(TriggerEventKey::PlayerCounterChanged),
         GameEvent::ManaExpended { .. } => push(TriggerEventKey::ManaSpent),
         GameEvent::Clash { .. } => push(TriggerEventKey::Clashed),
+        GameEvent::DilemmaFaced { .. } => push(TriggerEventKey::DilemmaFaced),
         GameEvent::VoteCast { .. } | GameEvent::VoteResolved { .. } => {
             push(TriggerEventKey::Voted);
         }

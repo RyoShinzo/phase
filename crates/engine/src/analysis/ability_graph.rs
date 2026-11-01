@@ -1347,6 +1347,7 @@ fn trigger_axis(trig: &TriggerDefinition) -> Option<AxisKey> {
         | TriggerMode::Copied
         | TriggerMode::ConjureAll
         | TriggerMode::Vote
+        | TriggerMode::DilemmaFaced
         | TriggerMode::BecomeRenowned
         | TriggerMode::BecomeMonstrous
         | TriggerMode::Proliferate

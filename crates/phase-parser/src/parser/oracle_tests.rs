@@ -35145,3 +35145,36 @@ fn self_exile_land_grant_class_parses_until_self_cast_and_self_permission() {
         }
     }
 }
+
+/// CR 700.2: "Whenever you face a dilemma" is a real trigger, and both forms of
+/// the per-turn count read the same counter (Star Trek release notes).
+#[test]
+fn face_a_dilemma_parses() {
+    let parsed = parse_oracle_text(
+        "Whenever you face a dilemma, draw a card.",
+        "Dilemma Test",
+        &[],
+        &["Creature".to_string()],
+        &[],
+    );
+    assert_eq!(parsed.triggers[0].mode, TriggerMode::DilemmaFaced);
+    assert!(parsed.triggers[0].valid_target.is_some());
+
+    let parsed = parse_oracle_text(
+        "At the beginning of your end step, create a 1/1 red Officer creature token for each dilemma you've faced this turn.",
+        "Dilemma Test",
+        &[],
+        &["Creature".to_string()],
+        &[],
+    );
+    assert!(serde_json::to_string(&parsed.triggers[0]).unwrap().contains("DilemmasFacedThisTurn"));
+
+    let parsed = parse_oracle_text(
+        "At the beginning of each end step, if you faced a dilemma this turn, draw a card.",
+        "Dilemma Test",
+        &[],
+        &["Creature".to_string()],
+        &[],
+    );
+    assert!(serde_json::to_string(&parsed.triggers[0]).unwrap().contains("DilemmasFacedThisTurn"));
+}

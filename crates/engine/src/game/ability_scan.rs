@@ -2921,7 +2921,8 @@ fn scan_quantity_ref(x: &QuantityRef, mode: ScanMode) -> Axes {
             acc = acc.or(scan_player_scope(player));
             acc
         }
-        QuantityRef::CardsDrawnThisTurn { player } => {
+        QuantityRef::CardsDrawnThisTurn { player }
+        | QuantityRef::DilemmasFacedThisTurn { player } => {
             let mut acc = Axes {
                 event: false,
                 sibling: false,

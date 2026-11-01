@@ -3249,6 +3249,7 @@ pub(crate) fn extract_target_object_from_event(
         | GameEvent::PhysicalContestResolved { .. }
         | GameEvent::VoteCast { .. }
         | GameEvent::CardNamed { .. }
+        | GameEvent::DilemmaFaced { .. }
         | GameEvent::VoteResolved { .. }
         | GameEvent::PowerToughnessChanged { .. }
         | GameEvent::CascadeMissed { .. }

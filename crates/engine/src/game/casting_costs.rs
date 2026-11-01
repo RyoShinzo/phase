@@ -13668,6 +13668,7 @@ fn finalize_cast_with_phyrexian_choices_inner(
     let kickers_paid = ability.context.kickers_paid.clone();
     let gift_recipient = ability.context.gift_recipient;
     let chosen_modes = ability.context.chosen_modes.clone();
+    let mode_chooser = ability.context.mode_chooser;
     let additional_cost_paid = ability.context.additional_cost_paid;
     let additional_cost_payment_count = ability.context.additional_cost_payment_count;
     let additional_cost_payments = ability.context.additional_cost_payments.clone();
@@ -14159,6 +14160,10 @@ fn finalize_cast_with_phyrexian_choices_inner(
                 .spell_mana_value(),
         ),
     });
+    // CR 700.2: the modes were chosen during this cast, so it now counts as a dilemma.
+    if let Some(chooser) = mode_chooser {
+        super::ability_utils::note_dilemma_faced(state, chooser, events);
+    }
 
     // CR 608.2c + CR 608.2g + CR 601.2i: A paid during-resolution cast is the
     // "performed optional" the moment its spell is on the stack and its mana is

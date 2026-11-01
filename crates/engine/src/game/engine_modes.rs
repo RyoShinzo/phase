@@ -76,6 +76,7 @@ pub(super) fn handle_ability_mode_choice(
         build_chained_resolved(&mode_abilities, indices.as_slice(), source_id, player)?;
     resolved.selected_mode_labels = selected_mode_labels(&modal.mode_descriptions, &indices);
 
+    let faced_dilemma = !indices.is_empty();
     let waiting_for = if let Some(ability_index) = activated_ability_index {
         handle_activated_mode_choice(
             state,
@@ -116,6 +117,27 @@ pub(super) fn handle_ability_mode_choice(
             state, events, produced,
         ))
     }?;
+
+    // CR 700.2 + CR 603.3b: triggers on the dilemma wait for the next priority. At
+    // a further prompt no post-action scan runs for this action, so they are queued.
+    if faced_dilemma {
+        if matches!(waiting_for, WaitingFor::Priority { .. }) {
+            super::ability_utils::note_dilemma_faced(state, player, events);
+        } else {
+            let mut faced = Vec::new();
+            super::ability_utils::note_dilemma_faced(state, player, &mut faced);
+            triggers::collect_triggers_into_deferred(state, &faced);
+            events.append(&mut faced);
+            let first = events.len() - 1;
+            state.consumed_before_priority_trigger_events.push(
+                triggers::ConsumedTriggerEventOccurrence {
+                    event: events[first].clone(),
+                    occurrence: triggers::trigger_event_occurrence(events, first),
+                    scope: triggers::ConsumedTriggerEventScope::AllCollectors,
+                },
+            );
+        }
+    }
 
     Ok(waiting_for)
 }

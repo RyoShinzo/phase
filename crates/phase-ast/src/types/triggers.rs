@@ -124,6 +124,8 @@ pub enum TriggerEventKey {
     Clashed,
     /// CR 701.38: A vote was cast or resolved.
     Voted,
+    /// CR 700.2: A player chose one or more modes for a spell or ability.
+    DilemmaFaced,
     /// CR 731: Day/Night designation flipped.
     DayNightChanged,
     /// CR 309 (Dungeon) + CR 716 (Class) + CR 719 (Case): Dungeon/Class/Case
@@ -570,6 +572,9 @@ pub enum TriggerMode {
     // Vote
     Vote,
 
+    // Modes: "Whenever you face a dilemma" (CR 700.2)
+    DilemmaFaced,
+
     // Renown / monstrous
     /// CR 702.112: Triggers when a creature becomes renowned.
     BecomeRenowned,
@@ -788,6 +793,7 @@ impl FromStr for TriggerMode {
             "ChaosEnsues" => TriggerMode::ChaosEnsues,
             "ClaimPrize" => TriggerMode::ClaimPrize,
             "Clashed" => TriggerMode::Clashed,
+            "DilemmaFaced" => TriggerMode::DilemmaFaced,
             "ClassLevelGained" => TriggerMode::ClassLevelGained,
             "CommitCrime" => TriggerMode::CommitCrime,
             "ConjureAll" => TriggerMode::ConjureAll,
@@ -1236,6 +1242,7 @@ mod tests {
             "ChaosEnsues",
             "ClaimPrize",
             "Clashed",
+            "DilemmaFaced",
             "ClassLevelGained",
             "CommitCrime",
             "ConjureAll",
