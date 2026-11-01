@@ -95610,3 +95610,72 @@ fn return_arm_routes_through_the_shared_this_way_policy() {
         );
     }
 }
+
+/// CR 122.6: a counter rider on a search's put step reaches the ChangeZone
+/// (Captain Jean-Luc Picard), and a counter phrase in the search filter does not.
+#[test]
+fn search_put_step_keeps_enter_with_counters() {
+    use crate::types::ability::AbilityKind;
+
+    fn put_counters(text: &str) -> Vec<Vec<(CounterType, QuantityExpr)>> {
+        let def = parse_effect_chain(text, AbilityKind::Activated);
+        let mut found = Vec::new();
+        let mut node = Some(&def);
+        while let Some(current) = node {
+            if let Effect::ChangeZone {
+                enter_with_counters,
+                ..
+            } = &*current.effect
+            {
+                found.push(enter_with_counters.clone());
+            }
+            node = current.sub_ability.as_deref();
+        }
+        found
+    }
+
+    assert_eq!(
+        put_counters(
+            "Search your library for a Spacecraft card, put it onto the battlefield with seven charge counters on it, then shuffle."
+        ),
+        vec![vec![(
+            CounterType::Generic("charge".to_string()),
+            QuantityExpr::Fixed { value: 7 }
+        )]]
+    );
+    assert_eq!(
+        put_counters(
+            "Search your library for a creature card, put it onto the battlefield, then shuffle."
+        ),
+        vec![vec![]]
+    );
+}
+
+/// CR 614.1a + CR 611.2a: Brad Boimler's resolved counter replacement floats until
+/// end of turn, adds one counter and only covers permanents its controller controls.
+#[test]
+fn until_end_of_turn_counter_replacement_floats_and_stays_scoped() {
+    use crate::types::ability::{AbilityKind, ControllerRef, QuantityModification};
+
+    let def = parse_effect_chain(
+        "Until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on that permanent instead.",
+        AbilityKind::Spell,
+    );
+    assert_eq!(def.duration, Some(Duration::UntilEndOfTurn));
+    let Effect::AddTargetReplacement {
+        replacement,
+        target: TargetFilter::None,
+    } = &*def.effect
+    else {
+        panic!("expected a floating replacement, got {:?}", def.effect);
+    };
+    assert_eq!(
+        replacement.quantity_modification,
+        Some(QuantityModification::Plus { value: 1 })
+    );
+    assert_eq!(replacement.counter_match, None);
+    let Some(TargetFilter::Typed(filter)) = &replacement.valid_card else {
+        panic!("expected a typed scope, got {:?}", replacement.valid_card);
+    };
+    assert_eq!(filter.controller, Some(ControllerRef::You));
+}

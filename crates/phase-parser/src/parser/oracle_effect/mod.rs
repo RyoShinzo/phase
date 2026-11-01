@@ -4059,6 +4059,33 @@ fn try_parse_global_life_floor_replacement(text: &str, lower: &str) -> Option<Ef
     })
 }
 
+/// CR 614.1a + CR 611.2a: Recognize the resolved form of a counter-quantity
+/// replacement, "until end of turn, if one or more counters would be put on a
+/// permanent you control, that many plus one ... are put on it instead" (Brad
+/// Boimler, Eager Ensign). Parsing is delegated to `parse_replacement_line`.
+///
+/// `lower` has its leading duration stripped upstream, so `expiry` stays `None`
+/// and the install resolver derives it from `ability.duration`, as for
+/// `try_parse_global_life_floor_replacement`. A replacement with no object scope
+/// is refused: the floating install has no printed "you" to fall back on.
+fn try_parse_global_counter_modification_replacement(text: &str, lower: &str) -> Option<Effect> {
+    use super::oracle_replacement::parse_replacement_line;
+    tag::<_, _, OracleError<'_>>("if one or more ")
+        .parse(lower)
+        .ok()?;
+    let replacement = parse_replacement_line(text, "")?;
+    if !matches!(replacement.event, ReplacementEvent::AddCounter)
+        || replacement.quantity_modification.is_none()
+        || replacement.valid_card.is_none()
+    {
+        return None;
+    }
+    Some(Effect::AddTargetReplacement {
+        replacement: Box::new(replacement),
+        target: TargetFilter::None,
+    })
+}
+
 /// CR 614.1a + CR 614.1d + CR 601: Recognize a floating zone-change redirect
 /// replacement of the shape
 /// "if one or more <creatures/permanents> would enter [from <zone>]
@@ -12359,6 +12386,11 @@ fn parse_effect_clause_inner_with_damage_context(
     // reaches it, and `AbilityDefinition.duration == UntilEndOfTurn` reaches
     // `expiry_from_duration` in the install resolver.
     if let Some(effect) = try_parse_global_life_floor_replacement(text, &lower) {
+        return parsed_clause(effect);
+    }
+
+    // CR 611.2a: duration-stripped like the life-floor lift above.
+    if let Some(effect) = try_parse_global_counter_modification_replacement(text, &lower) {
         return parsed_clause(effect);
     }
 
