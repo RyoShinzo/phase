@@ -7287,6 +7287,22 @@ fn parse_normalized_oracle_ir(
             }
         }
 
+        // "Beam me up {cost}" reads, on all ten cards printing it, "You may cast this
+        // card from your graveyard for {cost} if you also return a creature you
+        // control to its owner's hand. Then exile this spell.": flashback with a
+        // compound cost (CR 702.34a). The reminder is stripped before this point.
+        if let Ok((cost, _)) = tag::<_, _, OracleError<'_>>("beam me up ").parse(lower.as_str()) {
+            let flashback = format!(
+                "flashback\u{2014}{}, return a creature you control to its owner's hand",
+                cost.trim_end_matches('.').trim()
+            );
+            if let Some(kw) = parse_router_keyword_fragment(&flashback) {
+                emitter.keyword_at(item_line, kw);
+                i += 1;
+                continue;
+            }
+        }
+
         // CR 702.34a: Flashback em-dash / compound self-spell cost-reduction lines.
         // Must run before Priority 7 static patterns: "This spell costs {X} less
         // to cast this way" matches `is_static_pattern` and would swallow the

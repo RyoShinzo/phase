@@ -907,6 +907,8 @@ pub enum AdditionalCostTaxAction {
 pub enum CrewContributionKind {
     /// "as though its power were N greater" — contribute `power + delta`.
     PowerDelta { delta: i32 },
+    /// "as though his power were tripled" — contribute `power * factor`.
+    PowerMultiplier { factor: i32 },
     /// "using its toughness rather than its power" — contribute `toughness`.
     ToughnessInsteadOfPower,
 }

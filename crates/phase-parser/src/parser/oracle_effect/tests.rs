@@ -95679,3 +95679,29 @@ fn until_end_of_turn_counter_replacement_floats_and_stays_scoped() {
     };
     assert_eq!(filter.controller, Some(ControllerRef::You));
 }
+
+/// CR 702.26a: both the source and the optional target phase out; the target
+/// is optional, the source isn't.
+#[test]
+fn self_and_up_to_one_target_phase_out() {
+    let def = parse_effect_chain(
+        "it and up to one target creature you control phase out",
+        AbilityKind::Spell,
+    );
+    assert!(
+        matches!(*def.effect, Effect::PhaseOut { .. }),
+        "{:?}",
+        def.effect
+    );
+    assert!(matches!(
+        def.multi_target.as_ref().map(|m| &m.min),
+        Some(QuantityExpr::Fixed { value: 0 })
+    ));
+    let sub = def.sub_ability.as_deref().expect("source half");
+    assert!(matches!(
+        *sub.effect,
+        Effect::PhaseOut {
+            target: TargetFilter::SelfRef
+        }
+    ));
+}

@@ -169,13 +169,22 @@ pub(super) fn collect_object_targets(
             TargetRef::Player(_) => None,
         })
         .collect();
-    if !from_targets.is_empty() {
+    // A sub-ability inherits its parent's targets, so "it and up to one target
+    // creature phase out" must not read them for its self-reference half.
+    let is_self_ref = matches!(target, TargetFilter::SelfRef);
+    if !is_self_ref && !from_targets.is_empty() {
         return from_targets;
     }
 
+    // CR 601.2c: an "up to N" ability with no target chosen affects nothing. The
+    // filter here describes legal targets, not a mass effect.
+    if ability.multi_target.is_some() {
+        return Vec::new();
+    }
+
     // CR 400.7: a self-reference cannot phase out a later same-ID incarnation.
-    // Explicit targets retain precedence; other filters retain their mass lookup.
-    if matches!(target, TargetFilter::SelfRef) && !ability.self_ref_is_current(state) {
+    // Other filters retain their mass lookup.
+    if is_self_ref && !ability.self_ref_is_current(state) {
         return Vec::new();
     }
 

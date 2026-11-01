@@ -2086,7 +2086,8 @@ pub fn object_has_cant_crew(state: &GameState, object_id: ObjectId) -> bool {
 /// crew / saddle / station cost, after applying any active `CrewContribution`
 /// static whose action list contains `action`. "Using its toughness rather than
 /// its power" substitutes the creature's toughness for its base power; "as
-/// though its power were N greater" adds N. Multiple deltas accumulate. The
+/// though its power were N greater" adds N. Multiple deltas accumulate. "As
+/// though his power were tripled" multiplies the result. The
 /// result is clamped to 0, matching the plain `power.unwrap_or(0).max(0)` it
 /// replaces.
 pub fn object_crew_power_contribution(
@@ -2099,6 +2100,7 @@ pub fn object_crew_power_contribution(
     };
     let mut base = obj.power.unwrap_or(0);
     let mut delta = 0;
+    let mut factor = 1;
     for def in super::functioning_abilities::active_static_definitions(state, obj) {
         if let StaticMode::CrewContribution { kind, actions } = &def.mode {
             if !actions.contains(&action) {
@@ -2109,10 +2111,11 @@ pub fn object_crew_power_contribution(
                     base = obj.toughness.unwrap_or(0);
                 }
                 CrewContributionKind::PowerDelta { delta: d } => delta += *d,
+                CrewContributionKind::PowerMultiplier { factor: f } => factor *= *f,
             }
         }
     }
-    (base + delta).max(0)
+    ((base + delta) * factor).max(0)
 }
 
 /// Check if a static ability named `name` applies to a specific object

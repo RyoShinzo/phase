@@ -2907,6 +2907,10 @@ fn parse_crew_contribution_predicate_nom(
             vec![CrewAction::Crew, CrewAction::Station],
             tag("crews vehicles and stations permanents"),
         ),
+        value(
+            vec![CrewAction::Crew, CrewAction::Station],
+            tag("stations spacecraft and crews vehicles"),
+        ),
         value(vec![CrewAction::Crew], tag("crews vehicles")),
         // CR 702.184a: bare "stations permanents" — station-only contribution
         // modifier (Tapestry Warden: "… stations permanents using its toughness
@@ -2923,6 +2927,14 @@ fn parse_crew_contribution_predicate_nom(
                 tag(" greater"),
             ),
             |(_, n, _)| CrewContributionKind::PowerDelta { delta: n as i32 },
+        ),
+        value(
+            CrewContributionKind::PowerMultiplier { factor: 3 },
+            (
+                tag("as though "),
+                alt((tag("its"), tag("his"), tag("her"), tag("their"))),
+                tag(" power were tripled"),
+            ),
         ),
         value(
             CrewContributionKind::ToughnessInsteadOfPower,
