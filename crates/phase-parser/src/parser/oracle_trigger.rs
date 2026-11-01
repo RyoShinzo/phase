@@ -21495,6 +21495,24 @@ fn try_parse_player_trigger(lower: &str) -> Option<(TriggerMode, TriggerDefiniti
         return Some((TriggerMode::Vote, def));
     }
 
+    // CR 700.2: "whenever you face a dilemma" fires when the controller of the
+    // source chooses one or more modes for a spell or ability.
+    if all_consuming(preceded(
+        alt((tag::<_, _, OracleError<'_>>("whenever "), tag("when "))),
+        value(
+            (),
+            (tag("you"), space1, tag("face"), space1, tag("a"), space1, tag("dilemma")),
+        ),
+    ))
+    .parse(lower)
+    .is_ok()
+    {
+        let mut def = make_base();
+        def.mode = TriggerMode::DilemmaFaced;
+        def.valid_target = Some(TargetFilter::Controller);
+        return Some((TriggerMode::DilemmaFaced, def));
+    }
+
     // CR 701.30b-c: "whenever you clash" fires when the controller of the
     // trigger source is either player participating in a clash.
     // Cards: Entangling Trap, Rebellion of the Flamekin.

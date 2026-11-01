@@ -122,6 +122,9 @@ pub struct Player {
     pub descended_this_turn: bool,
     #[serde(default)]
     pub cards_drawn_this_turn: u32,
+    /// CR 700.2: Times this player chose one or more modes this turn.
+    #[serde(default)]
+    pub dilemmas_faced_this_turn: u32,
     /// CR 121.1 + CR 603.4: Number of cards this player drew during the
     /// previous turn, snapshotted at turn start. Used by "if you drew a card
     /// last turn" intervening-if conditions (Mine Is the Only Truth).
@@ -248,6 +251,7 @@ impl Default for Player {
             life_lost_last_turn: 0,
             descended_this_turn: false,
             cards_drawn_this_turn: 0,
+            dilemmas_faced_this_turn: 0,
             cards_drawn_last_turn: 0,
             opponent_spells_cast_since_own_last_turn: 0,
             cards_drawn_this_step: 0,

@@ -514,6 +514,7 @@ fn importance(event: &GameEvent) -> LogImportance {
         | GameEvent::PhysicalContestStarted { .. }
         | GameEvent::PhysicalContestResolved { .. }
         | GameEvent::VoteCast { .. }
+        | GameEvent::DilemmaFaced { .. }
         | GameEvent::VoteResolved { .. } => LogImportance::Detail,
     }
 }
@@ -572,6 +573,7 @@ fn tone(event: &GameEvent) -> LogTone {
         | GameEvent::PhysicalContestStarted { .. }
         | GameEvent::PhysicalContestResolved { .. }
         | GameEvent::VoteCast { .. }
+        | GameEvent::DilemmaFaced { .. }
         | GameEvent::VoteResolved { .. } => LogTone::Informational,
         // CR 701.17a + CR 701.17c: never narrated, because the paired `ZoneChanged`
         // already names the milled card and this event exists for mill triggers.
@@ -1071,6 +1073,7 @@ fn categorize(event: &GameEvent) -> LogCategory {
         | GameEvent::PhysicalContestStarted { .. }
         | GameEvent::PhysicalContestResolved { .. }
         | GameEvent::VoteCast { .. }
+        | GameEvent::DilemmaFaced { .. }
         | GameEvent::VoteResolved { .. }
         | GameEvent::XValueChosen { .. } => LogCategory::Special,
         GameEvent::CombatTaxPaid { .. } | GameEvent::CombatTaxDeclined { .. } => {
@@ -2268,6 +2271,9 @@ fn format_segments(event: &GameEvent, state: &GameState) -> Vec<LogSegment> {
             text(&sprocket.to_string()),
         ],
         GameEvent::Clash { .. } => vec![text("Clash")],
+        GameEvent::DilemmaFaced { player } => {
+            vec![player_seg(state, *player), text(" faces a dilemma")]
+        }
         // CR 608.2d: a card name chosen as the spell or ability resolves is public
         // information, so the log states the name itself.
         GameEvent::CardNamed {

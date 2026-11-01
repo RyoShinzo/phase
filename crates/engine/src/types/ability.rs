@@ -1985,6 +1985,10 @@ pub struct SpellContext {
     /// cast-latch channel.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub chosen_modes: Vec<usize>,
+    /// CR 700.2: the player who chose those modes, so that the finished cast can
+    /// publish that they faced a dilemma.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode_chooser: Option<PlayerId>,
     /// Whether an optional "you may" effect was performed during resolution.
     /// Used by AbilityCondition::effect_performed() to gate dependent sub_abilities.
     #[serde(default)]

@@ -1671,6 +1671,19 @@ fn modal_indices_have_legal_target_assignment(
 /// CR 700.2: Inserts into per-turn and/or per-game tracking maps.
 /// CR 400.7: `source` must be the same incarnation key the matching
 /// `compute_unavailable_modes` call read for this choice.
+/// CR 700.2: `player` chose one or more modes: they faced a dilemma. Choosing no
+/// mode isn't one, and neither is a copy, which never chooses.
+pub(crate) fn note_dilemma_faced(
+    state: &mut GameState,
+    player: crate::types::player::PlayerId,
+    events: &mut Vec<crate::types::events::GameEvent>,
+) {
+    if let Some(p) = state.players.iter_mut().find(|p| p.id == player) {
+        p.dilemmas_faced_this_turn = p.dilemmas_faced_this_turn.saturating_add(1);
+    }
+    events.push(crate::types::events::GameEvent::DilemmaFaced { player });
+}
+
 pub fn record_modal_mode_choices(
     state: &mut GameState,
     source: ObjectIncarnationRef,

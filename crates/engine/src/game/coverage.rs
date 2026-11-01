@@ -2076,6 +2076,9 @@ fn fmt_quantity_ref(qty: &QuantityRef) -> String {
         QuantityRef::CardsDrawnThisTurn { player } => {
             format!("cards drawn this turn ({})", fmt_player_scope(player))
         }
+        QuantityRef::DilemmasFacedThisTurn { player } => {
+            format!("dilemmas faced this turn ({})", fmt_player_scope(player))
+        }
         QuantityRef::CardsDrawnLastTurn { player } => {
             format!("cards drawn last turn ({})", fmt_player_scope(player))
         }
@@ -11199,6 +11202,7 @@ fn quantity_ref_feature(qref: &QuantityRef) -> (&'static str, FeatureSupport) {
         QuantityRef::BendTypesThisTurn => ("BendTypesThisTurn", Handled),
         QuantityRef::LifeGainedThisTurn { .. } => ("LifeGainedThisTurn", Handled),
         QuantityRef::CardsDrawnThisTurn { .. } => ("CardsDrawnThisTurn", Handled),
+        QuantityRef::DilemmasFacedThisTurn { .. } => ("DilemmasFacedThisTurn", Handled),
         QuantityRef::CardsDrawnLastTurn { .. } => ("CardsDrawnLastTurn", Handled),
         QuantityRef::OpponentSpellsCastSinceLastTurn { .. } => {
             ("OpponentSpellsCastSinceLastTurn", Handled)

@@ -199,6 +199,7 @@ fn trigger_route(mode: &TriggerMode) -> Option<TriggerRoute> {
         TriggerMode::FlippedCoin => silent(match_flipped_coin),
         TriggerMode::Clashed => silent(match_clash),
         TriggerMode::Vote => silent(match_vote_resolved),
+        TriggerMode::DilemmaFaced => silent(match_dilemma_faced),
         TriggerMode::RingTemptsYou => silent(match_ring_tempts_you),
         TriggerMode::DungeonCompleted => silent(match_dungeon_completed),
         // CR 311.7 / CR 901.9b: "Whenever chaos ensues" fires for the active plane.
@@ -474,6 +475,7 @@ pub fn build_trigger_registry() -> HashMap<TriggerMode, TriggerMatcher> {
 
     // CR 701.38: Vote trigger
     r.insert(TriggerMode::Vote, match_vote_resolved);
+    r.insert(TriggerMode::DilemmaFaced, match_dilemma_faced);
 
     // CR 701.54: Ring tempts you trigger
     r.insert(TriggerMode::RingTemptsYou, match_ring_tempts_you);
@@ -1289,6 +1291,7 @@ fn count_matching_trigger_event_subjects(
         | GameEvent::PhysicalContestResolved { .. }
         | GameEvent::VoteCast { .. }
         | GameEvent::CardNamed { .. }
+        | GameEvent::DilemmaFaced { .. }
         | GameEvent::VoteResolved { .. }
         | GameEvent::PowerToughnessChanged { .. }
         | GameEvent::CascadeMissed { .. }
@@ -5172,6 +5175,20 @@ pub(super) fn match_clash(
         }
     }
     true
+}
+
+/// CR 700.2: "Whenever you face a dilemma": the event's player chose one or more
+/// modes. `valid_target` narrows it to the source's controller.
+pub(super) fn match_dilemma_faced(
+    event: &GameEvent,
+    trigger: &TriggerDefinition,
+    source_context: &TriggerSourceContext,
+    state: &GameState,
+) -> bool {
+    let GameEvent::DilemmaFaced { player } = event else {
+        return false;
+    };
+    valid_player_matches(trigger, state, *player, source_context)
 }
 
 /// CR 701.38: Match vote-resolved events.

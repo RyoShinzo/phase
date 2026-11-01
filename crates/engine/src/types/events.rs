@@ -2127,6 +2127,10 @@ pub enum GameEvent {
         participants: [PlayerId; 2],
         result: crate::types::contest::ContestResult,
     },
+    /// CR 700.2: `player` chose one or more modes for a spell or ability.
+    DilemmaFaced {
+        player: PlayerId,
+    },
     /// CR 701.30: A clash occurred between two players.
     Clash {
         controller: PlayerId,
