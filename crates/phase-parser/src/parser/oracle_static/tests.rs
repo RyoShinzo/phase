@@ -33324,6 +33324,21 @@ fn eriette_charmed_apple_static_and_trigger_parse() {
 /// Star-Captain) parse into a `CrewContribution` static carrying the kind and
 /// the named action list.
 #[test]
+fn crew_contribution_tripled_power_covers_station_and_crew() {
+    let defs = parse_static_line_multi(
+        "~ stations Spacecraft and crews Vehicles as though his power were tripled.",
+    );
+    assert_eq!(defs.len(), 1);
+    assert_eq!(
+        defs[0].mode,
+        StaticMode::CrewContribution {
+            kind: CrewContributionKind::PowerMultiplier { factor: 3 },
+            actions: vec![CrewAction::Crew, CrewAction::Station],
+        }
+    );
+}
+
+#[test]
 fn crew_contribution_power_and_toughness_modifiers_parse() {
     let defs = parse_static_line_multi("~ crews Vehicles as though its power were 2 greater.");
     assert_eq!(

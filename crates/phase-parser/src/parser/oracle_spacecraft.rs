@@ -23,6 +23,7 @@ use crate::parser::oracle_nom::error::OracleError;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::combinator::value;
+use nom::sequence::preceded;
 use nom::Parser;
 
 use super::oracle::{find_activated_colon, has_unimplemented, strip_activated_constraints};
@@ -47,16 +48,26 @@ use crate::types::keywords::Keyword;
 /// Counter type gating Spacecraft threshold lines (CR 702.184a / CR 721).
 pub(crate) const STATION_COUNTER: &str = "charge";
 
-/// CR 721.2a / CR 721.2b: Return the highest `N+` station-symbol threshold
-/// printed on this Spacecraft, reading body lines that `parse_spacecraft_threshold_lines`
-/// would also recognize. Used by the synthesis layer to derive the
-/// creature-shift threshold from the striation with the printed P/T box,
-/// rather than from reminder text (CR 721.3).
-pub fn max_spacecraft_threshold(lines: &[&str]) -> Option<u32> {
-    lines
+/// CR 721.2b: The `N+` threshold of the striation holding the printed P/T box.
+/// Oracle text doesn't mark that striation, so the station reminder ("It's an
+/// artifact creature at N+") decides when printed: U.S.S. Prometheus has its box
+/// at 4+ and a higher 8+ striation without one. Reminderless cards use the
+/// highest symbol, where the box sits on every other Spacecraft.
+pub fn spacecraft_creature_threshold(lines: &[&str]) -> Option<u32> {
+    let highest_symbol = lines
         .iter()
         .filter_map(|raw| parse_threshold_header(raw.trim()).map(|(n, _)| n))
-        .max()
+        .max()?;
+    let reminder = lines.iter().find_map(|raw| {
+        nom_primitives::scan_at_word_boundaries(raw, |input| {
+            preceded(
+                tag::<_, _, OracleError<'_>>("artifact creature at "),
+                nom_primitives::parse_number,
+            )
+            .parse(input)
+        })
+    });
+    Some(reminder.unwrap_or(highest_symbol))
 }
 
 /// Return shape of [`parse_spacecraft_threshold_lines`]: source-line-tagged
@@ -194,14 +205,17 @@ impl ThresholdParser<'_> {
             return true;
         }
 
-        if has_trigger_prefix(body) {
+        // CR 207.2c: an ability word ("Multivector Assault Mode — Whenever ...")
+        // has no rules meaning, so the station gate still applies to the trigger.
+        let trigger_body = body.split_once(" — ").map_or(body, |(_, rest)| rest);
+        if has_trigger_prefix(trigger_body) {
             // CR 707.9a: Index for this trigger in the card's full printed
             // trigger list = caller-provided base + triggers already emitted
             // by this parser. Threading the index makes "has this ability"
             // retain the correct printed trigger slot for Spacecraft-gated
             // triggers.
             let mut parsed = parse_trigger_lines_at_index(
-                body,
+                trigger_body,
                 self.card_name,
                 // Printed slot of the next trigger this preprocessor emits.
                 // Unit 4 replaces `output.triggers.len()` with an emission counter.
@@ -392,6 +406,34 @@ mod tests {
         // Rejects non-threshold lines
         assert!(parse_threshold_header("Flying").is_none());
         assert!(parse_threshold_header("{T}: Draw a card").is_none());
+    }
+
+    #[test]
+    fn creature_threshold_follows_reminder_then_highest_symbol() {
+        let prometheus = [
+            "Station (Station only as a sorcery. It's an artifact creature at 4+.)",
+            "4+ | Flying",
+            "8+ | Multivector Assault Mode — Whenever ~ deals combat damage to an opponent, it deals that much damage to each other opponent.",
+        ];
+        assert_eq!(spacecraft_creature_threshold(&prometheus), Some(4));
+        let reminderless = ["Station", "2+ | Vigilance", "8+ | Flying"];
+        assert_eq!(spacecraft_creature_threshold(&reminderless), Some(8));
+        assert_eq!(spacecraft_creature_threshold(&["Station"]), None);
+    }
+
+    #[test]
+    fn ability_word_trigger_keeps_station_gate() {
+        let lines = [
+            "8+ | Multivector Assault Mode — Whenever ~ deals combat damage to an opponent, it deals that much damage to each other opponent.",
+        ];
+        let (_, triggers, _, consumed) =
+            spacecraft_test_lines(&lines, "Test", PrintedTriggerIndex::from_slot_for_test(0));
+        assert_eq!(consumed, vec![0]);
+        assert_eq!(triggers.len(), 1);
+        assert!(matches!(
+            triggers[0].condition,
+            Some(TriggerCondition::HasCounters { minimum: 8, .. })
+        ));
     }
 
     #[test]

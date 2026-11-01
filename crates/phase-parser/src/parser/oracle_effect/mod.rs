@@ -4060,6 +4060,33 @@ fn try_parse_global_life_floor_replacement(text: &str, lower: &str) -> Option<Ef
     })
 }
 
+/// CR 702.26a: "it and up to one target creature you control phase out" phases
+/// out the source as well as the optional target (U.S.S. Defiant, Mirror Migrant).
+fn try_parse_self_and_target_phase_out(
+    text: &str,
+    lower: &str,
+    ctx: &mut ParseContext,
+) -> Option<ParsedEffectClause> {
+    let (body_lower, _) = alt((tag::<_, _, OracleError<'_>>("it and "), tag("~ and ")))
+        .parse(lower)
+        .ok()?;
+    let body = &text[text.len() - body_lower.len()..];
+    let mut body_ctx = ctx.clone_throwaway();
+    let parsed = parse_effect_chain_with_context(body, AbilityKind::Spell, &mut body_ctx);
+    if !matches!(*parsed.effect, Effect::PhaseOut { .. }) {
+        return None;
+    }
+    let mut clause = parsed_clause(*parsed.effect);
+    clause.multi_target = parsed.multi_target;
+    clause.sub_ability = Some(Box::new(AbilityDefinition::new(
+        AbilityKind::Spell,
+        Effect::PhaseOut {
+            target: TargetFilter::SelfRef,
+        },
+    )));
+    Some(clause)
+}
+
 /// CR 614.1a + CR 611.2a: Recognize the resolved form of a counter-quantity
 /// replacement, "until end of turn, if one or more counters would be put on a
 /// permanent you control, that many plus one ... are put on it instead" (Brad
@@ -12449,6 +12476,10 @@ fn parse_effect_clause_inner_with_damage_context(
     // CR 611.2a: duration-stripped like the life-floor lift above.
     if let Some(effect) = try_parse_global_counter_modification_replacement(text, &lower) {
         return parsed_clause(effect);
+    }
+
+    if let Some(clause) = try_parse_self_and_target_phase_out(text, &lower, ctx) {
+        return clause;
     }
 
     // "it's still a/an [type]" / "that's still a/an [type]" — type-retention clause

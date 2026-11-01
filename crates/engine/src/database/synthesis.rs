@@ -1164,15 +1164,13 @@ pub fn synthesize_station(face: &mut CardFace) {
         return;
     }
 
-    // CR 721.2b / CR 721.3: The striation containing the printed P/T box is the
-    // highest N+ threshold on the card. Reminder text ("It's an artifact
-    // creature at N+") has no rules force (CR 721.3) and is deliberately
-    // ignored.
+    // CR 721.2b: The creature shift starts at the striation with the P/T box.
     let Some(oracle) = face.oracle_text.as_deref() else {
         return;
     };
     let lines: Vec<&str> = oracle.lines().collect();
-    let Some(threshold) = crate::parser::oracle_spacecraft::max_spacecraft_threshold(&lines) else {
+    let Some(threshold) = crate::parser::oracle_spacecraft::spacecraft_creature_threshold(&lines)
+    else {
         return;
     };
 
