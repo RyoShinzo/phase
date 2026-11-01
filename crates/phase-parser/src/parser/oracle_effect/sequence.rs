@@ -5211,6 +5211,7 @@ pub(super) fn apply_clause_continuation(
             enters_under,
             reveal,
             attach_host,
+            enter_with_counters,
         } => {
             // CR 110.2a: fail closed before touching either representation of
             // the put step. Search lowering may already have installed a
@@ -5263,6 +5264,7 @@ pub(super) fn apply_clause_continuation(
                     destination,
                     enter_tapped,
                     enters_under.as_controller_ref(),
+                    &enter_with_counters,
                 );
             }
             let put_origin = if multi_zone_search {
@@ -5280,7 +5282,7 @@ pub(super) fn apply_clause_continuation(
                 enter_tapped: crate::types::zones::EtbTapState::from_legacy_bool(enter_tapped),
                 enters_attacking: false,
                 up_to: false,
-                enter_with_counters: vec![],
+                enter_with_counters,
                 conditional_enter_with_counters: vec![],
                 face_down_profile: None,
                 enters_modified_if: None,
@@ -7003,11 +7005,22 @@ fn append_counter_riders_sub_abilities(
     cursor.sub_ability = Some(chain);
 }
 
+/// CR 122.6: counters from a "with N <type> counters on it" rider on the put
+/// step of a search. Only the put clause is scanned, so a search filter ("a
+/// creature card with ...") or a later clause cannot supply the counters.
+fn search_enter_counters(lower: &str) -> Vec<(CounterType, QuantityExpr)> {
+    nom_primitives::scan_preceded(lower, tag::<_, _, OracleError<'_>>("onto the battlefield"))
+        .and_then(|(_, _, rest)| rest.split([',', '.']).next())
+        .map(super::lower::parse_with_counters_suffix)
+        .unwrap_or_default()
+}
+
 fn apply_search_destination_to_ability_chain(
     ability: &mut AbilityDefinition,
     destination: Zone,
     enter_tapped: bool,
     enters_under: Option<ControllerRef>,
+    enter_with_counters: &[(CounterType, QuantityExpr)],
 ) {
     let mut cursor = Some(ability);
     while let Some(sub_ability) = cursor {
@@ -7016,10 +7029,12 @@ fn apply_search_destination_to_ability_chain(
             destination: existing_destination,
             enter_tapped: existing_enter_tapped,
             enters_under: existing_enters_under,
+            enter_with_counters: existing_enter_with_counters,
             ..
         } = &mut *sub_ability.effect
         {
             *existing_destination = destination;
+            *existing_enter_with_counters = enter_with_counters.to_vec();
             *existing_enter_tapped =
                 crate::types::zones::EtbTapState::from_legacy_bool(enter_tapped);
             // CR 110.2a: only overwrite when the clause specified a controller, so a value set by an earlier clause is preserved.
@@ -7362,6 +7377,7 @@ pub(super) fn parse_intrinsic_continuation_ast(
                 ),
                 reveal: *reveal,
                 attach_host,
+                enter_with_counters: search_enter_counters(&full_lower),
             })
         }
         _ => None,

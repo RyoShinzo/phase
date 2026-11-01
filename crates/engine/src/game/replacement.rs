@@ -4894,11 +4894,10 @@ fn add_counter_applier(
     _events: &mut Vec<GameEvent>,
 ) -> ApplyResult {
     use crate::types::ability::QuantityModification;
-    let modification = state
-        .objects
-        .get(&rid.source)
-        .and_then(|obj| obj.replacement_definitions.get(rid.index))
-        .and_then(|def| def.quantity_modification.clone());
+    // CR 611.2a: a resolved "until end of turn" counter replacement (Brad Boimler)
+    // lives in the floating store, so the lookup has to honour the rid sentinel.
+    let modification =
+        replacement_choice_definition(state, rid).and_then(|def| def.quantity_modification.clone());
     let Some(modification) = modification else {
         return ApplyResult::Modified(event);
     };

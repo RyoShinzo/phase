@@ -919,6 +919,7 @@ fn search_result_guard_source_relation_refuses_intervening_or_guarded_authority(
             enters_under: Default::default(),
             reveal: false,
             attach_host: None,
+            enter_with_counters: vec![],
         })
     };
     folded
