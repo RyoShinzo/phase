@@ -15011,6 +15011,18 @@ fn permission_node_keeps_ledger_for_this_way_head(ability: &ResolvedAbility) -> 
 /// ledger in place for the next gated node (the transform). The caller applies
 /// this only when the node moved no objects.
 fn gated_run_keeps_ledger_for_this_way_head(ability: &ResolvedAbility) -> bool {
+    // Assimilate: "It's a Borg artifact creature" sits between the move and its
+    // "If you can't" (Borg Cube). That type change moves nothing, so it must not
+    // hide the move from the gate that follows it.
+    if matches!(ability.effect, Effect::GenericEffect { .. })
+        && ability
+            .sub_ability
+            .as_ref()
+            .and_then(|sub| sub.condition.as_ref())
+            .is_some_and(condition_depends_on_zone_change_this_way)
+    {
+        return true;
+    }
     let gated_by_this_way_head = |condition: Option<&AbilityCondition>| {
         condition.is_some_and(|condition| condition.zone_changed_this_way_head().is_some())
     };

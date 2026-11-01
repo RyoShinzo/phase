@@ -9368,6 +9368,46 @@ fn strip_activated_mana_payment_restriction(
     }
 }
 
+
+/// "Assimilate X" reads, in the reminder text of every card printing it, "put X onto the
+/// battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and
+/// loses all other creature types." The Comprehensive Rules don't define it yet, so it is
+/// expanded to that wording before parsing.
+fn expand_assimilate(oracle_text: &str) -> String {
+    const RIDER: &str = " onto the battlefield under your control with a +1/+1 counter on it. \
+        It's a Borg artifact creature and loses all other creature types.";
+    let without_reminder = oracle_text
+        .split_inclusive('\n')
+        .map(|line| match line.find("(") {
+            Some(at) if line[at..].contains("It's a Borg artifact creature") => {
+                let end = line[at..].find(')').map_or(line.len(), |end| at + end + 1);
+                format!("{}{}", line[..at].trim_end(), &line[end..])
+            }
+            _ => line.to_string(),
+        })
+        .collect::<String>();
+    let mut out = String::with_capacity(without_reminder.len());
+    let mut rest = without_reminder.as_str();
+    while let Some(at) = ["assimilate ", "Assimilate "]
+        .iter()
+        .filter_map(|word| rest.find(word))
+        .min()
+    {
+        let object_start = at + "assimilate ".len();
+        let Some(period) = rest[object_start..].find('.') else {
+            break;
+        };
+        let period = object_start + period;
+        out.push_str(&rest[..at]);
+        out.push_str(if rest[at..].starts_with('A') { "Put " } else { "put " });
+        out.push_str(&rest[object_start..period]);
+        out.push_str(RIDER);
+        rest = &rest[period + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
 /// Parse Oracle text into structured ability definitions.
 ///
 /// This is the public API entry point — a thin wrapper around [`parse_oracle_ir`]
@@ -10205,6 +10245,8 @@ fn parse_oracle_pipeline(
 ) {
     let _card_span =
         tracing::debug_span!(target: "engine::parser::binding", "card", card_name).entered();
+    let expanded_assimilate = expand_assimilate(oracle_text);
+    let oracle_text = expanded_assimilate.as_str();
     let (normalized, refusals) = normalize_card_name_refs_reporting(oracle_text, card_name);
     let mut ir = {
         let _stage = tracing::debug_span!(target: "engine::parser::binding", "stage", stage = "ir_production").entered();
