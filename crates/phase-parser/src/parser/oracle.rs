@@ -9116,6 +9116,12 @@ fn expand_assimilate(oracle_text: &str) -> String {
             break;
         };
         let period = object_start + period;
+        // The parser's own Assimilate node reads a targeted graveyard card.
+        if rest[object_start..period].starts_with("target creature card from ") {
+            out.push_str(&rest[..period + 1]);
+            rest = &rest[period + 1..];
+            continue;
+        }
         out.push_str(&rest[..at]);
         out.push_str(if rest[at..].starts_with('A') { "Put " } else { "put " });
         out.push_str(&rest[object_start..period]);
