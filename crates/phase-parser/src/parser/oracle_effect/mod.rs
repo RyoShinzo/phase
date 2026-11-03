@@ -23201,20 +23201,23 @@ fn try_split_targeted_compound(text: &str, ctx: &mut ParseContext) -> Option<Par
         }
     }
 
-    // CR 608.2c: Article-led counter carry-forward for compound actions.
+    // CR 608.2c: Counted counter carry-forward for compound actions.
     // "put a +1/+1 counter on each creature you control and a loyalty counter
     // on each planeswalker you control" splits on " and " into sub-text
     // "a loyalty counter on each planeswalker you control" — a verbless counter
-    // clause starting with an article. Prepend the primary verb so it becomes
-    // "put a loyalty counter on each planeswalker you control".
+    // clause starting with its count. Prepend the primary verb so it becomes
+    // "put a loyalty counter on each planeswalker you control". The count may be
+    // an article or a number: "... and two charge counters on up to one target
+    // Spacecraft" (Jean-Luc Picard, Luminary).
     if matches!(sub_clause.effect, Effect::Unimplemented { .. })
         && alt((
-            tag::<_, _, OracleError<'_>>("a "),
-            tag::<_, _, OracleError<'_>>("an "),
+            nom_primitives::parse_article,
+            value((), terminated(nom_primitives::parse_number, tag(" "))),
         ))
         .parse(sub_lower.as_str())
         .is_ok()
-        && nom_primitives::scan_contains(&sub_lower, "counter on")
+        && (nom_primitives::scan_contains(&sub_lower, "counter on")
+            || nom_primitives::scan_contains(&sub_lower, "counters on"))
     {
         if let Some(verb) = extract_effect_verb(&primary_effect) {
             let reparsed_text = format!("{verb} {sub_text}");
