@@ -11977,10 +11977,28 @@ pub(super) fn parse_exile_ast(
         || starts_with_possessive(rest_lower, "", "hand")
         || starts_with_target_possessive_zone(rest_lower);
     if mass_zone {
+        let (target, _rem) =
+            ctx.with_player_antecedents(|scoped| parse_target_with_ctx(rest_text, scoped));
+        // CR 608.2c: mirror of the Entry-35 return-verb guard — a "this
+        // way" the filter doesn't bind must refuse, not sweep.
+        if super::target_span_dropped_this_way_anaphor(rest_text, &target) {
+            return None;
+        }
+        #[cfg(debug_assertions)]
+        assert_no_compound_remainder(_rem, text);
+        let origin = super::infer_origin_zone(rest_lower);
+        let (origin, mut target) = super::compose_exile_graveyard_origin_and_target(
+            origin,
+            target,
+            rest_text,
+            _rem,
+            ctx,
+            EffectScope::All,
+        );
         // CR 115.1 + CR 404.1: "exile target opponent's graveyard" targets one
         // opponent and moves only the cards that player owns there, the same filter
-        // as "all cards from target opponent's graveyard". The player-target reading
-        // below would sweep every opponent's graveyard (Assimilation Assessor).
+        // as "all cards from target opponent's graveyard". The player-target filter
+        // alone would sweep every opponent's graveyard (Assimilation Assessor).
         if let Ok((after, zone)) = preceded(
             tag::<_, _, OracleError<'_>>("target opponent's "),
             alt((
@@ -11992,42 +12010,18 @@ pub(super) fn parse_exile_ast(
         .parse(rest_lower)
         {
             if terminal_punctuation_only(after) {
-                return Some(ZoneCounterImperativeAst::Exile {
-                    origin: Some(zone),
-                    target: TargetFilter::Typed(TypedFilter {
-                        type_filters: vec![TypeFilter::Card],
-                        controller: None,
-                        properties: vec![
-                            FilterProp::Owned {
-                                controller: ControllerRef::TargetOpponent,
-                            },
-                            FilterProp::InZone { zone },
-                        ],
-                    }),
-                    all: true,
-                    enter_with_counters: vec![],
-                    multi_target: None,
+                target = TargetFilter::Typed(TypedFilter {
+                    type_filters: vec![TypeFilter::Card],
+                    controller: None,
+                    properties: vec![
+                        FilterProp::Owned {
+                            controller: ControllerRef::TargetOpponent,
+                        },
+                        FilterProp::InZone { zone },
+                    ],
                 });
             }
         }
-        let (target, _rem) =
-            ctx.with_player_antecedents(|scoped| parse_target_with_ctx(rest_text, scoped));
-        // CR 608.2c: mirror of the Entry-35 return-verb guard — a "this
-        // way" the filter doesn't bind must refuse, not sweep.
-        if super::target_span_dropped_this_way_anaphor(rest_text, &target) {
-            return None;
-        }
-        #[cfg(debug_assertions)]
-        assert_no_compound_remainder(_rem, text);
-        let origin = super::infer_origin_zone(rest_lower);
-        let (origin, target) = super::compose_exile_graveyard_origin_and_target(
-            origin,
-            target,
-            rest_text,
-            _rem,
-            ctx,
-            EffectScope::All,
-        );
         return Some(ZoneCounterImperativeAst::Exile {
             origin,
             target,

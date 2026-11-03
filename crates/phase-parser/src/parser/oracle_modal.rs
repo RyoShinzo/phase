@@ -5744,11 +5744,12 @@ When The Ruinous Wrecking Crew enters, choose up to X —\n\
             .expect("mode 2 second sentence present");
         match sub.effect.as_ref() {
             Effect::LoseLife { target, .. } => {
-                assert_eq!(
-                    target,
-                    &Some(TargetFilter::ParentTargetController),
-                    "'That player' must bind to the targeted opponent \
-                     (ParentTargetController), not TriggeringPlayer"
+                // The graveyard is the targeted opponent's (`Owned { TargetOpponent }`),
+                // so "that player" names the player that target declared.
+                assert!(
+                    matches!(target, Some(TargetFilter::DeclaredPlayer { .. })),
+                    "'That player' must bind to the targeted opponent, not \
+                     TriggeringPlayer, got {target:?}"
                 );
             }
             other => panic!("mode 2 second sentence must be LoseLife, got {other:?}"),
