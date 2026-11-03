@@ -13154,6 +13154,13 @@ fn resolve_legacy_effect(
                 // empty — so "may choose" declines are a no-op here.)
                 publish_tracked_set(state, chosen);
             }
+            // CR 115.6 + CR 608.2b: an optional ("up to N") declaration announced
+            // with no target binds no referent; tell the chained `ParentTarget`
+            // children so they do nothing instead of falling back to the source.
+            if ability.targets.is_empty() && ability.targeting_is_optional() {
+                state.last_parent_target_missing_reason =
+                    Some(crate::types::ability::ParentTargetMissingReason::UnchosenTarget);
+            }
             Ok(())
         }
         Effect::Choose { .. } => choose::resolve(state, ability, events),

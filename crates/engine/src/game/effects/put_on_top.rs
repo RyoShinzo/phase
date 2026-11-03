@@ -674,6 +674,7 @@ mod tests {
             ParentTargetMissingReason::ExileTop,
             ParentTargetMissingReason::RevealUntil,
             ParentTargetMissingReason::SearchLibrary,
+            ParentTargetMissingReason::UnchosenTarget,
         ] {
             for (filter, own_target) in [
                 (TargetFilter::ParentTarget, false),

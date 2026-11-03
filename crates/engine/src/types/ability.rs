@@ -2485,6 +2485,13 @@ pub enum ParentTargetMissingReason {
     /// CR 608.2b: legality validation emptied an announced binding. Its
     /// inherited anaphors remain bound to that unavailable announcement.
     IllegalAnnouncement { origin: TargetReadOrigin },
+    /// CR 115.6 + CR 608.2b: an "up to N" target declaration (`TargetOnly`) was
+    /// announced with no target, so nothing is bound as "that creature" for the
+    /// chained `ParentTarget` child. Read as `.is_some()` by the same no-op guards:
+    /// without it the child's empty `ParentTarget` falls back to the ability source,
+    /// and Unification's chapter I with no creature chosen would shuffle the Saga
+    /// itself into its owner's library.
+    UnchosenTarget,
 }
 
 impl ParentTargetMissingReason {
@@ -2505,6 +2512,7 @@ impl ParentTargetMissingReason {
             Self::ExileTop => Self::ExileTop,
             Self::RevealUntil => Self::RevealUntil,
             Self::SearchLibrary => Self::SearchLibrary,
+            Self::UnchosenTarget => Self::UnchosenTarget,
         }
     }
 }
@@ -2525,6 +2533,7 @@ mod parent_target_missing_reason_tests {
             ParentTargetMissingReason::ExileTop,
             ParentTargetMissingReason::RevealUntil,
             ParentTargetMissingReason::SearchLibrary,
+            ParentTargetMissingReason::UnchosenTarget,
         ] {
             let json = serde_json::to_string(&Some(reason)).unwrap();
             assert_eq!(
