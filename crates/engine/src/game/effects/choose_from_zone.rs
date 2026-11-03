@@ -142,6 +142,10 @@ pub fn resolve(
         });
         return resolve_empty_reciprocal_producer(state, reciprocal_role);
     }
+    // CR 608.2c: with cards to choose from, this choice is what "that card" names
+    // next. An earlier producer's miss must not reach past it (Gift of Perfection:
+    // the last opponent revealed no creature card, others did).
+    state.last_parent_target_missing_reason = None;
 
     let clamped_count = count.min(cards.len());
 
