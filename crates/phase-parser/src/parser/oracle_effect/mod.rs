@@ -44362,6 +44362,7 @@ fn parse_exile_object_and_top_face_down_pile_ir(
 
 pub(crate) fn finalize_effect_chain(def: &mut AbilityDefinition) {
     sequence::patch_reveal_until_for_library_category_exile(def);
+    sequence::patch_reveal_until_for_revealed_library_choice(def);
     sequence::promote_labeled_card_predicate_choices_for_chosen_kind(def);
     sequence::rewrite_reorder_dig_backref_reveal_to_top(def);
     fold_speed_floor_sentences(def);

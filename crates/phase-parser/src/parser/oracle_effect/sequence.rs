@@ -889,6 +889,64 @@ pub(super) fn patch_reveal_until_for_library_category_exile(def: &mut AbilityDef
     }
 }
 
+/// CR 701.20a + CR 608.2c: When a `RevealUntil` chains into a choice among the
+/// cards it revealed in the library (Gift of Perfection: "choose one of the creature
+/// cards revealed this way"), the reveal must leave every revealed card where it is,
+/// as the reveal itself moves nothing; a later instruction places the rest.
+pub(super) fn patch_reveal_until_for_revealed_library_choice(def: &mut AbilityDefinition) {
+    if let Some(sub) = def.sub_ability.as_mut() {
+        patch_reveal_until_for_revealed_library_choice(sub);
+        if let (
+            Effect::RevealUntil {
+                matched_disposition,
+                kept_destination,
+                rest_destination,
+                ..
+            },
+            Effect::ChooseFromZone {
+                zone: Zone::Library,
+                candidate_source: crate::types::ability::ZoneChoiceCandidateSource::Tracked,
+                ..
+            },
+        ) = (&mut *def.effect, &*sub.effect)
+        {
+            *matched_disposition = RevealUntilDisposition::RevealOnly;
+            *kept_destination = Zone::Library;
+            *rest_destination = Zone::Library;
+            // "Then each opponent puts the other cards they revealed this way on the
+            // bottom of their library in a random order": every revealed card still
+            // in a library, not one pick per opponent. Each goes to its owner's
+            // library (CR 400.3).
+            let mut node = sub.sub_ability.as_deref_mut();
+            while let Some(current) = node {
+                if let Effect::PutAtLibraryPosition {
+                    position: LibraryPosition::Bottom,
+                    target: TargetFilter::TrackedSet { id },
+                    ..
+                } = &*current.effect
+                {
+                    current.effect = Box::new(Effect::ChangeZoneAll {
+                        origin: Some(Zone::Library),
+                        destination: Zone::Library,
+                        target: TargetFilter::TrackedSet { id: *id },
+                        enters_under: None,
+                        enter_tapped: crate::types::zones::EtbTapState::Unspecified,
+                        enters_attacking: false,
+                        enter_with_counters: vec![],
+                        face_down_profile: None,
+                        library_position: Some(LibraryPosition::Bottom),
+                        library_shuffle: Default::default(),
+                        random_order: true,
+                    });
+                    current.player_scope = None;
+                    break;
+                }
+                node = current.sub_ability.as_deref_mut();
+            }
+        }
+    }
+}
+
 /// CR 608.2c + CR 205.2a: A bare "choose land or nonland" is an opaque
 /// labeled choice. It becomes a library-card-kind choice only when a later
 /// clause consumes "the chosen kind" through `MatchesLastChosenCardPredicate`.

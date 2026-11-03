@@ -9405,9 +9405,30 @@ fn expand_assimilate(oracle_text: &str) -> String {
             rest = &rest[period + 1..];
             continue;
         }
+        let object = &rest[object_start..period];
+        let capital = rest[at..].starts_with('A');
         out.push_str(&rest[..at]);
-        out.push_str(if rest[at..].starts_with('A') { "Put " } else { "put " });
-        out.push_str(&rest[object_start..period]);
+        if object.ends_with(" controls") {
+            // A permanent already on the battlefield ("target nonartifact creature an
+            // opponent controls", The Best of Both Worlds): its reminder reads "Gain
+            // control of it and put a +1/+1 counter on it" (release notes: you first
+            // gain control of it).
+            out.push_str(if capital { "Gain control of " } else { "gain control of " });
+            out.push_str(object);
+            out.push_str(" and put a +1/+1 counter on it. It's a Borg artifact creature and loses all other creature types.");
+            rest = &rest[period + 1..];
+            continue;
+        }
+        if object.starts_with("one of ") {
+            // "Assimilate one of the creature cards revealed this way" (Gift of
+            // Perfection) is a choice among those cards, then the put of that card.
+            out.push_str(if capital { "Choose " } else { "choose " });
+            out.push_str(object);
+            out.push_str(". Put that card");
+        } else {
+            out.push_str(if capital { "Put " } else { "put " });
+            out.push_str(object);
+        }
         out.push_str(RIDER);
         rest = &rest[period + 1..];
     }

@@ -5052,6 +5052,10 @@ pub(super) fn parse_choose_ast(
         return Some(ast);
     }
 
+    if let Some(ast) = try_parse_choose_one_of_revealed(lower, ctx) {
+        return Some(ast);
+    }
+
     // CR 400.7j + CR 601.2h + CR 602.2b + CR 608.2d: "[An opponent ]choose[s]
     // one of the exiled cards" INSIDE an ability whose own cost exiled non-self
     // cards (Coin of Fate). The anaphor names the cost-payment record, not a
@@ -5514,6 +5518,46 @@ fn try_parse_choose_owned_by_voter(
 /// X" — Valki, God of Lies), parsed by the shared `parse_mana_value_suffix`
 /// building block and intersected into the card-type filter. The untyped
 /// "exiled this way" tracked-set form accepts no suffix.
+/// CR 608.2c + CR 608.2d: "choose one of the creature cards revealed this way"
+/// (Gift of Perfection, after "each opponent reveals cards ... until they reveal a
+/// creature card"): one choice among the cards this resolution revealed, which are
+/// still in their owners' libraries. The tracked set holds every revealed card of
+/// every revealing player; the type phrase narrows it.
+fn try_parse_choose_one_of_revealed(
+    lower: &str,
+    ctx: &mut ParseContext,
+) -> Option<ChooseImperativeAst> {
+    type E<'a> = OracleError<'a>;
+    let (after, _) = alt((tag::<_, _, E>("choose "), tag("you choose ")))
+        .parse(lower)
+        .ok()?;
+    let (after, _) = tag::<_, _, E>("one of the ").parse(after).ok()?;
+    let (tail, type_phrase) = take_until::<_, _, E>(" cards revealed this way")
+        .parse(after)
+        .ok()?;
+    let (tail, _) = tag::<_, _, E>(" cards revealed this way").parse(tail).ok()?;
+    if !terminal_punctuation_only(tail) {
+        return None;
+    }
+    let type_phrase = type_phrase.trim();
+    if (super::super::oracle_nom::target::parse_type_phrase, eof)
+        .parse(type_phrase)
+        .is_err()
+    {
+        return None;
+    }
+    Some(ChooseImperativeAst::FromZone {
+        count: 1,
+        zones: vec![Zone::Library],
+        zone_owner: ZoneOwner::AllOwners,
+        filter: super::search::parse_search_filter(type_phrase, ctx),
+        chooser: Chooser::Controller,
+        up_to: false,
+        selection: CardSelectionMode::Chosen,
+        candidate_source: crate::types::ability::ZoneChoiceCandidateSource::Tracked,
+    })
+}
+
 fn try_parse_choose_exiled_anaphor(
     lower: &str,
     ctx: &mut ParseContext,
