@@ -393,6 +393,8 @@ pub fn build_static_registry() -> HashMap<StaticMode, StaticAbilityHandler> {
     // deal_damage) via `object_has_static_other` / `player_has_static_other`.
     let prohibitions = [
         "CantBeSacrificed",
+        // Beam me up (`trk`): enforced in the beam me up return cost's filter.
+        "CantBeBeamedUp",
         "CantBeEnchanted",
         "CantBeEquipped",
         "CantBeAttached",

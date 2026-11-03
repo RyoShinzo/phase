@@ -149,9 +149,32 @@ pub fn effective_flashback_cost(state: &GameState, object_id: ObjectId) -> Optio
             FlashbackCost::Mana(mana_cost) => Some(FlashbackCost::Mana(resolve_keyword_mana_cost(
                 state, object_id, &mana_cost,
             ))),
-            FlashbackCost::NonMana(ability_cost) => Some(FlashbackCost::NonMana(ability_cost)),
+            // CR 118.9: a composite cost can carry the card's own mana cost (beam me up
+            // granted by Scotty, Miracle Worker).
+            FlashbackCost::NonMana(ability_cost) => Some(FlashbackCost::NonMana(
+                resolve_self_mana_in_ability_cost(state, object_id, &ability_cost),
+            )),
         },
         _ => None,
+    }
+}
+
+/// CR 201.5a: binds the granter references in a granted keyword's cost to the granting
+/// source as it is now ("Scotty can't be beamed up to cast a spell this way"). Flashback
+/// works from the graveyard, so the off-zone keyword grants call it; other keywords come
+/// back unchanged.
+pub(crate) fn bind_keyword_granter(
+    keyword: &Keyword,
+    granter: Option<crate::types::identifiers::ObjectIncarnationRef>,
+) -> Keyword {
+    match (keyword, granter) {
+        (Keyword::Flashback(FlashbackCost::NonMana(cost)), Some(granter)) => {
+            use crate::types::ability_visit::granter_symbols_mut;
+            let mut cost = cost.clone();
+            granter_symbols_mut::ability_cost(&mut cost, &mut granter_symbols_mut::bind(granter));
+            Keyword::Flashback(FlashbackCost::NonMana(cost))
+        }
+        _ => keyword.clone(),
     }
 }
 

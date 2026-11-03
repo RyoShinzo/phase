@@ -6879,6 +6879,10 @@ pub fn static_condition_to_trigger_condition(sc: &StaticCondition) -> Option<Tri
         StaticCondition::FirstCombatPhaseOfTurn => {
             Some(TriggerCondition::FirstCombatPhaseOfTurn)
         }
+        // CR 500.1: the phase gate maps to its trigger-condition sibling.
+        StaticCondition::CurrentPhaseIs { phases } => Some(TriggerCondition::CurrentPhaseIs {
+            phases: phases.clone(),
+        }),
         StaticCondition::DayNightIs { .. } => None,
         StaticCondition::SharesColorWithMostCommonColorAmongPermanents => None,
 
@@ -21168,7 +21172,15 @@ fn try_parse_player_trigger(lower: &str) -> Option<(TriggerMode, TriggerDefiniti
         alt((tag::<_, _, OracleError<'_>>("whenever "), tag("when "))),
         value(
             (),
-            (tag("you"), space1, tag("face"), space1, tag("a"), space1, tag("dilemma")),
+            (
+                tag("you"),
+                space1,
+                tag("face"),
+                space1,
+                tag("a"),
+                space1,
+                tag("dilemma"),
+            ),
         ),
     ))
     .parse(lower)

@@ -12849,6 +12849,7 @@ fn latched_property_kind(
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => return None,
     })
 }
@@ -14798,6 +14799,7 @@ fn filter_prop_binding_diverges(prop: &FilterProp) -> bool {
         | FilterProp::PowerExceedsBase
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         // CR 506 + CR 508 + CR 509: live combat state.
         | FilterProp::Blocking
         | FilterProp::BlockStatus { .. }

@@ -4955,7 +4955,7 @@ fn scan_static_condition(x: &StaticCondition, mode: ScanMode) -> Axes {
         StaticCondition::SourceIsFaceUp => Axes::NONE,
         StaticCondition::AdditionalCostPaid => Axes::NONE,
         StaticCondition::CastingAsVariant { variant: _ } => Axes::NONE,
-        StaticCondition::FirstCombatPhaseOfTurn => Axes {
+        StaticCondition::FirstCombatPhaseOfTurn | StaticCondition::CurrentPhaseIs { .. } => Axes {
             event: false,
             sibling: false,
             projected: true,
@@ -5080,6 +5080,7 @@ fn scan_filter_prop(x: &FilterProp, mode: ScanMode) -> Axes {
         // CR 205.3m + CR 903.3: reads commander designation + the candidate's own
         // creature types — a board/object read, no player resource.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => Axes::NONE,
         FilterProp::EnteredThisTurn => Axes::history_of(HistoryMember::TurnNumber),
 

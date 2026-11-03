@@ -2248,6 +2248,7 @@ fn legacy_static_condition(x: &StaticCondition) -> bool {
         | StaticCondition::AdditionalCostPaid
         | StaticCondition::CastingAsVariant { .. }
         | StaticCondition::FirstCombatPhaseOfTurn
+        | StaticCondition::CurrentPhaseIs { .. }
         | StaticCondition::None => false,
     }
 }
@@ -2749,6 +2750,7 @@ fn legacy_filter_prop(p: &FilterProp) -> bool {
         // CR 205.3m: a unit variant with no nested TargetFilter/QuantityExpr/
         // ControllerRef interior — nothing to descend, so no legacy referent.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Modified
         | FilterProp::Historic
         | FilterProp::NotHistoric
@@ -3077,6 +3079,7 @@ fn member_bound_filter_prop(p: &FilterProp) -> bool {
         | FilterProp::IsCommander
         // CR 205.3m: no nested interior to carry a member-bound referent.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Modified
         | FilterProp::Historic
         | FilterProp::NotHistoric
@@ -7482,7 +7485,9 @@ fn rw_static_condition(x: &StaticCondition) -> RwProfile {
         // sequencing channel `Effect::AdditionalPhase` writes (an added combat
         // phase changes the answer), so the profile records the `TurnStructure`
         // kind rather than staying empty.
-        StaticCondition::FirstCombatPhaseOfTurn => reads_player_of(StateKind::TurnStructure),
+        StaticCondition::FirstCombatPhaseOfTurn | StaticCondition::CurrentPhaseIs { .. } => {
+            reads_player_of(StateKind::TurnStructure)
+        }
         StaticCondition::SourceMatchesFilter { filter: _ } => {
             let mut p = reads_src_of(StateKind::ObjectPt);
             p.current_pt_reads.add(PtReadScope::Source);

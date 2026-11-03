@@ -925,6 +925,7 @@ impl EventObjectSnapshot {
             // (CR 106.6 / CR 603.7a), which are evaluated live at the casting site —
             // never from the event-subject grammar.
             | FilterProp::SharesCreatureTypeWithCommander
+            | FilterProp::CantBeBeamedUp
             | FilterProp::Other { .. } => Unsupported,
         }
     }

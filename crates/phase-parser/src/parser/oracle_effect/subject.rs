@@ -7824,6 +7824,12 @@ fn parse_restriction_list_atom(input: &str) -> OracleResult<'_, Vec<StaticMode>>
             vec![StaticMode::Other("CantBeSacrificed".to_string())],
             tag("be sacrificed"),
         ),
+        // Beam me up (`trk`, not in the Comprehensive Rules yet): the
+        // permanent can't be returned to pay a beam me up cost (Marooned).
+        value(
+            vec![StaticMode::Other("CantBeBeamedUp".to_string())],
+            tag("be beamed up"),
+        ),
         // CR 702.5: aura attachment prohibition. The bare "enchanted"
         // alternate covers the elided-"be" second leg of "can't be equipped
         // or enchanted" (the negation and "be" distribute over the list).

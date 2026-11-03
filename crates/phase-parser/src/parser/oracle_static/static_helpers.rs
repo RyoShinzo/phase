@@ -1880,6 +1880,7 @@ fn rebind_scoped_designation_anaphor(condition: &mut StaticCondition, antecedent
         | StaticCondition::EnchantedIsFaceDown
         | StaticCondition::AdditionalCostPaid
         | StaticCondition::FirstCombatPhaseOfTurn
+        | StaticCondition::CurrentPhaseIs { .. }
         | StaticCondition::CastingAsVariant { .. }
         | StaticCondition::None => {}
     }

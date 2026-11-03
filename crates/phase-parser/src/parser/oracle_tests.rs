@@ -35167,7 +35167,9 @@ fn face_a_dilemma_parses() {
         &["Creature".to_string()],
         &[],
     );
-    assert!(serde_json::to_string(&parsed.triggers[0]).unwrap().contains("DilemmasFacedThisTurn"));
+    assert!(serde_json::to_string(&parsed.triggers[0])
+        .unwrap()
+        .contains("DilemmasFacedThisTurn"));
 
     let parsed = parse_oracle_text(
         "At the beginning of each end step, if you faced a dilemma this turn, draw a card.",
@@ -35176,5 +35178,150 @@ fn face_a_dilemma_parses() {
         &["Creature".to_string()],
         &[],
     );
-    assert!(serde_json::to_string(&parsed.triggers[0]).unwrap().contains("DilemmasFacedThisTurn"));
+    assert!(serde_json::to_string(&parsed.triggers[0])
+        .unwrap()
+        .contains("DilemmasFacedThisTurn"));
+}
+
+/// Beam me up (`trk`): "Enchanted permanent doesn't untap during its controller's untap
+/// step and can't be beamed up." is two statics on the host (Marooned).
+#[test]
+fn marooned_cant_untap_and_cant_be_beamed_up() {
+    let result = parse(
+        "Enchant artifact or creature\nWhen this Aura enters, you may pay {3}. If you do, tap enchanted permanent.\nEnchanted permanent doesn't untap during its controller's untap step and can't be beamed up.",
+        "Marooned",
+        &[],
+        &["Enchantment"],
+        &["Aura"],
+    );
+    let modes: Vec<_> = result.statics.iter().map(|def| def.mode.clone()).collect();
+    assert_eq!(
+        modes,
+        vec![
+            StaticMode::CantUntap,
+            StaticMode::Other("CantBeBeamedUp".to_string())
+        ]
+    );
+}
+
+/// Beam me up (`trk`): the return leg of a printed beam me up cost excludes a permanent
+/// that can't be beamed up.
+#[test]
+fn beam_me_up_return_excludes_cant_be_beamed_up() {
+    let result = parse(
+        "Draw a card.\nBeam me up {3}{W} (You may cast this card from your graveyard for {3}{W} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+        "Probe",
+        &[],
+        &["Sorcery"],
+        &[],
+    );
+    let Some(Keyword::Flashback(FlashbackCost::NonMana(AbilityCost::Composite { costs }))) =
+        result.extracted_keywords.first()
+    else {
+        panic!(
+            "beam me up must be a compound flashback: {:?}",
+            result.extracted_keywords
+        );
+    };
+    let Some(AbilityCost::ReturnToHand {
+        filter: Some(TargetFilter::Typed(filter)),
+        ..
+    }) = costs.get(1)
+    else {
+        panic!("missing return leg: {costs:?}");
+    };
+    assert!(filter.properties.contains(&FilterProp::Not {
+        prop: Box::new(FilterProp::CantBeBeamedUp),
+    }));
+}
+
+/// Beam me up (`trk`): Scotty, Miracle Worker gives instant and sorcery cards in the
+/// graveyard beam me up during your main phase, for their mana cost, and the return leg
+/// excludes Scotty as the granter (CR 201.5a).
+#[test]
+fn scotty_grants_beam_me_up_for_the_mana_cost() {
+    let result = parse(
+        "During your main phase, each card in your graveyard has beam me up. The beam me up cost is equal to that spell's mana cost. ~ can't be beamed up to cast a spell this way. (Only instant and sorcery spells can be cast this way. You may cast a card from your graveyard for its beam me up cost if you also return another creature you control to its owner's hand. Then exile that spell.)",
+        "Scotty, Miracle Worker",
+        &[],
+        &["Creature"],
+        &["Human", "Artificer"],
+    );
+    assert!(result.abilities.is_empty(), "{:?}", result.abilities);
+    let [grant] = result.statics.as_slice() else {
+        panic!("expected one static: {:?}", result.statics);
+    };
+    assert_eq!(
+        grant.condition,
+        Some(StaticCondition::And {
+            conditions: vec![
+                StaticCondition::DuringYourTurn,
+                StaticCondition::CurrentPhaseIs {
+                    phases: vec![Phase::PreCombatMain, Phase::PostCombatMain],
+                },
+            ],
+        })
+    );
+    let [ContinuousModification::AddKeyword {
+        keyword: Keyword::Flashback(FlashbackCost::NonMana(AbilityCost::Composite { costs })),
+    }] = grant.modifications.as_slice()
+    else {
+        panic!("expected a beam me up grant: {:?}", grant.modifications);
+    };
+    assert_eq!(
+        costs[0],
+        AbilityCost::Mana {
+            cost: ManaCost::SelfManaCost
+        }
+    );
+    let AbilityCost::ReturnToHand {
+        filter: Some(TargetFilter::And { filters }),
+        ..
+    } = &costs[1]
+    else {
+        panic!("missing return leg: {costs:?}");
+    };
+    assert!(filters.contains(&TargetFilter::Not {
+        filter: Box::new(TargetFilter::GrantingObject { bound: None }),
+    }));
+}
+
+/// Assimilate (`trk`) + CR 607.2d: chapter I of The Best of Both Worlds remembers the
+/// creature it assimilated, and chapter III exiles exactly that creature.
+#[test]
+fn best_of_both_worlds_links_the_assimilated_creature() {
+    let result = parse(
+        "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Assimilate target nonartifact creature an opponent controls. (Gain control of it and put a +1/+1 counter on it. It's a Borg artifact creature and loses all other creature types.)\nII — Artifact creatures you control get +2/+2 until end of turn.\nIII — Exile the Borg assimilated with this Saga, then return it to the battlefield under its owner's control.",
+        "The Best of Both Worlds",
+        &[],
+        &["Enchantment"],
+        &["Saga"],
+    );
+    let chapter = |n: usize| {
+        let execute = result.triggers[n]
+            .execute
+            .as_deref()
+            .expect("chapter ability");
+        std::iter::successors(Some(execute), |def| def.sub_ability.as_deref())
+            .map(|def| (*def.effect).clone())
+            .collect::<Vec<_>>()
+    };
+    assert!(matches!(
+        chapter(0).first(),
+        Some(Effect::GainControl { .. })
+    ));
+    assert_eq!(
+        chapter(0).last(),
+        Some(&Effect::RememberCard {
+            target: TargetFilter::ParentTarget
+        })
+    );
+    assert!(matches!(
+        chapter(2).first(),
+        Some(Effect::ChangeZone {
+            target: TargetFilter::ChosenCard,
+            destination: Zone::Exile,
+            ..
+        })
+    ));
 }

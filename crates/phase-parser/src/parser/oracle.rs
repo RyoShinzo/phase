@@ -1085,6 +1085,88 @@ pub(crate) fn parse_graveyard_keyword_continuation(
     }
 }
 
+/// Beam me up (`trk`, not in the Comprehensive Rules yet), granted by Scotty, Miracle
+/// Worker: "During your main phase, each card in your graveyard has beam me up. The beam
+/// me up cost is equal to that spell's mana cost. ~ can't be beamed up to cast a spell
+/// this way." The reminder text allows only instant and sorcery spells, so only those
+/// cards get the keyword. The return leg excludes a permanent that can't be beamed up,
+/// and the granter itself (CR 201.5a), which the off-zone keyword grant binds.
+fn try_parse_granted_beam_me_up(line: &str) -> Option<StaticDefinition> {
+    let lower = line.to_lowercase();
+    let (excludes_granter, rest) = nom_on_lower(line, &lower, |i| {
+        let (i, _) =
+            tag("during your main phase, each card in your graveyard has beam me up. ").parse(i)?;
+        let (i, _) = tag("the beam me up cost is equal to ").parse(i)?;
+        let (i, _) = alt((tag("that spell's"), tag("that card's"), tag("its"))).parse(i)?;
+        let (i, _) = tag(" mana cost").parse(i)?;
+        let (i, excluded) = opt(tag(". ~ can't be beamed up to cast a spell this way")).parse(i)?;
+        let (i, _) = opt(tag(".")).parse(i)?;
+        Ok((i, excluded.is_some()))
+    })?;
+    if !rest.trim().is_empty() {
+        return None;
+    }
+
+    let mut returned = TargetFilter::Typed(
+        TypedFilter::creature()
+            .controller(ControllerRef::You)
+            .properties(vec![FilterProp::Not {
+                prop: Box::new(FilterProp::CantBeBeamedUp),
+            }]),
+    );
+    if excludes_granter {
+        returned = TargetFilter::And {
+            filters: vec![
+                returned,
+                TargetFilter::Not {
+                    filter: Box::new(TargetFilter::GrantingObject { bound: None }),
+                },
+            ],
+        };
+    }
+    let keyword = Keyword::Flashback(FlashbackCost::NonMana(AbilityCost::Composite {
+        costs: vec![
+            AbilityCost::Mana {
+                cost: ManaCost::SelfManaCost,
+            },
+            AbilityCost::ReturnToHand {
+                count: 1,
+                filter: Some(returned),
+                from_zone: None,
+            },
+        ],
+    }));
+    let in_your_graveyard = |card_type| {
+        TargetFilter::Typed(
+            TypedFilter::default()
+                .with_type(card_type)
+                .controller(ControllerRef::You)
+                .properties(vec![FilterProp::InZone {
+                    zone: Zone::Graveyard,
+                }]),
+        )
+    };
+    Some(
+        StaticDefinition::continuous()
+            .affected(TargetFilter::Or {
+                filters: vec![
+                    in_your_graveyard(TypeFilter::Instant),
+                    in_your_graveyard(TypeFilter::Sorcery),
+                ],
+            })
+            .modifications(vec![ContinuousModification::AddKeyword { keyword }])
+            .condition(StaticCondition::And {
+                conditions: vec![
+                    StaticCondition::DuringYourTurn,
+                    StaticCondition::CurrentPhaseIs {
+                        phases: vec![Phase::PreCombatMain, Phase::PostCombatMain],
+                    },
+                ],
+            })
+            .description(line.to_string()),
+    )
+}
+
 fn try_parse_graveyard_keyword_static_with_continuation(line: &str) -> Option<StaticDefinition> {
     let lower = line.to_lowercase();
     let (prefix, continuation) = split_once_on_lower(line, &lower, ". ")?;
@@ -1139,6 +1221,8 @@ fn parse_static_line_with_graveyard_keyword_continuation(
     let mut defs = if let Some(def) = raw_conditional_type_grant {
         vec![def]
     } else if let Some(def) = try_parse_graveyard_keyword_static_with_continuation(line) {
+        vec![def]
+    } else if let Some(def) = try_parse_granted_beam_me_up(line) {
         vec![def]
     } else if let Some(def) = try_parse_graveyard_keyword_grant_static(line) {
         vec![def]
@@ -5633,6 +5717,27 @@ fn oneshot_damage_replacement_requires_direct_spell_route(effect: &Effect) -> bo
     }
 }
 
+/// Beam me up (`trk`, not in the Comprehensive Rules yet): a permanent that "can't be
+/// beamed up" (Marooned) can't be returned to pay a beam me up cost, so the return
+/// leg of the cost excludes it.
+pub(crate) fn forbid_beamed_up_returns(keyword: &mut Keyword) {
+    let Keyword::Flashback(FlashbackCost::NonMana(AbilityCost::Composite { costs })) = keyword
+    else {
+        return;
+    };
+    for cost in costs {
+        if let AbilityCost::ReturnToHand {
+            filter: Some(TargetFilter::Typed(filter)),
+            ..
+        } = cost
+        {
+            filter.properties.push(FilterProp::Not {
+                prop: Box::new(FilterProp::CantBeBeamedUp),
+            });
+        }
+    }
+}
+
 fn parse_normalized_oracle_ir(
     original_oracle_text: &str,
     normalized_oracle_text: &str,
@@ -7297,7 +7402,8 @@ fn parse_normalized_oracle_ir(
                 "flashback\u{2014}{}, return a creature you control to its owner's hand",
                 cost.trim_end_matches('.').trim()
             );
-            if let Some(kw) = parse_router_keyword_fragment(&flashback) {
+            if let Some(mut kw) = parse_router_keyword_fragment(&flashback) {
+                forbid_beamed_up_returns(&mut kw);
                 emitter.keyword_at(item_line, kw);
                 i += 1;
                 continue;
@@ -9086,7 +9192,6 @@ fn strip_activated_mana_payment_restriction(
     }
 }
 
-
 /// "Assimilate X" reads, in the reminder text of every card printing it, "put X onto the
 /// battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and
 /// loses all other creature types." The Comprehensive Rules don't define it yet, so it is
@@ -9130,7 +9235,11 @@ fn expand_assimilate(oracle_text: &str) -> String {
             // opponent controls", The Best of Both Worlds): its reminder reads "Gain
             // control of it and put a +1/+1 counter on it" (release notes: you first
             // gain control of it).
-            out.push_str(if capital { "Gain control of " } else { "gain control of " });
+            out.push_str(if capital {
+                "Gain control of "
+            } else {
+                "gain control of "
+            });
             out.push_str(object);
             out.push_str(" and put a +1/+1 counter on it. It's a Borg artifact creature and loses all other creature types.");
             rest = &rest[period + 1..];
@@ -9151,6 +9260,48 @@ fn expand_assimilate(oracle_text: &str) -> String {
     }
     out.push_str(rest);
     out
+}
+
+/// Assimilate (`trk`) + CR 607.2d: "the Borg assimilated with this Saga" (The Best of
+/// Both Worlds, chapter III) names the creature an earlier chapter assimilated. On a card
+/// printing "assimilated with", each battlefield assimilate (gain control, then the Borg
+/// type change) ends by remembering its creature on the source, which
+/// `TargetFilter::ChosenCard` reads.
+fn remember_assimilated_creatures(parsed: &mut ParsedAbilities, oracle_text: &str) {
+    if !scan_contains(&oracle_text.to_lowercase(), "assimilated with ") {
+        return;
+    }
+    let roots = parsed
+        .triggers
+        .iter_mut()
+        .filter_map(|trigger| trigger.execute.as_deref_mut())
+        .chain(parsed.abilities.iter_mut());
+    for root in roots {
+        if !matches!(&*root.effect, Effect::GainControl { .. }) || !chain_makes_borg(root) {
+            continue;
+        }
+        let mut last = root;
+        while last.sub_ability.is_some() {
+            last = last.sub_ability.as_deref_mut().expect("checked above");
+        }
+        last.sub_ability = Some(Box::new(AbilityDefinition::new(
+            AbilityKind::Spell,
+            Effect::RememberCard {
+                target: TargetFilter::ParentTarget,
+            },
+        )));
+    }
+}
+
+/// Whether an ability chain makes its object a Borg (assimilate's type change).
+fn chain_makes_borg(root: &AbilityDefinition) -> bool {
+    std::iter::successors(Some(root), |def| def.sub_ability.as_deref()).any(|def| {
+        matches!(&*def.effect, Effect::GenericEffect { static_abilities, .. }
+        if static_abilities.iter().flat_map(|s| &s.modifications).any(|m| matches!(
+            m,
+            ContinuousModification::AddSubtype { subtype } if subtype == "Borg"
+        )))
+    })
 }
 
 /// CR 401.1: current Oracle wording often leaves the library out of "they put the rest
@@ -10041,6 +10192,7 @@ fn parse_oracle_pipeline(
     // CR 608.2c + CR 614.1a + CR 614.6 + CR 615.5: settle every deferred guard verdict.
     resolve_unlowered_guards(&mut parsed);
     demote_unreached_granter_references(&mut parsed);
+    remember_assimilated_creatures(&mut parsed, oracle_text);
     // The report-only stage clone is settled by the same pass, so no tree this function
     // hands out carries a live mark.
     if let Some(raw) = raw_lowered.as_mut() {

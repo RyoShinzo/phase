@@ -1300,7 +1300,8 @@ fn effect(e: &$($mut_)? Effect, v: &mut impl FnMut(Symbol<'_>)) {
     }
 }
 
-fn ability_cost(cost: &$($mut_)? AbilityCost, v: &mut impl FnMut(Symbol<'_>)) {
+/// Visits the symbols in a cost, such as a granted keyword's cost.
+pub fn ability_cost(cost: &$($mut_)? AbilityCost, v: &mut impl FnMut(Symbol<'_>)) {
     match cost {
         AbilityCost::Sacrifice(sacrifice) => filter(&$($mut_)? sacrifice.target, v),
         AbilityCost::Exile { filter: Some(f), .. }
@@ -1425,6 +1426,14 @@ pub(crate) fn modification(m: &$($mut_)? ContinuousModification, v: &mut impl Fn
         | ContinuousModification::AddDynamicPower { value }
         | ContinuousModification::AddDynamicToughness { value } => quantity(value, v),
         ContinuousModification::AddStaticMode { mode } => static_mode(mode, v),
+        // CR 201.5a: a granted keyword's cost can name the granter (Scotty, Miracle
+        // Worker's beam me up); the off-zone keyword grant binds it.
+        ContinuousModification::AddKeyword {
+            keyword:
+                crate::types::keywords::Keyword::Flashback(
+                    crate::types::keywords::FlashbackCost::NonMana(cost),
+                ),
+        } => ability_cost(cost, v),
         _ => {}
     }
 }
