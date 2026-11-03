@@ -10512,7 +10512,8 @@ pub(super) fn parse_shuffle_ast(text: &str, lower: &str) -> Option<ShuffleImpera
     // your library") are still classified as `ChangeZoneAll`, not as a single
     // descriptive-target shuffle.
     if let Some(((target_phrase, ()), _)) = nom_on_lower(lower, lower, |input| {
-        let (input, _) = tag::<_, _, OracleError<'_>>("shuffle ").parse(input)?;
+        let (input, _) =
+            alt((tag::<_, _, OracleError<'_>>("shuffle "), tag("shuffles "))).parse(input)?;
         let (input, target_phrase) = take_until(" into ").parse(input)?;
         not(take_until::<_, _, OracleError<'_>>(" from ")).parse(target_phrase)?;
         let (input, _) = tag(" into ").parse(input)?;
@@ -10525,8 +10526,11 @@ pub(super) fn parse_shuffle_ast(text: &str, lower: &str) -> Option<ShuffleImpera
     }) {
         let (target, _) = parse_target(&target_phrase);
         // Only accept a real typed object target — never a whole-zone phrase
-        // (which the mass-move paths above already handled).
-        if matches!(target, TargetFilter::Typed(_)) {
+        // (which the mass-move paths above already handled). A demonstrative
+        // anaphor ("that creature") names the parent target: "The owner of up to
+        // one target creature draws two cards, then shuffles that creature into
+        // their library" (Unification). CR 400.3 sends it to its owner's library.
+        if matches!(target, TargetFilter::Typed(_) | TargetFilter::ParentTarget) {
             let all = preceded(
                 tag::<_, _, OracleError<'_>>("shuffle "),
                 alt((tag("all "), tag("each "))),

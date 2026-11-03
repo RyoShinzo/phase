@@ -4346,6 +4346,40 @@ fn counted_counter_conjunct_keeps_its_own_kind_and_target() {
     );
 }
 
+/// CR 108.3 + CR 400.3: "the owner of <target phrase>" is the actor and the object
+/// is the target: the owner draws, then the targeted creature goes into its owner's
+/// library and that library is shuffled (Unification, chapter I).
+#[test]
+fn owner_of_target_subject_draws_then_shuffles_that_creature() {
+    let def = parse_effect_chain(
+        "The owner of up to one target creature draws two cards, then shuffles that creature into their library.",
+        AbilityKind::Spell,
+    );
+    assert!(matches!(def.effect.as_ref(), Effect::TargetOnly { .. }));
+    assert!(
+        def.multi_target.is_some(),
+        "\"up to one\" keeps its quantifier"
+    );
+    let draw = def.sub_ability.as_deref().expect("draw");
+    assert!(matches!(
+        draw.effect.as_ref(),
+        Effect::Draw {
+            target: TargetFilter::ParentTargetOwner,
+            ..
+        }
+    ));
+    let moved = draw.sub_ability.as_deref().expect("move to library");
+    assert!(matches!(
+        moved.effect.as_ref(),
+        Effect::ChangeZone {
+            destination: Zone::Library,
+            target: TargetFilter::ParentTarget,
+            owner_library: true,
+            ..
+        }
+    ));
+}
+
 /// `another` modifying the counter quantity must not force `FilterProp::Another`
 /// on the target — only target-qualified ordinals (`another target`, etc.) do.
 #[test]
