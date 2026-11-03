@@ -7349,10 +7349,27 @@ fn filter_inner_for_object(
         // CR 400.7: an entry names the object it captured, so a card that left
         // exile (and any later exile of it) does not match.
         TargetFilter::ExiledBySource => {
-            let linked = match trigger_source {
+            let mut linked = match trigger_source {
                 Some(source) => crate::game::players::linked_exile_pile(state, source),
                 None => crate::game::players::linked_exile_cards_for_source(state, source_id),
             };
+            // CR 607.2a + CR 608.2c: the latched snapshot predates the trigger's
+            // resolution. While its source is still the same object, the cards the
+            // trigger itself exiles are linked too ("exile the top four cards of your
+            // library. Put all permanent cards exiled this way onto the battlefield",
+            // Deep Space 9).
+            if let Some(bound) = trigger_source.map(|source| source.identity.reference) {
+                if state
+                    .objects
+                    .get(&bound.object_id)
+                    .is_some_and(|object| object.incarnation == bound.incarnation)
+                {
+                    linked.extend(crate::game::players::linked_exile_cards_for_source(
+                        state,
+                        bound.object_id,
+                    ));
+                }
+            }
             linked
                 .iter()
                 .any(|entry| entry.exiled_id == object_id && entry.is_still_exiled(state))
