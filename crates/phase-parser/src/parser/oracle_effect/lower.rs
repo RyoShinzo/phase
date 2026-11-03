@@ -949,12 +949,20 @@ pub(super) fn is_exile_until_cast_bottom_cleanup(
     ) {
         return false;
     }
-    let Effect::CastFromZone { target, .. } = cast_effect else {
-        return false;
+    let acts_on_hit = match cast_effect {
+        // The cast anaphors the hit via `ParentTarget`; a cast that already reads
+        // `ExiledBySource` is the plain Chaos Wand / Etali shape handled elsewhere.
+        Effect::CastFromZone { target, .. } => matches!(target, TargetFilter::ParentTarget),
+        // Assimilate (The Borg Queen): "Assimilate that card" puts the hit onto the
+        // battlefield instead of casting it.
+        Effect::ChangeZone {
+            target: TargetFilter::ParentTarget,
+            destination: Zone::Battlefield,
+            ..
+        } => true,
+        _ => false,
     };
-    // The cast anaphors the hit via `ParentTarget`; a cast that already reads
-    // `ExiledBySource` is the plain Chaos Wand / Etali shape handled elsewhere.
-    if !matches!(target, TargetFilter::ParentTarget) {
+    if !acts_on_hit {
         return false;
     }
     matches!(
