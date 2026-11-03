@@ -792,8 +792,7 @@ fn parse_replacement_line_inner(text: &str, card_name: &str) -> Option<Replaceme
 
     if nom_primitives::scan_contains(&lower, "counters would be put on")
         || nom_primitives::scan_contains(&lower, "counter would be put on")
-        || nom_primitives::scan_contains(&lower, "would put one or more counters")
-        || nom_primitives::scan_contains(&lower, "would put a counter")
+        || nom_primitives::scan_preceded(&lower, parse_would_put_counters).is_some()
     {
         if let Some(def) = parse_counter_replacement(&lower, &text) {
             return Some(def);
@@ -13316,14 +13315,45 @@ fn is_counter_replacement_object_scope(filter: &TargetFilter) -> bool {
 }
 
 fn parse_counter_replacement_scope_anchor(input: &str) -> OracleResult<'_, ()> {
+    alt((
+        value(
+            (),
+            tag::<_, _, OracleError<'_>>("counters would be put on "),
+        ),
+        value((), tag("counter would be put on ")),
+        value(
+            (),
+            (
+                alt((tag("an effect "), tag("you "))),
+                parse_would_put_counters,
+                tag(" on "),
+            ),
+        ),
+    ))
+    .parse(input)
+}
+
+/// CR 614.1a + CR 122.1: The actor form of a counter-placement replacement: "would put
+/// one or more counters", "would put a counter", or with a named counter type, as in
+/// "would put one or more charge counters" (Lt. Cmdr. Geordi La Forge).
+fn parse_would_put_counters(input: &str) -> OracleResult<'_, ()> {
     value(
         (),
-        alt((
-            tag::<_, _, OracleError<'_>>("counters would be put on "),
-            tag("counter would be put on "),
-            tag("an effect would put one or more counters on "),
-            tag("an effect would put a counter on "),
-        )),
+        (
+            tag::<_, _, OracleError<'_>>("would put "),
+            alt((tag("one or more "), tag("a "))),
+            alt((
+                value((), tag("counters")),
+                value((), tag("counter")),
+                value(
+                    (),
+                    (
+                        nom_primitives::parse_counter_type_typed,
+                        alt((tag(" counters"), tag(" counter"))),
+                    ),
+                ),
+            )),
+        ),
     )
     .parse(input)
 }
@@ -13337,6 +13367,7 @@ fn parse_counter_replacement_scope_tail(input: &str) -> OracleResult<'_, ()> {
                 tag::<_, _, OracleError<'_>>(", that many"),
                 tag(", twice that many"),
                 tag(", it puts"),
+                tag(", put "),
             )),
         ),
     )
@@ -27485,6 +27516,40 @@ mod tests {
                 vec![TypeFilter::Subtype("Planet".to_string())],
             ]
         );
+    }
+
+    #[test]
+    fn counter_doubling_replacement_actor_with_named_counter_type() {
+        // CR 614.1a + CR 122.1: "If you would put one or more charge counters on an
+        // artifact you control, put twice that many charge counters on that artifact
+        // instead." The named type limits it to charge counters and the recipient to
+        // artifacts you control (Lt. Cmdr. Geordi La Forge).
+        let def = parse_replacement_line(
+            "If you would put one or more charge counters on an artifact you control, put twice that many charge counters on that artifact instead.",
+            "Lt. Cmdr. Geordi La Forge",
+        )
+        .unwrap();
+
+        assert_eq!(def.event, ReplacementEvent::AddCounter);
+        assert_eq!(
+            def.quantity_modification,
+            Some(QuantityModification::DOUBLE)
+        );
+        assert_eq!(
+            def.counter_match,
+            Some(CounterMatch::OfType(CounterType::Generic(
+                "charge".to_string()
+            )))
+        );
+        assert_eq!(def.valid_player, Some(ReplacementPlayerScope::You));
+        assert!(matches!(
+            def.valid_card,
+            Some(TargetFilter::Typed(TypedFilter {
+                ref type_filters,
+                controller: Some(ControllerRef::You),
+                ..
+            })) if type_filters == &vec![TypeFilter::Artifact]
+        ));
     }
 
     #[test]

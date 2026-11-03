@@ -4302,6 +4302,50 @@ fn incremental_growth_plus_counter_chain() {
     );
 }
 
+/// CR 608.2c + CR 122.1: a verbless second conjunct led by a number, not an article,
+/// still takes the "put" of the first one (Stand Together).
+#[test]
+fn counted_counter_conjunct_carries_put_forward() {
+    let def = parse_effect_chain(
+        "Put two +1/+1 counters on target creature and two +1/+1 counters on another target creature.",
+        AbilityKind::Spell,
+    );
+
+    let second = assert_plus_counter_node(&def, 2, false).expect("second counter node");
+    assert!(
+        assert_plus_counter_node(second, 2, true).is_none(),
+        "counter chain should contain exactly two nodes",
+    );
+}
+
+/// CR 608.2c + CR 122.1: each conjunct keeps its own counter kind, count and
+/// target (Jean-Luc Picard, Luminary).
+#[test]
+fn counted_counter_conjunct_keeps_its_own_kind_and_target() {
+    let def = parse_effect_chain(
+        "Put a +1/+1 counter on up to one other target creature and two charge counters on up to one target Spacecraft.",
+        AbilityKind::Spell,
+    );
+
+    let second = assert_plus_counter_node(&def, 1, true).expect("second counter node");
+    match second.effect.as_ref() {
+        Effect::PutCounter {
+            counter_type,
+            count: QuantityExpr::Fixed { value: 2 },
+            target,
+        } => {
+            assert_eq!(*counter_type, CounterType::Generic("charge".to_string()));
+            let tf = typed_leg(target).expect("counter target should be typed");
+            assert!(has_type(tf, TypeFilter::Subtype("Spacecraft".to_string())));
+        }
+        other => panic!("expected two charge counters, got {other:?}"),
+    }
+    assert!(
+        second.multi_target.is_some(),
+        "\"up to one\" keeps its own quantifier"
+    );
+}
+
 /// `another` modifying the counter quantity must not force `FilterProp::Another`
 /// on the target — only target-qualified ordinals (`another target`, etc.) do.
 #[test]
