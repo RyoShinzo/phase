@@ -6063,12 +6063,27 @@ pub(super) fn handle_resolution_choice(
             // A head that resumes with this pick as its own object publishes its
             // result itself (`resolution_choice_head_publishes_on_resume`), so
             // the answer leaves the chain's set to it.
+            // CR 608.2c: a choice among the chain's own tracked set whose next
+            // instruction takes the pick as "that card" (`ParentTarget`) leaves the
+            // set naming the population it chose from, so a later "the other cards
+            // revealed this way" still finds them (Gift of Perfection).
+            let chose_among_chain_set_for_parent_target = state
+                .chain_tracked_set_id
+                .and_then(|id| state.tracked_object_sets.get(&id))
+                .is_some_and(|set| cards.iter().all(|card| set.contains(card)))
+                && state.active_ability_continuation().is_some_and(|cont| {
+                    matches!(
+                        cont.chain.effect.target_filter(),
+                        Some(crate::types::ability::TargetFilter::ParentTarget)
+                    )
+                });
             let continuation_consumes_tracked_set =
                 state.active_ability_continuation().is_some_and(|cont| {
                     effects::chain_references_tracked_set(&cont.chain)
                         && !effects::resolution_choice_head_publishes_on_resume(&cont.chain)
                         && sticker_recipient.is_none()
-                });
+                })
+                    && !chose_among_chain_set_for_parent_target;
             if continuation_consumes_tracked_set {
                 effects::publish_fresh_tracked_set(state, chosen.clone());
             }
