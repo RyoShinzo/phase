@@ -3140,6 +3140,43 @@ fn parse_subject_application_for(
         imperative::add_another_to_filter_recursive(&mut filter);
         return subject_filter_application(filter, true);
     }
+    // CR 108.3 + CR 109.4: "the owner of <target phrase>" / "the controller of
+    // <target phrase>" is the prepositional form of "<target phrase>'s owner" /
+    // "'s controller": the ability targets the object, and its owner or controller
+    // performs the verb ("The owner of up to one target creature draws two cards",
+    // Unification). The target keeps its own "up to N" quantifier.
+    if let Ok((after, actor)) = alt((
+        value(
+            TargetFilter::ParentTargetOwner,
+            tag::<_, _, OracleError<'_>>("the owner of "),
+        ),
+        value(
+            TargetFilter::ParentTargetController,
+            tag("the controller of "),
+        ),
+    ))
+    .parse(lower.as_str())
+    {
+        let object = &subject[subject.len() - after.len()..];
+        let (target_text, multi_target) = super::strip_optional_target_prefix(object);
+        let target_lower = target_text.to_lowercase();
+        if tag::<_, _, OracleError<'_>>("target ")
+            .parse(target_lower.as_str())
+            .is_ok()
+        {
+            let (filter, rest) = parse_target_with_ctx(target_text, ctx);
+            if rest.trim().is_empty() {
+                return Some(SubjectApplication {
+                    affected: actor,
+                    target: Some(filter),
+                    multi_target,
+                    inherits_parent: false,
+                    is_optional: false,
+                    player_anaphor: None,
+                });
+            }
+        }
+    }
     if tag::<_, _, OracleError<'_>>("target ")
         .parse(lower.as_str())
         .is_ok()
@@ -8816,6 +8853,10 @@ pub(crate) fn starts_with_subject_prefix(lower: &str) -> bool {
             // then rewrites that to `PostReplacementSourceController`.
             value((), tag("the source's controller ")),
             value((), tag("the source's owner ")),
+            // CR 108.3 + CR 109.4: "the owner of <target phrase>" / "the
+            // controller of <target phrase>" (Unification), the prepositional form
+            // of "<target phrase>'s owner"; `parse_subject_application` reads it.
+            value((), alt((tag("the owner of "), tag("the controller of ")))),
             value((), tag("they ")),
             value((), tag("this ")),
             value((), tag("those ")),
@@ -10908,6 +10949,16 @@ mod tests {
         assert!(starts_with_subject_prefix("each of your opponents"));
         assert!(starts_with_subject_prefix("each of those creatures"));
         assert!(starts_with_subject_prefix("each of them"));
+    }
+
+    #[test]
+    fn starts_with_subject_prefix_owner_or_controller_of() {
+        assert!(starts_with_subject_prefix(
+            "the owner of up to one target creature draws two cards"
+        ));
+        assert!(starts_with_subject_prefix(
+            "the controller of target creature loses 2 life"
+        ));
     }
 
     #[test]
