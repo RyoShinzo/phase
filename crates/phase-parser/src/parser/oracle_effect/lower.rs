@@ -5810,7 +5810,17 @@ pub(super) fn parse_for_each_opponent_target_fanout_clause(
 
     let mut scoped_ctx = ctx.clone();
     scoped_ctx.relative_player_scope = Some(ControllerRef::TargetPlayer);
-    let clause = parse_effect_clause(text, &mut scoped_ctx);
+    let mut clause = parse_effect_clause(text, &mut scoped_ctx);
+    // CR 108.3 + CR 115.1: in "for each opponent, put up to one target creature
+    // card from that player's graveyard onto the battlefield" (Assimilate the
+    // Wounded), "that player" is the opponent the target is paired with. The
+    // zone grammar reads that possessive without an owner, which would admit a
+    // card from any graveyard, ours included, in a single slot.
+    if nom_primitives::scan_contains(&text.to_ascii_lowercase(), "from that player's graveyard") {
+        if let Some(filter) = clause.effect.target_filter_mut() {
+            bind_unowned_graveyard_card_to_target_player(filter);
+        }
+    }
     if !is_per_opponent_target_fanout_clause(&clause) {
         return None;
     }
@@ -5831,6 +5841,33 @@ pub(super) fn parse_for_each_opponent_target_fanout_clause(
         ),
         scoped_ctx,
     ))
+}
+
+/// Gives each graveyard card leaf without an owner the paired target player as
+/// owner and controller, the binding `target_filter_is_explicit_target_player_graveyard_card`
+/// expects.
+fn bind_unowned_graveyard_card_to_target_player(filter: &mut TargetFilter) {
+    match filter {
+        TargetFilter::Typed(tf) => {
+            let in_graveyard = tf.properties.contains(&FilterProp::InZone {
+                zone: Zone::Graveyard,
+            });
+            let owned = tf
+                .properties
+                .iter()
+                .any(|prop| matches!(prop, FilterProp::Owned { .. }));
+            if in_graveyard && !owned && tf.controller.is_none() {
+                tf.controller = Some(ControllerRef::TargetPlayer);
+                tf.properties.push(FilterProp::Owned {
+                    controller: ControllerRef::TargetPlayer,
+                });
+            }
+        }
+        TargetFilter::Or { filters } => {
+            filters.iter_mut().for_each(bind_unowned_graveyard_card_to_target_player)
+        }
+        _ => {}
+    }
 }
 
 fn is_per_opponent_target_fanout_clause(clause: &ParsedEffectClause) -> bool {
