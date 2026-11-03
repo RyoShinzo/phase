@@ -70154,6 +70154,7 @@ fn prop_has_chosen_color(p: &FilterProp) -> bool {
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }

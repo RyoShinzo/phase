@@ -1196,6 +1196,22 @@ pub fn parse_target_with_syntax<'a>(
         return (TargetFilter::Any, rest, syntax);
     }
 
+    // Assimilate (`trk`) + CR 607.2d: "the Borg assimilated with this Saga" (The Best
+    // of Both Worlds) names the creature an earlier ability of this source assimilated,
+    // which that ability remembered on the source.
+    if let Ok((rest, _)) = (
+        tag::<_, _, OracleError<'_>>("the borg assimilated with "),
+        alt((tag("~"), tag("this saga"))),
+    )
+        .parse(lower.as_str())
+    {
+        return (
+            TargetFilter::ChosenCard,
+            &text[lower.len() - rest.len()..],
+            syntax,
+        );
+    }
+
     // CR 610.3 / CR 406.6: linked exile and counter-marked exile phrases are
     // more specific than the generic "all <type phrase>" parser below.
     if let Ok((rest, _)) = alt((
@@ -5995,6 +6011,7 @@ fn prop_reads_creature_pt(prop: &FilterProp) -> bool {
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }

@@ -389,6 +389,7 @@ fn filter_prop_uses_object_population(prop: &FilterProp) -> bool {
         // CR 205.3m: reads the controller's COMMANDER, not whole-board population;
         // another object entering or leaving cannot change the commander's types.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }
@@ -761,6 +762,8 @@ fn filter_prop_characteristic_reads_at(prop: &FilterProp, depth: u32) -> Charact
         FilterProp::IsChosenCreatureType | FilterProp::SharesCreatureTypeWithCommander => {
             CharacteristicKinds::CARD_TYPES.union(CharacteristicKinds::ABILITIES)
         }
+        // Beam me up: reads the statics that apply to the object (Marooned's).
+        FilterProp::CantBeBeamedUp => CharacteristicKinds::ABILITIES,
         // CR 205.3m + CR 701.23a: whole-zone creature-type tally, scoped to a
         // player (CR 613.1b).
         FilterProp::MostPrevalentCreatureTypeIn { .. } => CharacteristicKinds::CARD_TYPES
@@ -1225,6 +1228,7 @@ fn entered_object_perturbs_filter_prop(
         // CR 205.3m: an entering object cannot perturb this — the commander's
         // creature types come from the deck-pool registration, not the board.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }
@@ -3111,6 +3115,7 @@ fn filter_prop_contains_input(
             | FilterProp::NameMatchesAnyPermanent { .. }
             | FilterProp::IsCommander
             | FilterProp::SharesCreatureTypeWithCommander
+            | FilterProp::CantBeBeamedUp
             | FilterProp::Other { .. } => false,
         }
 }
@@ -3898,6 +3903,7 @@ fn declared_group_controller(prop: &mut FilterProp) -> Option<&mut ControllerRef
         | FilterProp::SameNameAsExiledBySource
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::PrepareSpell
         | FilterProp::Other { .. } => None,
     }
@@ -4484,6 +4490,7 @@ fn absent_search_property_truth(prop: &FilterProp) -> Option<bool> {
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => None,
     }
 }
@@ -6736,6 +6743,30 @@ fn filter_inner_with_lookup(
     )
 }
 
+/// For members of an "exiled this way" set, which were exiled with the source: the
+/// filter with each `ExiledBySource` leg read as "still in exile" (CR 400.7), so a card
+/// cast from exile since then no longer matches (Epic Experiment's cleanup).
+fn without_exiled_by_source(filter: &TargetFilter) -> TargetFilter {
+    let still_exiled = || {
+        TargetFilter::Typed(TypedFilter::default().properties(vec![FilterProp::InZone {
+            zone: Zone::Exile,
+        }]))
+    };
+    match filter {
+        TargetFilter::ExiledBySource => still_exiled(),
+        TargetFilter::And { filters } => TargetFilter::And {
+            filters: filters
+                .iter()
+                .map(|leg| match leg {
+                    TargetFilter::ExiledBySource => still_exiled(),
+                    other => other.clone(),
+                })
+                .collect(),
+        },
+        other => other.clone(),
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn filter_inner_for_object(
     state: &GameState,
@@ -7323,12 +7354,21 @@ fn filter_inner_for_object(
                         .is_some_and(|member_cause| member_cause == cause),
                 }
             });
+            // CR 607.2a + CR 608.2c: a member exiled this way was exiled by this very
+            // resolution, so while it stays in exile it is exiled with its source. A
+            // trigger's latched exile snapshot predates that ("exile the top four cards of your library. Put
+            // all permanent cards exiled this way onto the battlefield", Deep Space 9).
+            let filter = if *caused_by == Some(crate::types::ability::ThisWayCause::Exiled) {
+                std::borrow::Cow::Owned(without_exiled_by_source(filter))
+            } else {
+                std::borrow::Cow::Borrowed(&**filter)
+            };
             in_set
                 && filter_inner_for_object(
                     state,
                     obj,
                     object_id,
-                    filter,
+                    &filter,
                     source_id,
                     source_controller,
                     ability,
@@ -7349,27 +7389,10 @@ fn filter_inner_for_object(
         // CR 400.7: an entry names the object it captured, so a card that left
         // exile (and any later exile of it) does not match.
         TargetFilter::ExiledBySource => {
-            let mut linked = match trigger_source {
+            let linked = match trigger_source {
                 Some(source) => crate::game::players::linked_exile_pile(state, source),
                 None => crate::game::players::linked_exile_cards_for_source(state, source_id),
             };
-            // CR 607.2a + CR 608.2c: the latched snapshot predates the trigger's
-            // resolution. While its source is still the same object, the cards the
-            // trigger itself exiles are linked too ("exile the top four cards of your
-            // library. Put all permanent cards exiled this way onto the battlefield",
-            // Deep Space 9).
-            if let Some(bound) = trigger_source.map(|source| source.identity.reference) {
-                if state
-                    .objects
-                    .get(&bound.object_id)
-                    .is_some_and(|object| object.incarnation == bound.incarnation)
-                {
-                    linked.extend(crate::game::players::linked_exile_cards_for_source(
-                        state,
-                        bound.object_id,
-                    ));
-                }
-            }
             linked
                 .iter()
                 .any(|entry| entry.exiled_id == object_id && entry.is_still_exiled(state))
@@ -9098,6 +9121,7 @@ fn spell_record_matches_property(record: &SpellCastRecord, prop: &FilterProp) ->
         // CR 205.3m: same fail-closed reason as `IsCommander` above — the
         // spell-cast record path carries no commander identity.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         // CR 608.2c: Tracked-set membership ("chosen this way" / "the rest") is
         // a resolution-time battlefield selection — a spell-cast snapshot is not
         // a member of a chosen-object set, so fail closed.
@@ -11084,6 +11108,10 @@ fn matches_filter_prop(
                 .iter()
                 .any(|s| commander_types.iter().any(|c| c.eq_ignore_ascii_case(s)))
         }
+        // Beam me up (`trk`): a "can't be beamed up" static applies to the object.
+        FilterProp::CantBeBeamedUp => {
+            super::static_abilities::object_has_static_other(state, object_id, "CantBeBeamedUp")
+        }
         FilterProp::Other { .. } => false, // Fail-closed for unrecognized properties
     }
 }
@@ -11779,6 +11807,7 @@ fn zone_change_record_matches_property(
         // CR 205.3m: the zone-change record path carries no commander identity;
         // fail closed, as `IsCommander` does.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         // CR 607 (by analogy): the controller's per-player anchor label is a
         // live-game read; a zone-change snapshot does not carry it. Fail closed.
         | FilterProp::ControllerChoseLabel { .. }
@@ -26061,6 +26090,7 @@ mod characteristic_read_classification_tests {
             | FilterProp::SameNameAsExiledBySource
             | FilterProp::IsCommander
             | FilterProp::SharesCreatureTypeWithCommander
+            | FilterProp::CantBeBeamedUp
             | FilterProp::Other { .. } => false,
         }
     }

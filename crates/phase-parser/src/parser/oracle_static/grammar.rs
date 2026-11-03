@@ -802,6 +802,30 @@ pub(crate) fn parse_enchanted_equipped_predicate(
         }
     }
 
+    // CR 502.3 + CR 611.2: "doesn't untap during its controller's untap step and
+    // can't <restriction>" (Marooned: "... and can't be beamed up") is the untap
+    // restriction plus the restriction list, each a static on the same host.
+    if nom_primitives::scan_contains(&pred_lower, "doesn't untap during") {
+        if let Some((head, tail)) = pred_tp.split_around(" and can't ") {
+            let tail = format!("can't {}", tail.lower.trim().trim_end_matches('.'));
+            if let Some(modes) = parse_restriction_modes(&tail) {
+                let mut defs = parse_enchanted_equipped_predicate(
+                    head.original,
+                    affected.clone(),
+                    description,
+                );
+                if defs.iter().any(|def| def.mode == StaticMode::CantUntap) {
+                    defs.extend(modes.into_iter().map(|mode| {
+                        StaticDefinition::new(mode)
+                            .affected(affected.clone())
+                            .description(description.to_string())
+                    }));
+                    return defs;
+                }
+            }
+        }
+    }
+
     // CR 502.3: enchanted/equipped host untap restriction with optional trailing
     // "if …" / "as long as …" (Venarian Gold, Winter's Rest canonical rewrite).
     if nom_primitives::scan_contains(&pred_lower, "doesn't untap during")

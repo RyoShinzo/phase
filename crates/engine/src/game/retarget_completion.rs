@@ -353,7 +353,8 @@ fn filter_prop_deps(prop: &FilterProp) -> RetargetDeps {
         | FilterProp::SameName
         | FilterProp::SameNameAsExiledBySource
         | FilterProp::IsCommander
-        | FilterProp::SharesCreatureTypeWithCommander => RetargetDeps::Independent,
+        | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp => RetargetDeps::Independent,
         FilterProp::Token
         | FilterProp::NonToken
         | FilterProp::RepresentedByCard

@@ -1192,6 +1192,7 @@ fn fmt_typed_filter(tf: &TypedFilter) -> String {
             FilterProp::PowerExceedsBase => parts.push("power > base power".into()),
             FilterProp::DifferentNameFrom { .. } => parts.push("different name".into()),
             FilterProp::DistinctFrom { .. } => parts.push("other than target".into()),
+            FilterProp::CantBeBeamedUp => parts.push("can't be beamed up".into()),
             FilterProp::Other { value } => parts.push(value.clone()),
             FilterProp::InAnyZone { zones } => {
                 let zone_strs: Vec<_> = zones.iter().map(fmt_zone).collect();
@@ -5413,6 +5414,10 @@ fn fmt_static_condition(cond: &StaticCondition) -> String {
         SC::AdditionalCostPaid => "additional cost was paid".into(),
         SC::CastingAsVariant { variant } => format!("casting as {variant:?}"),
         SC::FirstCombatPhaseOfTurn => "it's the first combat phase of the turn".into(),
+        SC::CurrentPhaseIs { phases } => {
+            let parts: Vec<&str> = phases.iter().map(fmt_phase).collect();
+            format!("during {}", parts.join(" or "))
+        }
         SC::None => "none".into(),
     }
 }
@@ -11390,6 +11395,7 @@ fn static_condition_feature(cond: &StaticCondition) -> (&'static str, FeatureSup
         StaticCondition::ClassLevelGE { .. } => ("ClassLevelGE", Handled),
         StaticCondition::DuringYourTurn => ("DuringYourTurn", Handled),
         StaticCondition::FirstCombatPhaseOfTurn => ("FirstCombatPhaseOfTurn", Handled),
+        StaticCondition::CurrentPhaseIs { .. } => ("CurrentPhaseIs", Handled),
         StaticCondition::DuringOpponentsTurn => ("DuringOpponentsTurn", Handled),
         StaticCondition::DayNightIs { .. } => ("DayNightIs", Handled),
         StaticCondition::SharesColorWithMostCommonColorAmongPermanents => {

@@ -960,10 +960,21 @@ fn apply_keyword_modification(
     effect: &ActiveContinuousEffect,
 ) {
     match &effect.modification {
-        ContinuousModification::AddKeyword { keyword } => upsert_keyword_contribution(
-            keywords,
-            OffZoneKeywordContribution::granted(keyword.clone(), effect, 0),
-        ),
+        ContinuousModification::AddKeyword { keyword } => {
+            // CR 201.5a: as in Layer 6, a granted cost names the source granting it.
+            let granter = state
+                .objects
+                .get(&effect.source_id)
+                .map(<crate::types::identifiers::ObjectIncarnationRef as crate::game::game_object::ObjectIncarnationRefExt>::from_object);
+            upsert_keyword_contribution(
+                keywords,
+                OffZoneKeywordContribution::granted(
+                    super::keywords::bind_keyword_granter(keyword, granter),
+                    effect,
+                    0,
+                ),
+            )
+        }
         // CR 702.143d + CR 702 (alt-cost off-zone family): grant a cost-bearing
         // keyword whose cost is DERIVED from the recipient's mana cost. The
         // "without foretell" clause is enforced per-recipient here: if the

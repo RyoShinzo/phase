@@ -6489,6 +6489,7 @@ fn holder_bound_condition_is_modeled(condition: &StaticCondition) -> bool {
         StaticCondition::DuringYourTurn
         | StaticCondition::DuringOpponentsTurn
         | StaticCondition::FirstCombatPhaseOfTurn
+        | StaticCondition::CurrentPhaseIs { .. }
         | StaticCondition::IsPresent { .. } => true,
         StaticCondition::And { conditions } | StaticCondition::Or { conditions } => {
             conditions.iter().all(holder_bound_condition_is_modeled)
@@ -33124,6 +33125,7 @@ fn filter_prop_reads_chosen_target(prop: &FilterProp, read: TargetRead) -> bool 
         | FilterProp::SameNameAsExiledBySource
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }

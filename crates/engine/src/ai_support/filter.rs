@@ -1116,6 +1116,7 @@ fn filterprop_reads_only_candidate_fp(p: &FilterProp) -> bool {
         // candidate's fingerprint entirely. Memoizing on the candidate alone would
         // cache a verdict that a commander change invalidates.
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         // CR 608.2c: Reads the resolution-chain tracked-set side-table
         // (`tracked_object_sets` / `chain_tracked_set_id`), not the candidate's
         // own fingerprint — POISON for memoization.

@@ -9706,6 +9706,7 @@ fn static_condition_reads_filter_population(
         | StaticCondition::AdditionalCostPaid
         | StaticCondition::CastingAsVariant { .. }
         | StaticCondition::FirstCombatPhaseOfTurn
+        | StaticCondition::CurrentPhaseIs { .. }
         | StaticCondition::None => false,
     }
 }

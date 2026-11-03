@@ -7532,6 +7532,10 @@ pub enum FilterProp {
     /// the retype — so the behavior is preserved BY CONSTRUCTION rather than by a
     /// ledger that cannot see runtime evaluation.
     SharesCreatureTypeWithCommander,
+    /// Beam me up (`trk`, not in the Comprehensive Rules yet): the object has a
+    /// "can't be beamed up" static (Marooned). The beam me up return cost reads it
+    /// negated, so such a permanent can't be returned to pay that cost.
+    CantBeBeamedUp,
     Other {
         value: String,
     },
@@ -7667,6 +7671,7 @@ impl FilterProp {
             | FilterProp::NameMatchesAnyPermanent { .. }
             | FilterProp::IsCommander
             | FilterProp::SharesCreatureTypeWithCommander
+            | FilterProp::CantBeBeamedUp
             | FilterProp::Other { .. } => false,
         }
     }
@@ -8956,6 +8961,7 @@ pub fn filter_prop_contains(prop: &FilterProp, leaf: &dyn Fn(&TargetFilter) -> b
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }
@@ -9252,6 +9258,7 @@ pub fn filter_prop_grammar_any(
             | FilterProp::NameMatchesAnyPermanent { .. }
             | FilterProp::IsCommander
             | FilterProp::SharesCreatureTypeWithCommander
+            | FilterProp::CantBeBeamedUp
             | FilterProp::Other { .. } => false,
         }
 }
@@ -9913,6 +9920,7 @@ pub fn rewrite_filter_prop<C>(
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => {}
     }
     post_property(prop);
@@ -12162,6 +12170,7 @@ fn filter_prop_has_unsupported_selected_ref(prop: &FilterProp, nested: bool) -> 
         | FilterProp::SameNameAsExiledBySource
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => false,
     }
 }
@@ -17086,6 +17095,12 @@ pub enum StaticCondition {
     /// `And([DuringYourTurn, FirstCombatPhaseOfTurn])` at the parse layer
     /// (CR 109.5: "your" = the ability's controller).
     FirstCombatPhaseOfTurn,
+    /// CR 500.1 + CR 505.1: the game is in one of `phases`. Turn-owner scope composes
+    /// via `And([DuringYourTurn, CurrentPhaseIs])`, as in "during your main phase"
+    /// (Scotty, Miracle Worker). Mirror of `AbilityCondition::CurrentPhaseIs`.
+    CurrentPhaseIs {
+        phases: Vec<Phase>,
+    },
     /// CR 102.3 + CR 805.4a: The active player is an opponent of this static
     /// ability's controller. This is deliberately distinct from
     /// `Not(DuringYourTurn)`: in team games, a teammate may be the active
@@ -17360,6 +17375,7 @@ impl StaticCondition {
             | StaticCondition::AdditionalCostPaid
             | StaticCondition::CastingAsVariant { .. }
             | StaticCondition::FirstCombatPhaseOfTurn
+            | StaticCondition::CurrentPhaseIs { .. }
             | StaticCondition::None => None,
         }
     }
@@ -17472,6 +17488,7 @@ impl StaticCondition {
             | StaticCondition::SourceInZone { .. }
             | StaticCondition::EnchantedIsFaceDown
             | StaticCondition::FirstCombatPhaseOfTurn
+            | StaticCondition::CurrentPhaseIs { .. }
             | StaticCondition::None => None,
         }
     }
@@ -17711,6 +17728,7 @@ impl StaticCondition {
             | StaticCondition::AdditionalCostPaid
             | StaticCondition::CastingAsVariant { .. }
             | StaticCondition::FirstCombatPhaseOfTurn
+            | StaticCondition::CurrentPhaseIs { .. }
             | StaticCondition::None => None,
         }
     }
@@ -17833,6 +17851,7 @@ impl StaticCondition {
             | StaticCondition::AdditionalCostPaid
             | StaticCondition::CastingAsVariant { .. }
             | StaticCondition::FirstCombatPhaseOfTurn
+            | StaticCondition::CurrentPhaseIs { .. }
             | StaticCondition::None => visit(self),
         }
     }
@@ -28073,6 +28092,7 @@ fn filter_prop_recipient_read(prop: &FilterProp) -> RecipientRead {
         | FilterProp::NameMatchesAnyPermanent { .. }
         | FilterProp::IsCommander
         | FilterProp::SharesCreatureTypeWithCommander
+        | FilterProp::CantBeBeamedUp
         | FilterProp::Other { .. } => RecipientRead::Unread,
     }
 }
