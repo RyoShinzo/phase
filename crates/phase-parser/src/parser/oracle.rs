@@ -9132,6 +9132,21 @@ fn expand_assimilate(oracle_text: &str) -> String {
     out
 }
 
+/// CR 401.1: current Oracle wording often leaves the library out of "they put the rest
+/// on the bottom in a random order" (The Borg Queen, discover's reminder). Only the
+/// owner's library has a bottom here, and the rest readers expect it named.
+fn name_library_of_zoneless_bottom(oracle_text: &str) -> String {
+    oracle_text
+        .replace(
+            "They put the rest on the bottom in a random order",
+            "They put the rest on the bottom of their library in a random order",
+        )
+        .replace(
+            "they put the rest on the bottom in a random order",
+            "they put the rest on the bottom of their library in a random order",
+        )
+}
+
 /// Parse Oracle text into structured ability definitions.
 ///
 /// This is the public API entry point — a thin wrapper around [`parse_oracle_ir`]
@@ -9969,7 +9984,7 @@ fn parse_oracle_pipeline(
 ) {
     let _card_span =
         tracing::debug_span!(target: "engine::parser::binding", "card", card_name).entered();
-    let expanded_assimilate = expand_assimilate(oracle_text);
+    let expanded_assimilate = name_library_of_zoneless_bottom(&expand_assimilate(oracle_text));
     let oracle_text = expanded_assimilate.as_str();
     let (normalized, refusals) = normalize_card_name_refs_reporting(oracle_text, card_name);
     let mut ir = {

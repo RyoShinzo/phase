@@ -4830,6 +4830,27 @@ fn normalize_linked_exile_cast_pair(
             }
         }
     }
+    // Assimilate (The Borg Queen): "Assimilate that card. They put the rest on the
+    // bottom" puts the hit onto the battlefield, and the type change of Assimilate
+    // sits between that move and the cleanup. Look past it for the cleanup.
+    let put_effect = (*chain.effect).clone();
+    let mut node = chain.sub_ability.as_deref_mut();
+    while let Some(current) = node {
+        if is_exile_until_cast_bottom_cleanup(&prev.effect, &put_effect, &current.effect) {
+            normalize_exile_until_cast_bottom_cleanup(&mut current.effect);
+            return true;
+        }
+        if !matches!(
+            &*current.effect,
+            Effect::GenericEffect {
+                target: Some(TargetFilter::ParentTarget),
+                ..
+            }
+        ) {
+            break;
+        }
+        node = current.sub_ability.as_deref_mut();
+    }
     false
 }
 
