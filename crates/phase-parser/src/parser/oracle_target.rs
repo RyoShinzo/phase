@@ -11086,6 +11086,8 @@ enum ZoneQual {
     You,
     /// "target player's " — produces `Owned{TargetPlayer}`.
     TargetPlayer,
+    /// "target opponent's " — produces `Owned{TargetOpponent}` (Assimilation Assessor).
+    TargetOpponent,
     /// "their " — produces `Owned{ScopedPlayer}`; in an each-player iteration
     /// the third-person possessive binds to the iterated player.
     Their,
@@ -11201,7 +11203,7 @@ pub(crate) fn parse_exile_graveyard_source(text: &str) -> Option<(Vec<FilterProp
         return None;
     }
     match qualifier {
-        ZoneQual::OtherPoss | ZoneQual::TargetPlayer => return None,
+        ZoneQual::OtherPoss | ZoneQual::TargetPlayer | ZoneQual::TargetOpponent => return None,
         ZoneQual::Plain => {
             // This adapter admits only the singular unowned object form. The
             // shared grammar still owns adjective/plural/selection spellings.
@@ -11345,6 +11347,15 @@ fn parse_zone_suffix_nom(
                 ],
                 None,
             ),
+            ZoneQual::TargetOpponent => (
+                vec![
+                    FilterProp::Owned {
+                        controller: ControllerRef::TargetOpponent,
+                    },
+                    FilterProp::InAnyZone { zones },
+                ],
+                None,
+            ),
             ZoneQual::Their => (
                 vec![
                     FilterProp::Owned {
@@ -11383,6 +11394,15 @@ fn parse_zone_suffix_nom(
                 ],
                 None,
             ),
+            ZoneQual::TargetOpponent => (
+                vec![
+                    FilterProp::Owned {
+                        controller: ControllerRef::TargetOpponent,
+                    },
+                    FilterProp::InZone { zone },
+                ],
+                None,
+            ),
             ZoneQual::Their => (
                 vec![
                     FilterProp::Owned {
@@ -11410,6 +11430,7 @@ fn parse_zone_qual(i: &str) -> super::oracle_nom::error::OracleResult<'_, ZoneQu
         // isn't consumed as a bare "the " article.
         value(ZoneQual::ChosenPlayer, tag("the chosen player's ")),
         value(ZoneQual::TargetPlayer, tag("target player's ")),
+        value(ZoneQual::TargetOpponent, tag("target opponent's ")),
         value(ZoneQual::Their, tag("their ")),
         value(
             ZoneQual::OtherPoss,

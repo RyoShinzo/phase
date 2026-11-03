@@ -11933,6 +11933,39 @@ pub(super) fn parse_exile_ast(
         || starts_with_possessive(rest_lower, "", "hand")
         || starts_with_target_possessive_zone(rest_lower);
     if mass_zone {
+        // CR 115.1 + CR 404.1: "exile target opponent's graveyard" targets one
+        // opponent and moves only the cards that player owns there, the same filter
+        // as "all cards from target opponent's graveyard". The player-target reading
+        // below would sweep every opponent's graveyard (Assimilation Assessor).
+        if let Ok((after, zone)) = preceded(
+            tag::<_, _, OracleError<'_>>("target opponent's "),
+            alt((
+                value(Zone::Graveyard, tag("graveyard")),
+                value(Zone::Library, tag("library")),
+                value(Zone::Hand, tag("hand")),
+            )),
+        )
+        .parse(rest_lower)
+        {
+            if terminal_punctuation_only(after) {
+                return Some(ZoneCounterImperativeAst::Exile {
+                    origin: Some(zone),
+                    target: TargetFilter::Typed(TypedFilter {
+                        type_filters: vec![TypeFilter::Card],
+                        controller: None,
+                        properties: vec![
+                            FilterProp::Owned {
+                                controller: ControllerRef::TargetOpponent,
+                            },
+                            FilterProp::InZone { zone },
+                        ],
+                    }),
+                    all: true,
+                    enter_with_counters: vec![],
+                    multi_target: None,
+                });
+            }
+        }
         let (target, _rem) =
             ctx.with_player_antecedents(|scoped| parse_target_with_ctx(rest_text, scoped));
         // CR 608.2c: mirror of the Entry-35 return-verb guard — a "this
