@@ -1834,6 +1834,18 @@ fn occurrence_trigger_events(
             source_context,
             state,
         )),
+        // CR 508.3a + CR 603.2c: the attack half of "Whenever a creature you
+        // control enters or attacks" (Kindred Discovery) fires once for each
+        // matching creature declared as an attacker, as `Attacks` does. The
+        // enter half reads one `ZoneChanged` event per creature already.
+        TriggerMode::EntersOrAttacks if matches!(event, GameEvent::AttackersDeclared { .. }) => {
+            Some(m::matching_attack_events(
+                event,
+                trig_def,
+                source_context,
+                state,
+            ))
+        }
         TriggerMode::YouAttack if ability.has_event_source_force_block_recursive() => {
             let matching = m::matching_you_attack_pairs(event, trig_def, source_context, state);
             Some(match event {

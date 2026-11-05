@@ -1156,6 +1156,7 @@ mod kicked_instead_target;
 mod kicker_enters_with_keyword_rider;
 mod kicker_x_cap_search_termination;
 mod kilo_live_offer_from_real_dump;
+mod kindred_discovery_each_attacker;
 mod kiora_self_library_peek_cast;
 mod knighthood_first_strike_grant;
 mod knollspine_dragon_target_damage_draw;
