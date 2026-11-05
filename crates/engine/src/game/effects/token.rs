@@ -1439,6 +1439,84 @@ fn token_event_cursor_completion(
 /// The outcome's `primary_ids` are the ids this batch itself created, without
 /// `initial_created_ids`.
 ///
+/// CR 122.6a: the entry counters still to place on `object_id`, as pending additions.
+fn token_entry_counter_additions(
+    owner: PlayerId,
+    object_id: ObjectId,
+    counters: &[(CounterType, u32)],
+) -> Vec<crate::types::game_state::PendingCounterAddition> {
+    counters
+        .iter()
+        .filter(|(_, count)| *count > 0)
+        .map(
+            |(counter_type, count)| crate::types::game_state::PendingCounterAddition::Object {
+                actor: owner,
+                object_id,
+                counter_type: counter_type.clone(),
+                count: *count,
+            },
+        )
+        .collect()
+}
+
+/// CR 122.6a + CR 508.4 + CR 608.2c: park the rest of one token's entry and of its
+/// batch behind a pending choice (a counter replacement or the token's attack
+/// destination), so that once the choice is made they resume as the uninterrupted
+/// loop runs them: the token's remaining entry counters, its entry finalisation,
+/// then the batch's remaining tokens.
+#[allow(clippy::too_many_arguments)]
+fn park_token_entry_resume(
+    state: &mut GameState,
+    owner: PlayerId,
+    object_id: ObjectId,
+    spec: &TokenSpec,
+    enter_tapped: EtbTapState,
+    remaining_counters: Vec<crate::types::game_state::PendingCounterAddition>,
+    remaining_count: u32,
+    created_ids: &[ObjectId],
+    prefix_len: usize,
+    pause_completion_event: PendingEffectResolutionEvent,
+    effect_source: ObjectId,
+) -> CreateTokenDelivery {
+    state.last_created_token_ids = created_ids.to_vec();
+    let mut resume_spec = spec.clone();
+    resume_spec.attack_request = spec
+        .attack_request
+        .after_entrants(created_ids.len() - prefix_len + 1);
+    let post_actions = vec![
+        PendingCounterPostAction::FinalizeTokenEntry {
+            object_id,
+            name: spec.characteristics.display_name.clone(),
+            attach_to: spec.attach_to.bound(),
+            sacrifice_at: spec.sacrifice_at.clone(),
+            source_id: spec.source_id,
+            controller: spec.controller,
+        },
+        PendingCounterPostAction::ContinueTokenCreation {
+            owner,
+            spec: Box::new(resume_spec),
+            enter_tapped,
+            remaining_count,
+        },
+    ];
+    let completion = match pause_completion_event {
+        PendingEffectResolutionEvent::Emit => {
+            PendingEffectResolved::with_post_actions(EffectKind::Token, effect_source, post_actions)
+        }
+        PendingEffectResolutionEvent::Suppress => {
+            PendingEffectResolved::with_post_actions_without_effect(
+                EffectKind::Token,
+                effect_source,
+                post_actions,
+            )
+        }
+    };
+    super::counters::stash_pending_counter_additions(state, remaining_counters, completion);
+    CreateTokenDelivery::Paused {
+        primary_ids: created_ids[prefix_len..].to_vec(),
+    }
+}
+
 /// `effect_source` is the source a pause's completion names: the event's own
 /// batch's source — the creating instruction's (CR 608.2c) unless a
 /// replacement substituted that batch's spec — which for a
@@ -1591,9 +1669,11 @@ fn apply_create_token_batch(
                 .expect("resolved token creation must have a live journal cause");
         }
 
-        // CR 508.4: Token enters attacking — not declared as attacker.
-        if spec.enters_attacking {
-            crate::game::combat::enter_attacking_at_destination(
+        // CR 508.4: Token enters attacking — not declared as attacker. With no
+        // destination named and several legal, its controller chooses; the rest
+        // of its entry, its counters included, waits for that choice.
+        if spec.enters_attacking
+            && crate::game::combat::park_entry_attack_choice_or_enter(
                 state,
                 obj_id,
                 spec.source_id,
@@ -1601,6 +1681,22 @@ fn apply_create_token_batch(
                 &spec
                     .attack_request
                     .for_entrant(created_ids.len() - prefix_len),
+            )
+        {
+            let remaining_counters =
+                token_entry_counter_additions(owner, obj_id, &spec.enter_with_counters);
+            return park_token_entry_resume(
+                state,
+                owner,
+                obj_id,
+                &spec,
+                enter_tapped,
+                remaining_counters,
+                final_count.saturating_sub(index + 1),
+                &created_ids,
+                prefix_len,
+                pause_completion_event,
+                effect_source,
             );
         }
 
@@ -1618,62 +1714,24 @@ fn apply_create_token_batch(
                     events,
                 )
             {
-                state.last_created_token_ids = created_ids.clone();
-                let remaining_counters = spec.enter_with_counters[counter_index + 1..]
-                    .iter()
-                    .filter(|(_, count)| *count > 0)
-                    .map(|(counter_type, count)| {
-                        crate::types::game_state::PendingCounterAddition::Object {
-                            actor: owner,
-                            object_id: obj_id,
-                            counter_type: counter_type.clone(),
-                            count: *count,
-                        }
-                    })
-                    .collect();
-                let remaining_count = final_count.saturating_sub(index + 1);
-                let mut resume_spec = spec.clone();
-                resume_spec.attack_request = spec
-                    .attack_request
-                    .after_entrants(created_ids.len() - prefix_len + 1);
-                let post_actions = vec![
-                    PendingCounterPostAction::FinalizeTokenEntry {
-                        object_id: obj_id,
-                        name: spec.characteristics.display_name.clone(),
-                        attach_to: spec.attach_to.bound(),
-                        sacrifice_at: spec.sacrifice_at.clone(),
-                        source_id: spec.source_id,
-                        controller: spec.controller,
-                    },
-                    PendingCounterPostAction::ContinueTokenCreation {
-                        owner,
-                        spec: resume_spec,
-                        enter_tapped,
-                        remaining_count,
-                    },
-                ];
-                let completion = match pause_completion_event {
-                    PendingEffectResolutionEvent::Emit => {
-                        crate::types::game_state::PendingEffectResolved::with_post_actions(
-                            EffectKind::Token,
-                            effect_source,
-                            post_actions,
-                        )
-                    }
-                    PendingEffectResolutionEvent::Suppress => crate::types::game_state::PendingEffectResolved::with_post_actions_without_effect(
-                        EffectKind::Token,
-                        effect_source,
-                        post_actions,
-                    ),
-                };
-                super::counters::stash_pending_counter_additions(
-                    state,
-                    remaining_counters,
-                    completion,
+                let remaining_counters = token_entry_counter_additions(
+                    owner,
+                    obj_id,
+                    &spec.enter_with_counters[counter_index + 1..],
                 );
-                return CreateTokenDelivery::Paused {
-                    primary_ids: created_ids[prefix_len..].to_vec(),
-                };
+                return park_token_entry_resume(
+                    state,
+                    owner,
+                    obj_id,
+                    &spec,
+                    enter_tapped,
+                    remaining_counters,
+                    final_count.saturating_sub(index + 1),
+                    &created_ids,
+                    prefix_len,
+                    pause_completion_event,
+                    effect_source,
+                );
             }
         }
 
@@ -5496,7 +5554,23 @@ mod tests {
             PlayerId(0),
         );
         resolve(&mut state, &twin, &mut events).unwrap();
-        let twin_token = state.last_created_token_ids[0];
+        // CR 508.4: with two legal defenders the twin's controller is asked where it
+        // attacks, which is the twin entering attacking in this very state.
+        let crate::types::game_state::WaitingFor::EntryAttackTargetChoice {
+            object_id: twin_token,
+            valid_targets,
+            ..
+        } = state.waiting_for.clone()
+        else {
+            panic!(
+                "reach guard: an unspecified destination enters attacking; waiting_for={:?}",
+                state.waiting_for
+            );
+        };
+        assert!(
+            valid_targets.len() > 1 && state.objects.contains_key(&twin_token),
+            "reach guard: the twin is created and offered every legal defender"
+        );
 
         let attackers: Vec<ObjectId> = state
             .combat
@@ -5506,10 +5580,6 @@ mod tests {
             .iter()
             .map(|a| a.object_id)
             .collect();
-        assert!(
-            attackers.contains(&twin_token),
-            "reach guard: an unspecified destination enters attacking; attackers={attackers:?}"
-        );
         assert!(
             state.objects.contains_key(&named_token)
                 && state.objects[&named_token].zone == Zone::Battlefield,

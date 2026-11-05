@@ -1194,6 +1194,38 @@ pub fn enter_attacking_at_destination(
     }
 }
 
+/// CR 508.4: a token created attacking with no destination named attacks the
+/// defending player, planeswalker or battle its controller chooses. When more than
+/// one destination is legal, park that choice for the controller and report `true`;
+/// the caller resumes the token's entry after `ChooseEntryAttackTarget` seats it.
+/// Otherwise seat it as `enter_attacking_at_destination` does and report `false`.
+pub fn park_entry_attack_choice_or_enter(
+    state: &mut GameState,
+    object_id: ObjectId,
+    source_id: ObjectId,
+    controller: PlayerId,
+    destination: &crate::types::ability::EntryAttackDestination,
+) -> bool {
+    use crate::types::ability::EntryAttackDestination;
+
+    if matches!(
+        destination,
+        EntryAttackDestination::AnyDefender | EntryAttackDestination::PlayerOrPlaneswalker
+    ) {
+        let valid_targets = valid_entry_attack_targets(state, controller, destination);
+        if valid_targets.len() > 1 {
+            state.waiting_for = crate::types::game_state::WaitingFor::EntryAttackTargetChoice {
+                player: controller,
+                object_id,
+                valid_targets,
+            };
+            return true;
+        }
+    }
+    enter_attacking_at_destination(state, object_id, source_id, controller, destination);
+    false
+}
+
 /// CR 508.4 + CR 733: seat `object_id` as an attacking creature against an
 /// already-decided defender and journal the settled pair.
 fn push_attacker_and_journal(
