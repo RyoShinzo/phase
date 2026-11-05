@@ -366,6 +366,7 @@ mod valki_god_of_lies;
 mod vanille_meld_optional_cost;
 mod vannifar_cloak_from_hand;
 mod vanquish_horde_ai_manapayment_wedge;
+mod vanquishers_banner_only_your_spells;
 mod varragoth_search_top;
 mod veteran_armorsmith_soldier_anthem;
 mod veyran_storm_source_scope;
