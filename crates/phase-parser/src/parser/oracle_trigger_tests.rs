@@ -28910,6 +28910,30 @@ fn managorger_phoenix_perpetual_clause_fails_closed_instead_of_pumping() {
     );
 }
 
+/// CR 603.4 + CR 608.2k: an intervening-`if` that tests the source's own
+/// characteristics names the source, so the effect's bare "it" is the source,
+/// not the spell whose cast triggered the ability. Romulan Bird-of-Prey: "put
+/// two charge counters on it" goes on the Bird, negated condition or not.
+#[test]
+fn spell_cast_intervening_if_on_source_characteristics_binds_it_to_source() {
+    for line in [
+        "Whenever you cast a noncreature spell, if this Spacecraft isn't a creature, put two charge counters on it.",
+        "Whenever you cast a noncreature spell, if this Spacecraft is a creature, put two charge counters on it.",
+    ] {
+        let def = parse_trigger_line(line, "Romulan Bird-of-Prey");
+        assert_eq!(def.mode, TriggerMode::SpellCast, "{line}");
+        let execute = def.execute.as_ref().expect("trigger must execute");
+        assert!(
+            matches!(
+                &*execute.effect,
+                Effect::PutCounter { target: TargetFilter::SelfRef, .. }
+            ),
+            "\"on it\" after an intervening-if on the source must bind SelfRef: {line} -> {:?}",
+            execute.effect
+        );
+    }
+}
+
 #[test]
 fn trigger_intervening_if_this_card_is_suspended() {
     let def = parse_trigger_line(

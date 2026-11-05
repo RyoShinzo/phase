@@ -14095,14 +14095,20 @@ fn trigger_plural_object_pronoun_ref_for_intervening_if(
 fn trigger_object_pronoun_ref_for_intervening_if(
     if_condition: &Option<TriggerCondition>,
 ) -> Option<TargetFilter> {
-    fn pins_source_off_battlefield(condition: &TriggerCondition) -> bool {
+    // CR 603.4 + CR 608.2k: an intervening-`if` whose subject is the source
+    // itself — pinning it off the battlefield ("if ~ is in your graveyard") or
+    // testing its own characteristics ("if this Spacecraft isn't a creature") —
+    // names the source as the nearest object antecedent, so a following bare
+    // "it" refers to the source rather than the trigger's event object.
+    fn names_source(condition: &TriggerCondition) -> bool {
         match condition {
             TriggerCondition::SourceInZone { zone } => *zone != Zone::Battlefield,
+            TriggerCondition::SourceMatchesFilter { .. } => true,
             TriggerCondition::And { conditions } | TriggerCondition::Or { conditions } => {
-                conditions.iter().any(pins_source_off_battlefield)
+                conditions.iter().any(names_source)
             }
             TriggerCondition::Not { condition } | TriggerCondition::EventTime { condition } => {
-                pins_source_off_battlefield(condition)
+                names_source(condition)
             }
             _ => false,
         }
@@ -14110,7 +14116,7 @@ fn trigger_object_pronoun_ref_for_intervening_if(
 
     if_condition
         .as_ref()
-        .filter(|condition| pins_source_off_battlefield(condition))
+        .filter(|condition| names_source(condition))
         .map(|_| TargetFilter::SelfRef)
 }
 
