@@ -447,6 +447,7 @@ mod optional_replacement_decline_unreplaced_event;
 mod oracle_of_the_alpha_conjure_power_nine;
 mod orzhov_advokist;
 mod other_than_attached_host_exclusion;
+mod other_than_trigger_object_resolution;
 mod otherwise_conditional_effects;
 mod outrageous_robbery_look_and_play;
 mod overflow_submatrix_graveyard_finality;

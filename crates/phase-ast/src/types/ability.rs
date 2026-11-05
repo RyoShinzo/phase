@@ -7060,8 +7060,10 @@ pub enum FilterProp {
     /// count predicates like Valakut, the Molten Pinnacle's "if you control at
     /// least five other Mountains" — here "other" means "other than the newly-
     /// entered Mountain," not "other than Valakut." Resolves against
-    /// `FilterContext::triggering_object`, populated at trigger-condition
-    /// evaluation from the current `GameEvent`.
+    /// `FilterContext::triggering_object` where a zone-change event filter binds
+    /// it, else against the subject of the trigger event in scope — at fire time
+    /// and while the triggered ability resolves, so an effect's "each other
+    /// creature" leaves the triggering creature out too.
     ///
     /// CR 400.7: the exclusion is keyed on the triggering object's exact IDENTITY
     /// (id + incarnation), not on its storage id — an object that left and

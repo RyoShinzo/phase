@@ -1576,9 +1576,9 @@ pub struct FilterContext<'a> {
     /// "other than the ability source"). Bound only inside
     /// `matches_zone_change_event_object_filter`, which is the one place holding
     /// the `GameEvent::ZoneChanged` both CR 603.4 legs are handed; `None`
-    /// everywhere else, where `FilterProp::OtherThanTriggerObject` keeps its
-    /// transparent pass-through and the `ObjectCount` / `PropertyAggregate`
-    /// resolvers apply the exclusion at the set level instead.
+    /// everywhere else, where `FilterProp::OtherThanTriggerObject` reads the
+    /// subject of the trigger event in scope instead
+    /// (`quantity::triggering_event_object_ref`).
     ///
     /// CR 400.7: carried as a `TriggeringObjectRef` (id + the incarnation the
     /// event proves) rather than a bare `ObjectId`, so a leave-and-re-enter at
@@ -9141,7 +9141,7 @@ struct SourceContext<'a> {
     /// `FilterContext::triggering_object` — the identity of the object whose zone
     /// change fired the trigger being evaluated. Read by the
     /// `FilterProp::OtherThanTriggerObject` arm; `None` outside a zone-change
-    /// intervening-`if`.
+    /// intervening-`if`, where that arm reads the trigger event in scope.
     triggering_object: Option<TriggeringObjectRef>,
     /// Public source characteristics obtained through `TriggerSourceContext`
     /// when this filter belongs to a triggered ability. Kept as an owned
@@ -10656,17 +10656,20 @@ fn matches_filter_prop(
         // is trivially self-satisfied (Guardian Project). Distinct from
         // `FilterProp::Another` above, which excludes the ability SOURCE.
         //
-        // Unbound (`None`) keeps the historical transparent pass-through: every
-        // non-trigger context, and the `QuantityRef::ObjectCount` /
-        // `PropertyAggregate` resolvers, which strip this marker
-        // (`game::quantity`) and apply the exclusion at the set level instead.
-        // Expressing the default via `is_none_or` makes that a property of the
-        // code rather than of the current corpus.
+        // The referent is the context's explicit binding (a zone-change event
+        // filter), else the subject of the trigger event in scope: the event a
+        // resolving triggered ability carries (`current_trigger_event`) or the one
+        // a fire-time check holds (`quantity::triggering_event_object_ref`). Without
+        // that fallback the filter matched the triggering object itself in every
+        // effect a trigger resolves, such as an attack trigger's "each other
+        // creature" (issue #40). No trigger event in scope, or one with no single
+        // subject, leaves the marker a transparent pass-through.
         // CR 400.7: compared as (id, incarnation), never as a raw storage id — a
         // re-entered object at the same id is a NEW object with no relation to
         // the entrant, so it belongs in the "another" population.
         FilterProp::OtherThanTriggerObject => source
             .triggering_object
+            .or_else(|| crate::game::quantity::triggering_event_object_ref(state))
             .is_none_or(|trigger_object| !trigger_object.is_object(obj)),
         // CR 608.2c: Membership in the active resolution-chain tracked set.
         // Resolve the `TrackedSetId(0)` sentinel chain-first (the set the
@@ -11343,11 +11346,12 @@ fn zone_change_record_matches_property(
         // object. CR 400.7: "other" is identity, not storage — the record's own
         // `entered_incarnation` is the same authority the binding was taken from,
         // so the two agree exactly when the record describes THIS event and a
-        // re-entry at the same id does not. Unbound keeps the historical
-        // pass-through — see the live arm in `matches_filter_prop` for the full
-        // contract.
+        // re-entry at the same id does not. The referent falls back to the trigger
+        // event in scope exactly as in the live arm in `matches_filter_prop`, which
+        // holds the full contract.
         FilterProp::OtherThanTriggerObject => source
             .triggering_object
+            .or_else(|| crate::game::quantity::triggering_event_object_ref(state))
             .is_none_or(|trigger_object| !trigger_object.describes_record(record)),
         // CR 400.1: "from [zone]" — the record's origin zone.
         // CR 111.1 + CR 603.6a: Token creation produces `from_zone = None`,
