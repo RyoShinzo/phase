@@ -352,6 +352,7 @@ mod mimeoplasm_interactive_exile;
 mod minimus_containment_treasure_grant;
 mod mirror_march_copy_token_exile;
 mod mirror_strike_redirect;
+mod mixed_alternative_cost_replaces_mana_cost;
 mod mizzixs_mastery;
 mod modal_enters_becomes_choice;
 mod modal_mode_labels;
