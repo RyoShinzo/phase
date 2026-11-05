@@ -37,7 +37,7 @@ use crate::types::game_state::{
     BattlefieldDepartureSourceContext, CastOccurrence, DamageRecord, GameState,
     LinkedExileSnapshot, TargetSelectionConstraint, TriggerSourceContext,
 };
-use crate::types::identifiers::{ObjectId, ObjectIncarnationRef};
+use crate::types::identifiers::{ObjectId, ObjectIncarnationRef, TriggeringObjectRef};
 use crate::types::mana::{ManaColor, ManaCost};
 use crate::types::player::PlayerId;
 use crate::types::statics::StaticMode;
@@ -3774,6 +3774,47 @@ pub(crate) fn triggering_event_source_object(state: &GameState) -> Option<Object
         .and_then(|e| crate::game::targeting::extract_source_from_event(&e))
 }
 
+/// CR 603.4 + CR 109.3 + CR 400.7: the object that caused the trigger in scope —
+/// the referent of "other" in a filter carrying `FilterProp::OtherThanTriggerObject`
+/// — as its storage id plus the incarnation the event proves. The event is the
+/// detection-time thread-local while `resolve_quantity_for_trigger_check` holds
+/// one (it is authoritative there even when another ability's resolution left
+/// `current_trigger_event` set), else the resolution-time `current_trigger_event`.
+/// `None` when no trigger event is in scope or the event names no single subject.
+///
+/// A zone change binds exactly as `filter::matches_zone_change_event_object_filter`
+/// does (the entrant's incarnation for a battlefield entry, storage identity
+/// otherwise); every other event takes the incarnation it stamps for its subject
+/// (`targeting::event_context_incarnation`: an attack declaration, a tap, a
+/// damage event), so a creature that left and returned before resolution is a new
+/// object and is "other".
+pub(crate) fn triggering_event_object_ref(state: &GameState) -> Option<TriggeringObjectRef> {
+    let detection = detection_trigger_event();
+    let event = detection
+        .as_ref()
+        .or(state.current_trigger_event.as_ref())?;
+    if let GameEvent::ZoneChanged {
+        object_id, record, ..
+    } = event
+    {
+        return Some(TriggeringObjectRef::from_zone_change(
+            *object_id,
+            record.entered_incarnation,
+        ));
+    }
+    let object_id = crate::game::targeting::extract_source_from_event(event)?;
+    let incarnation = crate::game::targeting::event_context_incarnation(
+        &TargetFilter::TriggeringSource,
+        event,
+        object_id,
+    )
+    .map(|pin| pin.incarnation);
+    Some(TriggeringObjectRef {
+        object_id,
+        incarnation,
+    })
+}
+
 /// CR 603.4 + CR 109.3: Recursively check whether a `TargetFilter` carries
 /// `FilterProp::OtherThanTriggerObject` anywhere in its property tree. Used
 /// by the `ObjectCount` resolver to decide whether to subtract the triggering
@@ -4719,24 +4760,26 @@ pub(crate) fn object_count_matching_candidate_ids(
         .filter(|id| seen.insert(*id) && matches_target_filter(state, *id, filter, filter_ctx))
         .collect();
     // Drop the triggering object for an "other than" filter (Valakut's "five
-    // other Mountains" — the newly-entered Mountain matches the per-object filter
-    // as a pass-through and is removed here). The exclusion is the Oracle-text
-    // semantic of "other"/"other than", not a numbered CR. Falls back to the
-    // ability source when the trigger event carries no object subject.
-    // Resolution-time prefers the live `current_trigger_event`; detection-time
-    // uses the TLS override set by `resolve_quantity_for_trigger_check`.
+    // other Mountains"). The per-object `OtherThanTriggerObject` arm already
+    // excludes it wherever the marker is a plain property; this set-level pass
+    // also covers a marker under `Not`, and falls back to the ability source when
+    // the trigger event carries no object subject (Platoon Dispenser's "two or
+    // more other creatures" at the beginning of the end step). The exclusion is
+    // the Oracle-text semantic of "other"/"other than", not a numbered CR.
+    // CR 400.7: the trigger object is matched by identity (id + the incarnation
+    // the event proves), the same authority as the per-object arm, so a Mountain
+    // that left and returned before resolution is another Mountain.
     if filter_contains_other_than_trigger_object(filter) {
-        let triggering_id = state
-            .current_trigger_event
-            .as_ref()
-            .and_then(crate::game::targeting::extract_source_from_event)
-            .or_else(|| {
-                detection_trigger_event()
-                    .as_ref()
-                    .and_then(crate::game::targeting::extract_source_from_event)
-            })
-            .unwrap_or(source_id);
-        ids.retain(|&id| id != triggering_id);
+        match filter_ctx
+            .triggering_object
+            .or_else(|| triggering_event_object_ref(state))
+        {
+            Some(trigger) => ids.retain(|&id| match state.objects.get(&id) {
+                Some(obj) => !trigger.is_object(obj),
+                None => id != trigger.object_id,
+            }),
+            None => ids.retain(|&id| id != source_id),
+        }
     }
     ids
 }

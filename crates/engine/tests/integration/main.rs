@@ -1356,6 +1356,7 @@ mod oracle_of_the_alpha_conjure_power_nine;
 mod oracle_parser;
 mod orzhov_advokist;
 mod other_than_attached_host_exclusion;
+mod other_than_trigger_object_resolution;
 mod overload_no_legal_target;
 mod oversimplify_per_player_fractal;
 mod owner_library_arrangement_simultaneity;
