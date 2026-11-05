@@ -1469,6 +1469,21 @@ fn parse_batch_creature_attack_subject(input: &str) -> OracleResult<'_, ()> {
     Ok((rest.trim_start(), ()))
 }
 
+/// CR 303.4b + CR 702.5a: "enchanted player" or "enchanted opponent" — the player
+/// an Aura with "Enchant player" or "Enchant opponent" is attached to. Both name
+/// the same object; "Enchant opponent" only restricts what the Aura may enchant
+/// (Tenuous Truce, Archnemesis, Overencumbered, Psychic Possession).
+fn parse_enchanted_player_noun(input: &str) -> OracleResult<'_, ()> {
+    value(
+        (),
+        preceded(
+            tag("enchanted "),
+            alt((tag::<_, _, OracleError<'_>>("player"), tag("opponent"))),
+        ),
+    )
+    .parse(input)
+}
+
 /// CR 303.4b + CR 508.1a: "[actor] attack[s] enchanted player" names
 /// the Aura's attached player as the trigger's referenced defender, so a later
 /// bare "that player"/"the player" anaphor in the effect body binds to the
@@ -1486,10 +1501,7 @@ fn condition_introduces_enchanted_player(cond_lower: &str) -> bool {
             .map(|(r, _)| r)
             .unwrap_or(remaining);
         if let Ok((after_verb, ())) = parse_attack_verb(after_actor) {
-            if tag::<_, _, OracleError<'_>>("enchanted player")
-                .parse(after_verb)
-                .is_ok()
-            {
+            if parse_enchanted_player_noun(after_verb).is_ok() {
                 return true;
             }
         }
@@ -11716,7 +11728,43 @@ fn split_and_when_compound(cond_lower: &str, condition: &str) -> Option<Vec<Stri
             normalize_compound_pronouns(&capitalize_first(condition[second_start..].trim()));
         return Some(vec![first, second]);
     }
+    // CR 603.2: "When A or when B" (Tenuous Truce) is one ability with two trigger
+    // events; each becomes its own trigger sharing the effect. Without this split
+    // the cross-subject splitter cuts at the first " or ", inside A's attack target.
+    if let Ok((_, (before, _))) = split_once_on(cond_lower, " or when") {
+        let pos = before.len();
+        let first = condition[..pos].trim().to_string();
+        let second_start = pos + " or ".len();
+        let second = capitalize_first(&resolve_they_attack(
+            before,
+            condition[second_start..].trim(),
+        ));
+        return Some(vec![first, normalize_compound_pronouns(&second)]);
+    }
     None
+}
+
+/// CR 303.4b: in "When you attack enchanted opponent … or when they attack you …"
+/// (Tenuous Truce) the second half's "they" is the enchanted player the first half
+/// names. Rewrites "<keyword> they attack" to "<keyword> enchanted <noun> attacks"
+/// so the half parses on its own; any other second half is returned unchanged.
+fn resolve_they_attack(first_lower: &str, second: &str) -> String {
+    let Some(noun) = nom_primitives::scan_at_word_boundaries(first_lower, |i| {
+        recognize(parse_enchanted_player_noun).parse(i)
+    }) else {
+        return second.to_string();
+    };
+    let second_lower = second.to_lowercase();
+    let Ok((rest, keyword)) = terminated(
+        alt((tag::<_, _, OracleError<'_>>("whenever"), tag("when"))),
+        tag(" they attack "),
+    )
+    .parse(second_lower.as_str()) else {
+        return second.to_string();
+    };
+    // ASCII prefix: byte offsets in `second` align with `second_lower`.
+    let rest = &second[second.len() - rest.len()..];
+    format!("{keyword} {noun} attacks {rest}")
 }
 
 /// In compound trigger splits, the second half may use pronouns ("it", "its")
@@ -14602,6 +14650,22 @@ fn parse_single_subject<'a>(text: &'a str, ctx: &mut ParseContext) -> (TargetFil
         }
     }
 
+    // CR 303.4b + CR 508.1a: "enchanted player attacks …" / "enchanted opponent
+    // attacks …" names the attacking PLAYER this Aura is attached to (Tenuous
+    // Truce). It is a player-axis scope, so the attack matcher compares the
+    // attacking player. Like "it" before "enters" above, it is recognised only
+    // before the attack verb, so no other event reads this subject.
+    if let Ok((rest, ())) = terminated(parse_enchanted_player_noun, tag(" ")).parse(text) {
+        if parse_attack_verb(rest).is_ok() {
+            return (
+                TargetFilter::Typed(
+                    TypedFilter::default().controller(ControllerRef::EnchantedPlayer),
+                ),
+                rest,
+            );
+        }
+    }
+
     if let Ok((rest, ())) = value((), tag::<_, _, OracleError<'_>>("this ")).parse(text) {
         let noun_end = rest.find(' ').unwrap_or(rest.len());
         if noun_end > 0 {
@@ -16208,7 +16272,24 @@ fn try_parse_event(
                 // is Player; the player-identity scope is set below via
                 // `valid_target = AttachedTo` (Curse of Predation, Curse of Chaos,
                 // Curse of Inertia).
-                value(AttackTargetFilter::Player, tag(" enchanted player")),
+                // CR 303.4b + CR 508.1b: "attacks enchanted opponent or a
+                // planeswalker they control" (Tenuous Truce) — the enchanted
+                // player or a planeswalker that player controls. A planeswalker's
+                // controller is its defending player, so `valid_target =
+                // AttachedTo` below scopes both legs.
+                value(
+                    AttackTargetFilter::PlayerOrPlaneswalker,
+                    (
+                        tag(" "),
+                        parse_enchanted_player_noun,
+                        tag(" or a planeswalker "),
+                        alt((tag("they control"), tag("that player controls"))),
+                    ),
+                ),
+                value(
+                    AttackTargetFilter::Player,
+                    preceded(tag(" "), parse_enchanted_player_noun),
+                ),
                 // CR 508.1a + CR 725.1: "attacks the monarch" — a Player-type
                 // attack whose defending player must currently hold the monarch
                 // designation. The monarch-identity check is stateful and lives
@@ -16389,7 +16470,7 @@ fn try_parse_event(
             def.valid_target = Some(TargetFilter::Typed(
                 TypedFilter::default().controller(ControllerRef::Opponent),
             ));
-        } else if tag::<_, _, OracleError<'_>>(" enchanted player")
+        } else if preceded(tag::<_, _, OracleError<'_>>(" "), parse_enchanted_player_noun)
             .parse(after)
             .is_ok()
         {
@@ -20350,7 +20431,18 @@ fn try_parse_phase_trigger(lower: &str) -> Option<(TriggerMode, TriggerDefinitio
     } else {
         turn_constraint
     };
-    if scan_contains(phase_text, "enchanted player's") {
+    // CR 303.4b: "enchanted player's" / "enchanted opponent's" turn or step
+    // (Curse of the Pierced Heart, Tenuous Truce, Overencumbered) — only the
+    // turn of the player this Aura is attached to.
+    if nom_primitives::scan_at_word_boundaries(phase_text, |i| {
+        terminated(
+            parse_enchanted_player_noun,
+            alt((tag("'s"), tag("\u{2019}s"))),
+        )
+        .parse(i)
+    })
+    .is_some()
+    {
         def.valid_target = Some(TargetFilter::AttachedTo);
     }
     // CR 303.4e + CR 109.4 + CR 503.1: "the upkeep of enchanted creature's
@@ -21372,7 +21464,7 @@ fn try_parse_player_trigger(lower: &str) -> Option<(TriggerMode, TriggerDefiniti
         // valid_source=Controller ("you"), valid_target=AttachedTo (the enchanted
         // player), and attack_target_filter=Player — the same shape as the Curse
         // cycle. A bare "you attack" (any defender) still maps to YouAttack.
-        if tag::<_, _, OracleError<'_>>(" enchanted player")
+        if preceded(tag::<_, _, OracleError<'_>>(" "), parse_enchanted_player_noun)
             .parse(rest)
             .is_err()
         {

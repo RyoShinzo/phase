@@ -823,6 +823,19 @@ fn player_matches_filter_as(
             controller: Some(ControllerRef::Opponent),
             ..
         }) => crate::game::players::is_opponent(state, trigger_controller, player_id),
+        // CR 303.4b: the player the source Aura is attached to ("enchanted
+        // opponent attacks you", Tenuous Truce). Without this arm the fail-open
+        // fallback below would match every player.
+        TargetFilter::Typed(TypedFilter {
+            controller: Some(ControllerRef::EnchantedPlayer),
+            ..
+        }) => {
+            source_context
+                .source_read(state)
+                .attached_to()
+                .and_then(|host| host.as_player())
+                == Some(player_id)
+        }
         TargetFilter::SourceChosenPlayer => source_context
             .source_read(state)
             .lki()
