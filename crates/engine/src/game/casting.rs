@@ -4036,6 +4036,20 @@ fn own_exile_cast_permission(state: &GameState, obj: &GameObject, player: Player
 /// CR 715.3a bounds the subject — "When casting an adventurer card as an Adventure, only
 /// the alternative characteristics are evaluated to see if it can be cast" — so this asks
 /// about the FACE BEING CAST. A caller holding an unswapped object must not consult it.
+/// CR 601.3: a card that can be cast only from some zones (Haakon, Stromgald
+/// Scourge: "You may cast this card from your graveyard, but not from anywhere
+/// else.") is refused in every other zone, whatever permission would admit it
+/// there: its hand, the command zone, or an effect's exile or library grant.
+fn own_zone_restriction_admits(obj: &GameObject) -> bool {
+    obj.casting_restrictions.iter().all(|restriction| match restriction {
+        crate::types::ability::CastingRestriction::OnlyFromZones { zones } => {
+            // allow-noncombinator: typed `Vec<Zone>` membership, not text dispatch.
+            zones.contains(&obj.zone)
+        }
+        _ => true,
+    })
+}
+
 fn object_may_enter_cast_path(obj: &GameObject) -> bool {
     !obj.card_types
         .core_types
@@ -4246,6 +4260,7 @@ pub(crate) fn castable_from_current_zone(
     let normal_cost_route =
         || !face_down_variant || normal_cost_grant_supports_cast(state, obj, player);
     object_may_enter_cast_path(obj)
+        && own_zone_restriction_admits(obj)
         && (
             // CR 601.2a + CR 611.2a: CastFromZone effects grant ExileWithAltCost on
             // opponent's cards. When the grant carries a `granted_to: Some(p)`

@@ -1265,6 +1265,9 @@ fn casting_restriction_applies(
         // CR 601.2b / CR 601.2h: "Spend only ... on X" restricts how the cost is paid,
         // never when. Always satisfied here; enforced in the mana-payment path.
         CastingRestriction::SpendOnlyOnX { .. } => true,
+        // CR 601.3: a zone gate, not a timing gate; enforced at cast admission
+        // (`casting::castable_from_current_zone`).
+        CastingRestriction::OnlyFromZones { .. } => true,
     }
 }
 

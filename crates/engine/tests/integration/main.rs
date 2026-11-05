@@ -577,6 +577,7 @@ mod gush_alt_cost;
 mod gut_true_soul_zealot_sacrifice_type_union;
 mod gwaihir_cda_off_zone_sibling_static;
 mod gwaihir_vigilance_zone_gate;
+mod haakon_cast_only_from_graveyard;
 mod hag_noxious_nightmares_menace_grant;
 mod halana_alena_partners_where_x;
 mod half_life_activation_cost;

@@ -35362,3 +35362,39 @@ fn lwaxana_troi_grants_the_chosen_creature_trigger_doubling() {
         }
     )));
 }
+
+/// CR 601.3: Haakon, Stromgald Scourge is cast only from its owner's graveyard. Its
+/// first line is the card's own graveyard permission plus a restriction refusing
+/// every other zone; the Knight permission of its second line stays as it was.
+#[test]
+fn haakon_casts_only_from_the_graveyard() {
+    use crate::types::ability::CastingRestriction;
+    use crate::types::statics::StaticMode;
+    let result = parse(
+        "You may cast this card from your graveyard, but not from anywhere else.\nAs long as Haakon is on the battlefield, you may cast Knight spells from your graveyard.\nWhen Haakon dies, you lose 2 life.",
+        "Haakon, Stromgald Scourge",
+        &[],
+        &["Creature"],
+        &["Zombie", "Knight"],
+    );
+    assert_eq!(
+        result.casting_restrictions,
+        vec![CastingRestriction::OnlyFromZones {
+            zones: vec![Zone::Graveyard]
+        }]
+    );
+    assert!(
+        result.abilities.is_empty(),
+        "no line is left unparsed: {:?}",
+        result.abilities
+    );
+    let permissions: Vec<_> = result
+        .statics
+        .iter()
+        .filter(|s| matches!(s.mode, StaticMode::GraveyardCastPermission { .. }))
+        .collect();
+    assert_eq!(permissions.len(), 2, "{:?}", result.statics);
+    assert_eq!(permissions[0].affected, Some(TargetFilter::SelfRef));
+    assert!(permissions[0].active_zones.contains(&Zone::Graveyard));
+    assert_eq!(result.triggers.len(), 1);
+}

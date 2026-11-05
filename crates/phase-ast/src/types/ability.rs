@@ -35168,6 +35168,14 @@ pub enum CastingRestriction {
     SpendOnlyOnX {
         colors: Vec<ManaColor>,
     },
+    /// CR 601.3: the card can be cast only from these zones, whatever else would
+    /// allow it. Haakon, Stromgald Scourge: "You may cast this card from your
+    /// graveyard, but not from anywhere else." (its ruling: not from the hand,
+    /// and not from another zone even if an effect would allow it). Not a timing
+    /// gate: enforced at cast admission (`casting::castable_from_current_zone`).
+    OnlyFromZones {
+        zones: Vec<Zone>,
+    },
 }
 
 /// CR 602.2b + CR 601.2f: Self-referential activation/cast cost modification.

@@ -139,8 +139,8 @@ use super::oracle_static::{
     is_speed_unlock_sentence, lower_static_ir, parse_alternative_keyword_cost,
     parse_cast_spells_alternative_cost_multi, parse_collect_evidence_alt_cost,
     parse_flashback_trailing_self_spell_cost_reduction, parse_spells_alternative_cost,
-    parse_static_line, parse_static_line_multi, try_parse_graveyard_keyword_grant_clause,
-    try_parse_graveyard_keyword_grant_static, try_parse_top_of_library_cast_permission,
+    parse_static_line, parse_static_line_multi, split_only_from_graveyard_rider,
+    try_parse_graveyard_keyword_grant_clause, try_parse_graveyard_keyword_grant_static, try_parse_top_of_library_cast_permission,
     GrantedCastKeywordKind,
 };
 use super::oracle_trigger::{
@@ -6415,6 +6415,30 @@ fn parse_normalized_oracle_ir(
         // Normalize card self-references for static parsing (replace card name with ~).
         let static_line = normalize_self_refs_for_static(&line, card_name);
         let static_line_lower = static_line.to_lowercase();
+        // CR 601.3: "You may cast this card from your graveyard, but not from
+        // anywhere else." (Haakon, Stromgald Scourge) is the card's own graveyard
+        // cast permission plus a restriction refusing every other zone.
+        if let Some(permission) = split_only_from_graveyard_rider(&static_line) {
+            let defs = parse_static_line_with_graveyard_keyword_continuation(
+                &permission,
+                None,
+                None,
+            );
+            if !defs.is_empty() {
+                for mut def in defs {
+                    def.description = Some(line.to_string());
+                    emitter.static_ir_at(item_line, StaticIr::from_definition(&permission, def));
+                }
+                emitter.casting_restriction_at(
+                    item_line,
+                    CastingRestriction::OnlyFromZones {
+                        zones: vec![Zone::Graveyard],
+                    },
+                );
+                i += 1;
+                continue;
+            }
+        }
         // CR 611.3a + CR 702: "As long as a creature card with <kw> is in a
         // graveyard, this creature has <kw>. The same is true for <keyword list>."
         // (Cairn Wanderer) — distribute the gated grant per keyword before the

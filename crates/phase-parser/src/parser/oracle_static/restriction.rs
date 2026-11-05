@@ -2672,6 +2672,29 @@ fn is_punctuation_only(text: &str) -> bool {
         .is_ok()
 }
 
+/// CR 601.3: Haakon, Stromgald Scourge — "You may cast this card from your
+/// graveyard, but not from anywhere else." Returns the permission sentence
+/// without the ", but not from anywhere else" rider, which the caller records as
+/// `CastingRestriction::OnlyFromZones { [Graveyard] }`: by its ruling the card
+/// can't be cast from the hand, or from any zone other than the graveyard even
+/// if an effect would allow it.
+pub(crate) fn split_only_from_graveyard_rider(line: &str) -> Option<String> {
+    const RIDER: &str = ", but not from anywhere else";
+    let lower = line.trim().to_lowercase();
+    let (rest, _) = (
+        tag::<_, _, OracleError<'_>>("you may cast "),
+        parse_self_subject,
+        tag(" from your graveyard"),
+    )
+        .parse(lower.as_str())
+        .ok()?;
+    all_consuming((tag::<_, _, OracleError<'_>>(RIDER), opt(tag("."))))
+        .parse(rest)
+        .ok()?;
+    let head = line.trim().get(..lower.len() - rest.len())?;
+    Some(format!("{head}."))
+}
+
 /// CR 601.2a + CR 113.6b: True when `lower` opens with this module's
 /// cast-permission lead — from a graveyard, or the card's own exile tail —
 /// regardless of whether the full permission parses. The document dispatcher
