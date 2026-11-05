@@ -360,6 +360,34 @@ fn residual_from_parts(mut residuals: Vec<AbilityCost>) -> Option<AbilityCost> {
     }
 }
 
+/// CR 118.9 + CR 601.2f: an accepted alternative cost is paid rather than the
+/// spell's mana cost. Its mana part becomes the base the total cost is built
+/// from, so increases and reductions apply to it (CR 118.9d); its other parts
+/// (tap creatures, exile or sacrifice something, pay life) are paid beside the
+/// mana. `None` when the alternative cost has no mana part.
+fn split_alternative_mana_base(cost: &AbilityCost) -> Option<(ManaCost, Option<AbilityCost>)> {
+    match cost {
+        AbilityCost::Mana { cost } => Some((cost.clone(), None)),
+        AbilityCost::Composite { costs } => {
+            let mut mana: Option<ManaCost> = None;
+            let mut others = Vec::new();
+            for part in costs {
+                match part {
+                    AbilityCost::Mana { cost } => {
+                        mana = Some(match mana {
+                            Some(sum) => super::restrictions::add_mana_cost(&sum, cost),
+                            None => cost.clone(),
+                        });
+                    }
+                    other => others.push(other.clone()),
+                }
+            }
+            mana.map(|mana| (mana, residual_from_parts(others)))
+        }
+        _ => None,
+    }
+}
+
 fn split_first_residual_payment(residual: AbilityCost) -> (AbilityCost, Option<AbilityCost>) {
     match residual {
         AbilityCost::Composite { mut costs } if costs.len() > 1 => {
@@ -657,8 +685,10 @@ fn apply_only_payable_alternative_cost(
     pending.ability.context.alternative_mana_cost_paid = true;
     pending.ability.context.alt_cost_grant_source = alt_cost.once_per_turn_source;
     pending.alt_cost_grant_source = alt_cost.once_per_turn_source;
-    match alt_cost.cost {
-        AbilityCost::Mana { cost: alt_mana } => {
+    // CR 118.9 + CR 601.2f: the mana part replaces the mana cost; the other
+    // parts are paid as well.
+    let others = match split_alternative_mana_base(&alt_cost.cost) {
+        Some((alt_mana, others)) => {
             pending.base_cost = Some(alt_mana);
             pending.cost = super::casting::recompute_pending_mana_total(
                 state,
@@ -666,9 +696,13 @@ fn apply_only_payable_alternative_cost(
                 &pending,
                 pending.ability.chosen_x,
             );
-            finish_pending_cost_or_cast(state, player, pending, events)
+            others
         }
-        cost => pay_additional_cost_with_source(
+        None => Some(alt_cost.cost),
+    };
+    match others {
+        None => finish_pending_cost_or_cast(state, player, pending, events),
+        Some(cost) => pay_additional_cost_with_source(
             state,
             player,
             cost,
@@ -833,13 +867,15 @@ pub(crate) fn handle_decide_additional_cost(
                     // finalize_cast consumes its per-turn slot. Declining (below)
                     // leaves it `None` — the printed cost was paid, nothing spent.
                     ability.context.alt_cost_grant_source = pending.alt_cost_grant_source;
-                    match preferred {
-                        AbilityCost::Mana { cost } => {
-                            alternative_base_override = Some(cost.clone());
+                    // CR 118.9 + CR 601.2f: the alternative cost's mana part
+                    // replaces the mana cost; its other parts are paid as well.
+                    match split_alternative_mana_base(preferred) {
+                        Some((base, others)) => {
+                            alternative_base_override = Some(base);
                             recompute_choice_cost = true;
-                            None
+                            others
                         }
-                        _ => Some(preferred.clone()),
+                        None => Some(preferred.clone()),
                     }
                 } else {
                     Some(preferred.clone())
@@ -9410,8 +9446,10 @@ fn check_additional_cost_or_pay_with_kept_cost(
             let alt_cost_required_for_timing = cast_timing_permission.is_some()
                 && alt_cost.timing_permission == cast_timing_permission;
             if alt_cost_required_for_timing {
-                match alt_cost.cost {
-                    AbilityCost::Mana { cost: alt_mana } => {
+                match split_alternative_mana_base(&alt_cost.cost) {
+                    // CR 118.9 + CR 601.2f: the mana part replaces the mana
+                    // cost; the other parts are paid as well.
+                    Some((alt_mana, others)) => {
                         pending.alternative_cost_election =
                             crate::types::game_state::SpellAlternativeCostElection::Accepted;
                         pending.ability.context.alternative_mana_cost_paid = true;
@@ -9426,13 +9464,23 @@ fn check_additional_cost_or_pay_with_kept_cost(
                             &pending,
                             pending.ability.chosen_x,
                         );
-                        return finish_pending_cost_or_cast(state, player, pending, events);
+                        return match others {
+                            None => finish_pending_cost_or_cast(state, player, pending, events),
+                            Some(cost) => pay_additional_cost_with_source(
+                                state,
+                                player,
+                                cost,
+                                SpellCostSource::Other,
+                                pending,
+                                events,
+                            ),
+                        };
                     }
-                    cost => {
+                    None => {
                         return pay_additional_cost_with_source(
                             state,
                             player,
-                            cost,
+                            alt_cost.cost,
                             SpellCostSource::Other,
                             pending,
                             events,
