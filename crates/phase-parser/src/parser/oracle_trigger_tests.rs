@@ -41924,3 +41924,94 @@ fn stack_spell_copy_cast_indicated_action_strict_fails() {
         cast.effect
     );
 }
+
+/// CR 303.4b + CR 603.2: Tenuous Truce. "Enchanted opponent" names the enchanted
+/// player as "enchanted player" does: the end step is only theirs, and "when you
+/// attack enchanted opponent or a planeswalker they control or when they attack you
+/// or a planeswalker you control" is two attack triggers, one for each direction,
+/// each scoped to the enchanted player and taking planeswalkers along.
+#[test]
+fn tenuous_truce_scopes_end_step_and_both_attack_directions_to_enchanted_opponent() {
+    use crate::types::triggers::AttackTargetFilter;
+    let defs = parse_trigger_lines(
+        "At the beginning of enchanted opponent's end step, you and that player each draw a card.",
+        "Tenuous Truce",
+    );
+    assert_eq!(defs.len(), 1);
+    assert_eq!(defs[0].mode, TriggerMode::Phase);
+    assert_eq!(defs[0].phase, Some(crate::types::phase::Phase::End));
+    assert_eq!(
+        defs[0].valid_target,
+        Some(TargetFilter::AttachedTo),
+        "only the enchanted opponent's end step"
+    );
+
+    let defs = parse_trigger_lines(
+        "When you attack enchanted opponent or a planeswalker they control or when they attack you or a planeswalker you control, sacrifice this Aura.",
+        "Tenuous Truce",
+    );
+    assert_eq!(defs.len(), 2, "{defs:#?}");
+    let ours = &defs[0];
+    assert_eq!(ours.mode, TriggerMode::Attacks);
+    assert_eq!(ours.valid_source, Some(TargetFilter::Controller));
+    assert_eq!(ours.valid_target, Some(TargetFilter::AttachedTo));
+    assert_eq!(
+        ours.attack_target_filter,
+        Some(AttackTargetFilter::PlayerOrPlaneswalker)
+    );
+    let theirs = &defs[1];
+    assert_eq!(theirs.mode, TriggerMode::Attacks);
+    assert_eq!(
+        theirs.valid_source,
+        Some(TargetFilter::Typed(
+            TypedFilter::default().controller(ControllerRef::EnchantedPlayer)
+        )),
+        "the attacking player is the enchanted opponent"
+    );
+    assert_eq!(theirs.valid_target, Some(TargetFilter::Controller));
+    assert_eq!(
+        theirs.attack_target_filter,
+        Some(AttackTargetFilter::PlayerOrPlaneswalker)
+    );
+    for def in &defs {
+        assert!(
+            matches!(
+                def.execute.as_ref().map(|e| e.effect.as_ref()),
+                Some(Effect::Sacrifice {
+                    target: TargetFilter::SelfRef,
+                    ..
+                })
+            ),
+            "{:?}",
+            def.execute
+        );
+    }
+}
+
+/// CR 303.4b: "you attack enchanted opponent" is the defender-scoped attack
+/// trigger "you attack enchanted player" is (Archnemesis), not a bare `YouAttack`.
+#[test]
+fn you_attack_enchanted_opponent_is_defender_scoped() {
+    use crate::types::triggers::AttackTargetFilter;
+    let def = parse_trigger_line(
+        "Whenever you attack enchanted opponent, draw a card.",
+        "Probe",
+    );
+    assert_eq!(def.mode, TriggerMode::Attacks);
+    assert_eq!(def.valid_source, Some(TargetFilter::Controller));
+    assert_eq!(def.valid_target, Some(TargetFilter::AttachedTo));
+    assert_eq!(def.attack_target_filter, Some(AttackTargetFilter::Player));
+}
+
+/// CR 303.4b: Overencumbered — "At the beginning of combat on enchanted
+/// opponent's turn" is only the enchanted opponent's combat.
+#[test]
+fn overencumbered_beginning_of_combat_only_on_enchanted_opponents_turn() {
+    let defs = parse_trigger_lines(
+        "At the beginning of combat on enchanted opponent's turn, that player may pay {1} for each artifact they control. If they don't, creatures can't attack this combat.",
+        "Overencumbered",
+    );
+    assert_eq!(defs[0].mode, TriggerMode::Phase);
+    assert_eq!(defs[0].phase, Some(crate::types::phase::Phase::BeginCombat));
+    assert_eq!(defs[0].valid_target, Some(TargetFilter::AttachedTo));
+}
