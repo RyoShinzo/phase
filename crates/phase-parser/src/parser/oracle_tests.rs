@@ -35619,3 +35619,48 @@ fn lwaxana_troi_grants_the_chosen_creature_trigger_doubling() {
         }
     )));
 }
+
+/// CR 122.1 + CR 608.2c: Holy Frazzle-Cannon puts a +1/+1 counter on the attacking
+/// equipped creature and on each other creature you control that shares a creature
+/// type with it: a `PutCounter` on the triggering creature, then a `PutCounterAll`
+/// over the sharers that leaves the triggering creature out.
+#[test]
+fn holy_frazzle_cannon_counters_each_creature_sharing_a_type() {
+    use crate::types::ability::SharedQuality;
+    let result = parse(
+        "Whenever equipped creature attacks, put a +1/+1 counter on that creature and each other creature you control that shares a creature type with it.\nEquip {1}",
+        "Holy Frazzle-Cannon",
+        &[],
+        &["Artifact"],
+        &["Equipment"],
+    );
+    let execute = result.triggers[0].execute.as_deref().expect("execute");
+    assert!(matches!(
+        &*execute.effect,
+        Effect::PutCounter {
+            target: TargetFilter::TriggeringSource,
+            ..
+        }
+    ));
+    let fanout = execute.sub_ability.as_deref().expect("the fan-out follows");
+    let Effect::PutCounterAll {
+        counter_type: CounterType::Plus1Plus1,
+        target: TargetFilter::Typed(typed),
+        ..
+    } = &*fanout.effect
+    else {
+        panic!("expected a PutCounterAll fan-out, got {:?}", fanout.effect);
+    };
+    assert_eq!(typed.controller, Some(ControllerRef::You));
+    assert!(typed.properties.contains(&FilterProp::DistinctFrom {
+        reference: Box::new(TargetFilter::TriggeringSource)
+    }));
+    assert!(typed.properties.iter().any(|p| matches!(
+        p,
+        FilterProp::SharesQuality {
+            quality: SharedQuality::CreatureType,
+            reference: Some(reference),
+            ..
+        } if matches!(reference.as_ref(), TargetFilter::TriggeringSource)
+    )));
+}

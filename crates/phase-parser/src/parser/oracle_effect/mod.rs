@@ -21799,6 +21799,9 @@ fn lower_imperative_clause(
     if let Some(clause) = try_parse_multi_target_counter_chain(text, ctx) {
         return clause;
     }
+    if let Some(clause) = try_parse_put_counter_and_each_other(text, ctx) {
+        return clause;
+    }
     // CR 400.7 + CR 608.2c: "Return this card and target land card from your
     // graveyard to the battlefield tapped" (Sandman) and "... up to one other
     // target creature card ..." (Slimefoot and Squee) — the self-and-target
@@ -24731,6 +24734,91 @@ fn try_parse_target_subject_multi_target_damage_chain(
     let wrapped = wrap_target_subject_damage(clause, &subject)?;
     *ctx = tentative_ctx;
     Some(wrapped)
+}
+
+/// CR 122.1 + CR 608.2c: "put a <counter> on <object> and each other <type
+/// phrase>" — one placement on the named object and on every other object the
+/// type phrase matches (Holy Frazzle-Cannon: "put a +1/+1 counter on that
+/// creature and each other creature you control that shares a creature type
+/// with it"). The named object takes its counter from a `PutCounter`; a
+/// `PutCounterAll` sub-ability puts one on each other match. "it" and "other"
+/// in the second leg name the first leg's object: a trigger's "that creature"
+/// (`TriggeringSource`) or the chosen target (`ParentTarget`), so the shared
+/// quality reads it and the exclusion keeps it from a second counter. Any other
+/// first-leg object, or a second leg that does not parse whole, declines and
+/// leaves the parse context untouched.
+fn try_parse_put_counter_and_each_other(
+    text: &str,
+    ctx: &mut ParseContext,
+) -> Option<ParsedEffectClause> {
+    let mut tentative_ctx = ctx.clone();
+    let lower = text.to_lowercase();
+    let (primary, remainder, multi_target) =
+        counter::try_parse_put_counter(&lower, text, &mut tentative_ctx)?;
+    let Effect::PutCounter {
+        counter_type,
+        count,
+        target,
+    } = &primary
+    else {
+        return None;
+    };
+    if multi_target.is_some() {
+        return None;
+    }
+    let (anchor, exclusion) = match target {
+        TargetFilter::TriggeringSource => (
+            TargetFilter::TriggeringSource,
+            FilterProp::DistinctFrom {
+                reference: Box::new(TargetFilter::TriggeringSource),
+            },
+        ),
+        TargetFilter::Typed(_) => (
+            TargetFilter::ParentTarget,
+            FilterProp::DistinctFrom {
+                reference: Box::new(TargetFilter::ParentTarget),
+            },
+        ),
+        _ => return None,
+    };
+    let rest_lower = remainder.to_lowercase();
+    let (after, _) = tag::<_, _, OracleError<'_>>(" and each other ")
+        .parse(rest_lower.as_str())
+        .ok()?;
+    let phrase = &remainder[remainder.len() - after.len()..];
+    let phrase = phrase.trim_end().trim_end_matches('.').trim_end();
+    let (filter, unparsed) = parse_type_phrase_folding_with_ctx(phrase, &mut tentative_ctx);
+    if !unparsed.trim().is_empty() {
+        return None;
+    }
+    let TargetFilter::Typed(mut typed) = filter else {
+        return None;
+    };
+    for prop in &mut typed.properties {
+        if let FilterProp::SharesQuality { reference, .. } = prop {
+            *reference = Some(Box::new(anchor.clone()));
+        }
+    }
+    typed.properties.push(exclusion);
+    let fanout = Effect::PutCounterAll {
+        counter_type: counter_type.clone(),
+        count: count.clone(),
+        target: TargetFilter::Typed(typed),
+    };
+    *ctx = tentative_ctx;
+    Some(ParsedEffectClause {
+        optional_targeting: false,
+        unlowered_guard: None,
+        effect: primary.clone(),
+        duration: None,
+        sub_ability: Some(Box::new(AbilityDefinition::new(AbilityKind::Spell, fanout))),
+        distribute: None,
+        multi_target: None,
+        condition: None,
+        optional: false,
+        unless_pay: None,
+        entry_onset: ContinuousEffectOnset::WhenFollowed,
+    })
 }
 
 /// CR 122.1 + CR 608.2c: Multi-target counter placement split. A single
