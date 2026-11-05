@@ -3650,23 +3650,20 @@ pub fn resolve_top(state: &mut GameState, events: &mut Vec<GameEvent>) -> u32 {
             // create a delayed trigger to exile it at end step with WarpExile permission.
             // Only triggers on the initial Warp cast (CastingVariant::Warp), NOT on re-casts
             // from exile (which use CastingVariant::Normal and stay permanently).
+            // The warp cost was paid, which is what the rider asks. The permanent need
+            // not have warp itself: an effect may grant warp only to cards in hand
+            // (Tannuk, Steadfast Second), as Lier grants flashback only in the
+            // graveyard and its rulings still exile the spell.
             if casting_variant == CastingVariant::Warp {
-                let has_warp = state.objects.get(&entry.id).is_some_and(|obj| {
-                    obj.keywords
-                        .iter()
-                        .any(|k| matches!(k, crate::types::keywords::Keyword::Warp(_)))
-                });
-                if has_warp {
-                    // CR 702.185a + CR 603.7d. Chooser: who controls the end-step exile
-                    // trigger for the PERMANENT this spell became.
-                    // KNOWN LIMITATION (CR 603.7d): a permanent rider. CR 400.7a carries a
-                    // spell-level control change onto the permanent, but the permanent's
-                    // controller can then change again independently, and the trigger
-                    // keeps this latched value either way — the same pre-existing defect
-                    // as dash/blitz below, on the permanent's control lineage rather than
-                    // the spell's.
-                    create_warp_delayed_trigger(state, entry.id, entry.controller, events);
-                }
+                // CR 702.185a + CR 603.7d. Chooser: who controls the end-step exile
+                // trigger for the PERMANENT this spell became.
+                // KNOWN LIMITATION (CR 603.7d): a permanent rider. CR 400.7a carries a
+                // spell-level control change onto the permanent, but the permanent's
+                // controller can then change again independently, and the trigger
+                // keeps this latched value either way — the same pre-existing defect
+                // as dash/blitz below, on the permanent's control lineage rather than
+                // the spell's.
+                create_warp_delayed_trigger(state, entry.id, entry.controller, events);
                 // CR 702.185a + CR 400.7: stamp the per-object warp marker after
                 // `reset_for_battlefield_entry` cleared it, mirroring the Evoke /
                 // Impending / Suspend stamps below. Read by the target-scoped
@@ -8885,6 +8882,46 @@ mod tests {
             },
             other => panic!("expected GrantCastingPermission, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn warp_granted_only_in_hand_still_exiles() {
+        // CR 702.185a: a card that had warp only in hand (Tannuk, Steadfast Second)
+        // has no warp keyword on the battlefield; its paid warp cost still exiles it.
+        let mut state = setup();
+        state.turn_number = 3;
+        let obj_id = create_object(
+            &mut state,
+            CardId(1),
+            PlayerId(0),
+            "Granted Warp Ship".to_string(),
+            Zone::Battlefield,
+        );
+        state
+            .objects
+            .get_mut(&obj_id)
+            .unwrap()
+            .card_types
+            .core_types
+            .push(CoreType::Artifact);
+        state.stack.push_back(StackEntry {
+            id: obj_id,
+            source_id: obj_id,
+            controller: PlayerId(0),
+            kind: StackEntryKind::Spell {
+                card_id: CardId(1),
+                ability: None,
+                casting_variant: crate::types::game_state::CastingVariant::Warp,
+                actual_mana_spent: 0,
+            },
+        });
+        let mut events = Vec::new();
+        resolve_top(&mut state, &mut events);
+        assert_eq!(
+            state.delayed_triggers.len(),
+            1,
+            "a paid warp cost creates the end-step exile without a warp keyword"
+        );
     }
 
     #[test]

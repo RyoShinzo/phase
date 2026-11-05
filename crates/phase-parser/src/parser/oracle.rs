@@ -9602,6 +9602,17 @@ fn name_library_of_zoneless_bottom(oracle_text: &str) -> String {
         )
 }
 
+/// CR 603.2d: "if a triggered ability of that creature triggers, that ability triggers
+/// an additional time" (Lwaxana Troi, Charming Guest) grants the chosen creature a
+/// trigger doubler for its own abilities. It is read as the quoted grant it means,
+/// which gives that creature the doubling static anchored to itself.
+fn grant_named_creature_trigger_doubling(oracle_text: &str) -> String {
+    oracle_text.replace(
+        "if a triggered ability of that creature triggers, that ability triggers an additional time.",
+        "that creature has \"If a triggered ability of this creature triggers, that ability triggers an additional time.\"",
+    )
+}
+
 /// Parse Oracle text into structured ability definitions.
 ///
 /// This is the public API entry point — a thin wrapper around [`parse_oracle_ir`]
@@ -10439,7 +10450,9 @@ fn parse_oracle_pipeline(
 ) {
     let _card_span =
         tracing::debug_span!(target: "engine::parser::binding", "card", card_name).entered();
-    let expanded_assimilate = name_library_of_zoneless_bottom(&expand_assimilate(oracle_text));
+    let expanded_assimilate = grant_named_creature_trigger_doubling(
+        &name_library_of_zoneless_bottom(&expand_assimilate(oracle_text)),
+    );
     let oracle_text = expanded_assimilate.as_str();
     let (normalized, refusals) = normalize_card_name_refs_reporting(oracle_text, card_name);
     let mut ir = {

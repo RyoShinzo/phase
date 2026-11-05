@@ -13090,12 +13090,13 @@ fn doubler_applies(
     // references the source itself (`~`, e.g. Cloud's "a triggered ability
     // of Cloud or an Equipment attached to it"), CR 603.2d makes its own
     // triggered abilities eligible, so skip the exclusion and let the
-    // `affected` match below decide.
-    let affected_references_self = doubler
-        .affected
-        .as_ref()
-        .is_some_and(filter_references_self);
-    if !affected_references_self && trigger.source_id == doubler.source_id() {
+    // `affected` match below decide. The same holds for a scope that names
+    // every permanent you control without "another": Krang, the All-Powerful
+    // is such a permanent, so its own draw trigger is doubled too.
+    let affected_includes_self = doubler.affected.as_ref().is_some_and(|filter| {
+        filter_references_self(filter) || scope_is_every_permanent_you_control(filter)
+    });
+    if !affected_includes_self && trigger.source_id == doubler.source_id() {
         return false;
     }
     // CR 603.2d: Check the cause predicate against the spawning event.
@@ -13118,6 +13119,13 @@ fn doubler_applies(
                 trigger_source_matches_doubler_filter(state, trigger, filter, doubler.source_id())
             }
         })
+}
+
+/// CR 603.2d: "a triggered ability of a permanent you control", with no "another"
+/// and no narrower type, takes in the doubler's own triggered abilities.
+fn scope_is_every_permanent_you_control(filter: &TargetFilter) -> bool {
+    matches!(filter, TargetFilter::Typed(typed)
+        if typed.type_filters == [TypeFilter::Permanent] && typed.properties.is_empty())
 }
 
 fn apply_trigger_doubling(state: &GameState, pending: &mut Vec<PendingTriggerContext>) {
@@ -13177,6 +13185,7 @@ pub fn trigger_cause_can_match_control_change(cause: &TriggerCause) -> bool {
         | TriggerCause::ControlledCreatureDealtDamage
         | TriggerCause::ControllerCastOrCopiedSpell { .. }
         | TriggerCause::RoomEntered
+        | TriggerCause::CardDrawn
         | TriggerCause::BattlefieldTransition { .. } => false,
     }
 }
@@ -13261,6 +13270,12 @@ fn trigger_cause_matches(
             };
             obj.controller == doubler_controller
                 && obj.card_types.core_types.contains(&CoreType::Creature)
+        }
+        TriggerCause::CardDrawn => {
+            // CR 121.1: each card drawn is its own draw event, so a trigger caused
+            // by drawing carries a `CardDrawn` event. A permanent entering, which
+            // then makes a player draw, is not a draw causing the trigger.
+            matches!(event, Some(GameEvent::CardDrawn { .. }))
         }
         TriggerCause::RoomEntered => {
             // CR 309.4c: Room abilities of dungeons you own trigger an
@@ -19938,6 +19953,7 @@ pub mod tests {
                 core_types: vec![CoreType::Instant],
             },
             TriggerCause::RoomEntered,
+            TriggerCause::CardDrawn,
             TriggerCause::BattlefieldTransition {
                 enter: true,
                 leave: true,
@@ -19950,6 +19966,43 @@ pub mod tests {
                 "{cause:?}"
             );
         }
+    }
+
+    #[test]
+    fn card_drawn_cause_matches_only_draws() {
+        // CR 603.2d + CR 121.1: Krang doubles a trigger a draw caused, not one
+        // caused by attacking or by no event.
+        let state = setup();
+        let draw = GameEvent::CardDrawn {
+            player_id: PlayerId(1),
+            object_id: ObjectId(1),
+            nth_in_turn: 2,
+            nth_in_step: 1,
+        };
+        let attack = GameEvent::AttackersDeclared {
+            attacker_ids: vec![],
+            defending_player: PlayerId(1),
+            attacks: vec![],
+            declaration_records: vec![],
+        };
+        assert!(trigger_cause_matches(
+            &state,
+            &TriggerCause::CardDrawn,
+            Some(&draw),
+            PlayerId(0)
+        ));
+        assert!(!trigger_cause_matches(
+            &state,
+            &TriggerCause::CardDrawn,
+            Some(&attack),
+            PlayerId(0)
+        ));
+        assert!(!trigger_cause_matches(
+            &state,
+            &TriggerCause::CardDrawn,
+            None,
+            PlayerId(0)
+        ));
     }
 
     #[test]
