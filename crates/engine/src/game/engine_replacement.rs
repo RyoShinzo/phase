@@ -4314,20 +4314,14 @@ pub(crate) fn apply_pending_spell_resolution(
     }
 
     // CR 702.185a: Warp delayed trigger setup.
+    // The paid warp cost decides, not a warp keyword on the permanent (see stack.rs).
     if ctx.casting_variant == CastingVariant::Warp {
-        let has_warp = state.objects.get(&ctx.object_id).is_some_and(|obj| {
-            obj.keywords
-                .iter()
-                .any(|k| matches!(k, crate::types::keywords::Keyword::Warp(_)))
-        });
-        if has_warp {
-            super::stack::create_warp_delayed_trigger(
-                state,
-                ctx.object_id,
-                cast_time_controller,
-                events,
-            );
-        }
+        super::stack::create_warp_delayed_trigger(
+            state,
+            ctx.object_id,
+            cast_time_controller,
+            events,
+        );
     }
 
     // CR 702.190b: Sneak-cast permanent also enters attacking alongside the

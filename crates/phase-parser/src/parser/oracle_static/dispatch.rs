@@ -3945,6 +3945,9 @@ pub(crate) fn parse_static_line_inner(
             TriggerCause::CreatureAttacking
         } else if nom_primitives::scan_contains(tp.lower, "dying causes") {
             TriggerCause::CreatureDying
+        } else if nom_primitives::scan_contains(tp.lower, "drawing a card causes") {
+            // CR 121.1: "a player drawing a card causes" (Krang, the All-Powerful).
+            TriggerCause::CardDrawn
         } else if let Some(cause) = parse_battlefield_transition_cause(tp.lower) {
             cause
         } else if nom_primitives::scan_contains(tp.lower, "entering")

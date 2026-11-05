@@ -35325,3 +35325,40 @@ fn best_of_both_worlds_links_the_assimilated_creature() {
         })
     ));
 }
+
+/// CR 603.2d: Lwaxana Troi, Charming Guest grants the chosen creature a doubler of
+/// its own triggered abilities for as long as she remains tapped.
+#[test]
+fn lwaxana_troi_grants_the_chosen_creature_trigger_doubling() {
+    use crate::types::statics::{StaticMode, TriggerCause};
+    let result = parse(
+        "You may choose not to untap Lwaxana Troi during your untap step.\n{2}, {T}: Choose another target creature you control. For as long as Lwaxana Troi remains tapped, if a triggered ability of that creature triggers, that ability triggers an additional time.",
+        "Lwaxana Troi, Charming Guest",
+        &[],
+        &["Creature"],
+        &["Betazoid", "Advisor"],
+    );
+    let grant = result.abilities[0]
+        .sub_ability
+        .as_deref()
+        .expect("the grant follows the target");
+    let Effect::GenericEffect {
+        static_abilities,
+        target: Some(TargetFilter::ParentTarget),
+        ..
+    } = &*grant.effect
+    else {
+        panic!(
+            "expected a grant to the chosen creature, got {:?}",
+            grant.effect
+        );
+    };
+    assert!(static_abilities[0].modifications.iter().any(|m| matches!(
+        m,
+        ContinuousModification::AddStaticMode {
+            mode: StaticMode::DoubleTriggers {
+                cause: TriggerCause::Any
+            }
+        }
+    )));
+}

@@ -721,6 +721,10 @@ pub enum TriggerCause {
     /// CR 309.4c: Trigger was caused by entering a dungeon room
     /// (Hama Pashar-class). Matches `GameEvent::RoomEntered` events.
     RoomEntered,
+    /// CR 121.1 + CR 603.2d: Trigger was caused by a player drawing a card
+    /// (Krang, the All-Powerful: "If a player drawing a card causes ...").
+    /// Matches `GameEvent::CardDrawn` events of any player.
+    CardDrawn,
     /// CR 603.6a + CR 603.6c: Trigger was caused by a permanent entering
     /// and/or leaving the battlefield (Gandalf the White-class). `enter` /
     /// `leave` select which directions qualify; when both are true, either
@@ -759,6 +763,7 @@ impl fmt::Display for TriggerCause {
                 write!(f, "ControllerCastOrCopiedSpell([{}])", names.join(","))
             }
             TriggerCause::RoomEntered => write!(f, "RoomEntered"),
+            TriggerCause::CardDrawn => write!(f, "CardDrawn"),
             TriggerCause::BattlefieldTransition {
                 enter,
                 leave,

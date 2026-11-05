@@ -699,6 +699,23 @@ fn parses_wayta_damage_caused_doubler() {
     assert_eq!(filter.controller, Some(ControllerRef::You));
 }
 
+/// CR 603.2d + CR 121.1: Draw-caused trigger doubler (Krang, the All-Powerful).
+/// Never the unrestricted `Any` fallback, which also doubled triggers caused by
+/// a permanent entering, such as a draw for it.
+#[test]
+fn parses_krang_draw_caused_doubler() {
+    let def = parse_static_line(
+        "If a player drawing a card causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+    )
+    .expect("expected DoubleTriggers static for Krang");
+    assert_eq!(
+        def.mode,
+        StaticMode::DoubleTriggers {
+            cause: TriggerCause::CardDrawn
+        }
+    );
+}
+
 /// CR 603.2d + CR 601.2 + CR 707.10: Cast-or-copy-caused trigger doubler
 /// (Veyran, Voice of Duality). "If you casting or copying an instant or
 /// sorcery spell causes ..." must produce a `ControllerCastOrCopiedSpell`
