@@ -289,6 +289,7 @@ mod tinybones_pocket_nuisance;
 mod tobita_master_of_winds_flying_grant;
 mod token_abilities_from_creating_effect;
 mod token_art_descriptor;
+mod token_created_attacking_chooses_defender;
 mod token_storm_scaling_gate;
 mod token_zone_change_index;
 mod tom_bombadil_lore_counter_gate;
