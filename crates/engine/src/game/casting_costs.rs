@@ -409,10 +409,12 @@ fn residual_from_parts(mut residuals: Vec<AbilityCost>) -> Option<AbilityCost> {
 /// spell's mana cost. Its mana part becomes the base the total cost is built
 /// from, so increases and reductions apply to it (CR 118.9d); its other parts
 /// (tap creatures, exile or sacrifice something, pay life) are paid beside the
-/// mana. `None` when the alternative cost has no mana part.
-fn split_alternative_mana_base(cost: &AbilityCost) -> Option<(ManaCost, Option<AbilityCost>)> {
+/// mana. An alternative cost with no mana part (Force of Will, Daze) has the
+/// base `NoCost`, a mana component of nothing: an increase still makes it
+/// {1} and a cost floor still raises it (CR 601.2f).
+fn split_alternative_mana_base(cost: &AbilityCost) -> (ManaCost, Option<AbilityCost>) {
     match cost {
-        AbilityCost::Mana { cost } => Some((cost.clone(), None)),
+        AbilityCost::Mana { cost } => (cost.clone(), None),
         AbilityCost::Composite { costs } => {
             let mut mana: Option<ManaCost> = None;
             let mut others = Vec::new();
@@ -427,9 +429,12 @@ fn split_alternative_mana_base(cost: &AbilityCost) -> Option<(ManaCost, Option<A
                     other => others.push(other.clone()),
                 }
             }
-            mana.map(|mana| (mana, residual_from_parts(others)))
+            (
+                mana.unwrap_or(ManaCost::NoCost),
+                residual_from_parts(others),
+            )
         }
-        _ => None,
+        other => (ManaCost::NoCost, Some(other.clone())),
     }
 }
 
@@ -729,19 +734,14 @@ fn apply_only_payable_alternative_cost(
     pending.alt_cost_grant_source = alt_cost.once_per_turn_source;
     // CR 118.9 + CR 601.2f: the mana part replaces the mana cost; the other
     // parts are paid as well.
-    let others = match split_alternative_mana_base(&alt_cost.cost) {
-        Some((alt_mana, others)) => {
-            pending.base_cost = Some(alt_mana);
-            pending.cost = super::casting::recompute_pending_mana_total(
-                state,
-                player,
-                &pending,
-                pending.ability.chosen_x,
-            );
-            others
-        }
-        None => Some(alt_cost.cost),
-    };
+    let (alt_mana, others) = split_alternative_mana_base(&alt_cost.cost);
+    pending.base_cost = Some(alt_mana);
+    pending.cost = super::casting::recompute_pending_mana_total(
+        state,
+        player,
+        &pending,
+        pending.ability.chosen_x,
+    );
     match others {
         None => finish_pending_cost_or_cast(state, player, pending, events),
         Some(cost) => pay_additional_cost_with_source(
@@ -911,14 +911,10 @@ pub(crate) fn handle_decide_additional_cost(
                     ability.context.alt_cost_grant_source = pending.alt_cost_grant_source;
                     // CR 118.9 + CR 601.2f: the alternative cost's mana part
                     // replaces the mana cost; its other parts are paid as well.
-                    match split_alternative_mana_base(preferred) {
-                        Some((base, others)) => {
-                            alternative_base_override = Some(base);
-                            recompute_choice_cost = true;
-                            others
-                        }
-                        None => Some(preferred.clone()),
-                    }
+                    let (base, others) = split_alternative_mana_base(preferred);
+                    alternative_base_override = Some(base);
+                    recompute_choice_cost = true;
+                    others
                 } else {
                     Some(preferred.clone())
                 }
@@ -3939,6 +3935,84 @@ fn auto_activate_spell_mana_abilities_before_deferred_sacrifice(
     Ok(())
 }
 
+/// CR 601.2g + CR 601.2h: mana abilities are activated before costs are paid,
+/// and the costs are then paid in any order. So a land returned to its owner's
+/// hand for a spell's cost can first tap for that spell's mana (Fieldmist
+/// Borderpost's ruling; Deprive's additional cost). Under automatic payment the
+/// returned permanents tap first for what they can pay, when the other sources
+/// can pay the rest; otherwise every source taps for the whole cost now, as
+/// before a deferred sacrifice. The mana stays in the pool until `finalize_cast`
+/// spends it.
+fn auto_activate_spell_mana_abilities_before_return(
+    state: &mut GameState,
+    player: PlayerId,
+    pending: &PendingCast,
+    returned: &[ObjectId],
+    events: &mut Vec<GameEvent>,
+) -> Result<(), EngineError> {
+    if pending.activation_ability_index.is_some()
+        || pending.payment_mode != CastPaymentMode::Auto
+        || cost_has_x(&pending.cost)
+    {
+        return Ok(());
+    }
+    let others: HashSet<ObjectId> = state
+        .battlefield
+        .iter()
+        .copied()
+        .filter(|id| !returned.contains(id))
+        .collect();
+    let mut simulated = state.clone();
+    simulated.pending_cast = Some(Box::new(pending.clone()));
+    let mut simulated_events = events.clone();
+    let events_before = simulated_events.len();
+    let spell_meta = super::casting::build_spell_meta(&simulated, player, pending.object_id);
+    let spell_ctx = spell_meta.as_ref().map(PaymentContext::Spell);
+    auto_tap_mana_sources_with_context_excluding(
+        &mut simulated,
+        player,
+        &pending.cost,
+        &mut simulated_events,
+        None,
+        spell_ctx.as_ref(),
+        &others,
+    );
+    if simulated_events.len() > events_before
+        && !super::casting::mana_ability_cost_payment_is_paused(&simulated)
+    {
+        // CR 605.4a: triggered mana abilities from those taps resolve at once.
+        super::triggers::resolve_tap_mana_triggers_inline(
+            &mut simulated,
+            &mut simulated_events,
+            events_before,
+        );
+        if super::casting::settle_pre_spend_echoes(
+            &mut simulated,
+            player,
+            &simulated_events,
+            events_before,
+            None,
+            None,
+        )
+        .is_ok()
+            && super::casting::can_pay_cost_after_auto_tap(
+                &simulated,
+                player,
+                pending.object_id,
+                &pending.cost,
+            )
+        {
+            simulated.pending_cast = state.pending_cast.clone();
+            *state = simulated;
+            *events = simulated_events;
+            return Ok(());
+        }
+    }
+    auto_activate_spell_mana_abilities_before_deferred_sacrifice(
+        state, player, pending, None, events,
+    )
+}
+
 fn validate_deferred_spell_sacrifices_at_commit(
     state: &GameState,
     player: PlayerId,
@@ -5448,6 +5522,15 @@ pub(crate) fn handle_return_to_hand_for_cost(
         }
     }
 
+    // CR 601.2g: a spell's mana abilities are activated before its costs are
+    // paid, so a permanent returned for the cost can tap for the mana first.
+    let cost_event_start = if pending.activation_ability_index.is_none() {
+        auto_activate_spell_mana_abilities_before_return(state, player, &pending, chosen, events)?;
+        events.len()
+    } else {
+        cost_event_start
+    };
+
     if let Some(ability_index) = pending.activation_ability_index {
         if let Some(cost) = pending.activation_cost.take() {
             // CR 118.3 + CR 601.2h + CR 602.2b: A player pays an activated ability's total
@@ -6520,9 +6603,19 @@ fn finish_exile_selection_for_cost(
             // CR 107.3a + CR 118.9: Shoal-style alternative costs ("exile a
             // [color] card with mana value X") define X from the pitched card's
             // mana value rather than a prior announcement.
+            // An accepted alternative cost is the base of the total cost
+            // (CR 601.2f), not the printed cost with its X, so the printed
+            // mana cost tells whether X is still to be defined.
+            let alternative_cost_defines_x = pending.alternative_cost_election
+                == crate::types::game_state::SpellAlternativeCostElection::Accepted
+                && state
+                    .objects
+                    .get(&pending.object_id)
+                    .is_some_and(|spell| cost_has_x(&spell.mana_cost));
             if pending.ability.chosen_x.is_none()
-                && pending.cost == crate::types::mana::ManaCost::NoCost
-                && pending.base_cost.as_ref().is_some_and(cost_has_x)
+                && ((pending.cost == crate::types::mana::ManaCost::NoCost
+                    && pending.base_cost.as_ref().is_some_and(cost_has_x))
+                    || alternative_cost_defines_x)
             {
                 // CR 202.3d + CR 709.4b: the pitched card is exiled from hand
                 // (off the stack), so a split card defines X from its combined
@@ -9547,47 +9640,34 @@ fn check_additional_cost_or_pay_with_kept_cost(
             let alt_cost_required_for_timing = cast_timing_permission.is_some()
                 && alt_cost.timing_permission == cast_timing_permission;
             if alt_cost_required_for_timing {
-                match split_alternative_mana_base(&alt_cost.cost) {
-                    // CR 118.9 + CR 601.2f: the mana part replaces the mana
-                    // cost; the other parts are paid as well.
-                    Some((alt_mana, others)) => {
-                        pending.alternative_cost_election =
-                            crate::types::game_state::SpellAlternativeCostElection::Accepted;
-                        pending.ability.context.alternative_mana_cost_paid = true;
-                        // CR 118.9 + CR 601.2b: timing-immediate-pay branch skips
-                        // the accept handler, so stamp the grant source directly on
-                        // the ability context for finalize to consume.
-                        pending.ability.context.alt_cost_grant_source = alt_cost_grant_source;
-                        pending.base_cost = Some(alt_mana);
-                        pending.cost = super::casting::recompute_pending_mana_total(
-                            state,
-                            player,
-                            &pending,
-                            pending.ability.chosen_x,
-                        );
-                        return match others {
-                            None => finish_pending_cost_or_cast(state, player, pending, events),
-                            Some(cost) => pay_additional_cost_with_source(
-                                state,
-                                player,
-                                cost,
-                                SpellCostSource::Other,
-                                pending,
-                                events,
-                            ),
-                        };
-                    }
-                    None => {
-                        return pay_additional_cost_with_source(
-                            state,
-                            player,
-                            alt_cost.cost,
-                            SpellCostSource::Other,
-                            pending,
-                            events,
-                        );
-                    }
-                }
+                // CR 118.9 + CR 601.2f: the mana part replaces the mana cost;
+                // the other parts are paid as well.
+                let (alt_mana, others) = split_alternative_mana_base(&alt_cost.cost);
+                pending.alternative_cost_election =
+                    crate::types::game_state::SpellAlternativeCostElection::Accepted;
+                pending.ability.context.alternative_mana_cost_paid = true;
+                // CR 118.9 + CR 601.2b: timing-immediate-pay branch skips
+                // the accept handler, so stamp the grant source directly on
+                // the ability context for finalize to consume.
+                pending.ability.context.alt_cost_grant_source = alt_cost_grant_source;
+                pending.base_cost = Some(alt_mana);
+                pending.cost = super::casting::recompute_pending_mana_total(
+                    state,
+                    player,
+                    &pending,
+                    pending.ability.chosen_x,
+                );
+                return match others {
+                    None => finish_pending_cost_or_cast(state, player, pending, events),
+                    Some(cost) => pay_additional_cost_with_source(
+                        state,
+                        player,
+                        cost,
+                        SpellCostSource::Other,
+                        pending,
+                        events,
+                    ),
+                };
             }
             // CR 601.2h: "Unpayable costs can't be paid." With no printed mana
             // cost the alternative is the only way to cast the card, so there
