@@ -90,8 +90,16 @@ fn sephara_alternative_cost_pays_w_instead_of_the_mana_cost() {
         .pay_cost_with(&b.flyers.clone())
         .resolve();
     assert_eq!(outcome.zone_of(b.spell), Zone::Battlefield);
-    assert_eq!(tapped(&b.runner, &b.plains), 1, "only {{W}} is paid in mana");
-    assert_eq!(tapped(&b.runner, &b.flyers), 4, "the four flyers are tapped");
+    assert_eq!(
+        tapped(&b.runner, &b.plains),
+        1,
+        "only {{W}} is paid in mana"
+    );
+    assert_eq!(
+        tapped(&b.runner, &b.flyers),
+        4,
+        "the four flyers are tapped"
+    );
 }
 
 /// CR 118.9 + CR 601.2h: one untapped Plains pays the alternative cost.
@@ -121,7 +129,11 @@ fn cost_increase_applies_to_the_mixed_alternative_cost() {
         .pay_cost_with(&b.flyers.clone())
         .resolve();
     assert_eq!(outcome.zone_of(b.spell), Zone::Battlefield);
-    assert_eq!(tapped(&b.runner, &b.plains), 2, "{{W}} plus the {{1}} increase");
+    assert_eq!(
+        tapped(&b.runner, &b.plains),
+        2,
+        "{{W}} plus the {{1}} increase"
+    );
     assert_eq!(tapped(&b.runner, &b.flyers), 4);
 }
 
@@ -198,12 +210,20 @@ fn zahid_alternative_cost_pays_its_mana_part_only() {
         .pay_cost_with(&[relic])
         .resolve();
     assert_eq!(outcome.zone_of(zahid), Zone::Battlefield);
-    assert!(runner.state().objects[&relic].tapped, "the artifact is tapped");
-    assert_eq!(tapped(&runner, &islands), 4, "{{3}}{{U}}, not {{3}}{{U}} plus {{4}}{{U}}{{U}}");
+    assert!(
+        runner.state().objects[&relic].tapped,
+        "the artifact is tapped"
+    );
+    assert_eq!(
+        tapped(&runner, &islands),
+        4,
+        "{{3}}{{U}}, not {{3}}{{U}} plus {{4}}{{U}}{{U}}"
+    );
 }
 
 /// CR 118.9: Fieldmist Borderpost ({1}{W}{U}) for {1} and a returned basic
-/// land: one land returns to hand and the other pays {1}.
+/// land: the returned land taps for the {1} first (CR 601.2g, its ruling), so
+/// the other land stays untapped.
 #[test]
 fn borderpost_alternative_cost_pays_one_and_returns_a_land() {
     let mut scenario = GameScenario::new();
@@ -225,5 +245,8 @@ fn borderpost_alternative_cost_pays_one_and_returns_a_land() {
         .resolve();
     assert_eq!(outcome.zone_of(post), Zone::Battlefield);
     assert_eq!(outcome.zone_of(plains), Zone::Hand);
-    assert!(runner.state().objects[&island].tapped, "the Island pays {{1}}");
+    assert!(
+        !runner.state().objects[&island].tapped,
+        "the returned Plains pays {{1}}"
+    );
 }
