@@ -21260,6 +21260,37 @@ pub fn can_cast_object_now_with_probe(
     castable_spell_verdict_with_probe(state, player, object_id, probe).is_some()
 }
 
+/// CR 702.185a + CR 118.9: the normal cast of a hand card that has warp, on a
+/// detached state without the Warp keyword, as `handle_warp_cost_choice`
+/// prepares a cast its player chose to make normally. `None` when the card has
+/// no warp or the normal cast is not castable now.
+fn castable_normal_cast_over_warp_verdict(
+    state: &GameState,
+    player: PlayerId,
+    object_id: ObjectId,
+) -> Option<CastableSpellVerdict> {
+    let obj = state.objects.get(&object_id)?;
+    if obj.zone != Zone::Hand {
+        return None;
+    }
+    let warp = obj
+        .keywords
+        .iter()
+        .position(|k| matches!(k, crate::types::keywords::Keyword::Warp(_)))?;
+    let mut normal_state = state.clone();
+    normal_state.objects.get_mut(&object_id)?.keywords.remove(warp);
+    let prepared = prepare_spell_cast(&normal_state, player, object_id).ok()?;
+    if !can_cast_prepared_now_with_probe(&normal_state, player, &prepared, None) {
+        return None;
+    }
+    Some(CastableSpellVerdict {
+        payment_state: Some(
+            prepared_payment_terms_state(&normal_state, &prepared).unwrap_or(normal_state),
+        ),
+        prepared_cost: Some(prepared.mana_cost),
+    })
+}
+
 fn castable_alternative_spell_face_verdict(
     state: &GameState,
     player: PlayerId,
@@ -21348,6 +21379,15 @@ fn castable_spell_verdict_with_probe(
             payment_state: prepared_payment_terms_state(state, &prepared),
             prepared_cost: Some(prepared.mana_cost),
         });
+    }
+    // CR 702.185a + CR 118.9: warp is an optional alternative cost, yet
+    // `prepare_spell_cast` picks the warp variant for every hand card with the
+    // keyword, printed or granted (Tannuk, Steadfast Second). A card whose warp
+    // cost is unaffordable still casts for its mana cost, as the cast dispatch
+    // allows, so check the normal cast the way `handle_warp_cost_choice` makes
+    // it: on a state without the Warp keyword.
+    if let Some(verdict) = castable_normal_cast_over_warp_verdict(state, player, object_id) {
+        return Some(verdict);
     }
     // CR 702.37c / CR 702.168b + CR 601.2b: the printed cast prepared fine but is
     // not payable (and no variant option exists). The {3} face-down cast may still
