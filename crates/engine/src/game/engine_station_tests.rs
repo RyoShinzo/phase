@@ -113,6 +113,76 @@ fn station_activation_enters_station_target_state() {
     }
 }
 
+/// CR 702.26b: a phased-out Spacecraft's station can't be activated, a
+/// phased-out creature can't be tapped to station, and a Spacecraft that
+/// phases out before its station ability resolves gets no counters.
+#[test]
+fn station_ignores_phased_out_permanents() {
+    use crate::game::game_object::PhaseOutCause;
+    let (mut state, spacecraft_id, p5, p2) = setup_station_scenario();
+    let mut events = Vec::new();
+    crate::game::phasing::phase_out_object(&mut state, p5, PhaseOutCause::Directly, &mut events);
+    let result = apply_as_current(
+        &mut state,
+        GameAction::ActivateStation {
+            spacecraft_id,
+            creature_id: None,
+        },
+    )
+    .unwrap();
+    match result.waiting_for {
+        WaitingFor::StationTarget {
+            eligible_creatures, ..
+        } => {
+            assert_eq!(eligible_creatures, vec![p2], "a phased-out creature can't station");
+        }
+        other => panic!("Expected StationTarget, got {other:?}"),
+    }
+    apply_as_current(
+        &mut state,
+        GameAction::ActivateStation {
+            spacecraft_id,
+            creature_id: Some(p2),
+        },
+    )
+    .unwrap();
+    crate::game::phasing::phase_out_object(
+        &mut state,
+        spacecraft_id,
+        PhaseOutCause::Directly,
+        &mut events,
+    );
+    crate::game::stack::resolve_top(&mut state, &mut events);
+    assert_eq!(
+        state.objects[&spacecraft_id]
+            .counters
+            .get(&CounterType::Generic("charge".to_string()))
+            .copied()
+            .unwrap_or(0),
+        0,
+        "a phased-out Spacecraft can't get charge counters"
+    );
+
+    let (mut state, spacecraft_id, _, _) = setup_station_scenario();
+    crate::game::phasing::phase_out_object(
+        &mut state,
+        spacecraft_id,
+        PhaseOutCause::Directly,
+        &mut events,
+    );
+    let rejected = apply_as_current(
+        &mut state,
+        GameAction::ActivateStation {
+            spacecraft_id,
+            creature_id: None,
+        },
+    );
+    assert!(
+        matches!(rejected, Err(EngineError::ActionNotAllowed(_))),
+        "a phased-out Spacecraft can't station, got {rejected:?}"
+    );
+}
+
 #[test]
 fn station_activation_excludes_cant_tap_creatures() {
     let (mut state, spacecraft_id, p5, p2) = setup_station_scenario();

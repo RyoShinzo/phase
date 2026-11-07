@@ -4072,10 +4072,12 @@ fn resolve_keyword_action(
             snapshot_power,
         } => {
             let counters_added = snapshot_power.max(0) as u32;
+            // CR 702.26b: a Spacecraft that phased out before the station
+            // ability resolved can't be affected, so it gets no counters.
             let spacecraft_controller = state
                 .objects
                 .get(&spacecraft_id)
-                .filter(|sc| sc.zone == Zone::Battlefield)
+                .filter(|sc| sc.is_phased_in_permanent())
                 .map(|sc| sc.controller);
             if let (Some(controller), true) = (spacecraft_controller, counters_added > 0) {
                 if !effects::counters::add_counter_with_replacement(

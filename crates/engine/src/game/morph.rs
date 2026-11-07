@@ -490,6 +490,14 @@ pub(crate) fn turn_face_up_prepare(
         ));
     }
 
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so it can't be turned face up.
+    if obj.is_phased_out() {
+        return Err(EngineError::ActionNotAllowed(
+            "A phased-out permanent can't be turned face up (CR 702.26b)".to_string(),
+        ));
+    }
+
     // CR 116.2b + CR 708.7: a `CantBeTurnedFaceUp` static prohibits turning the
     // matched permanents face up (Karlov Watchdog: "Permanents your opponents
     // control can't be turned face up during your turn"). The static's timing

@@ -20116,6 +20116,13 @@ fn handle_equip_activation(
             "Equipment is not on the battlefield".to_string(),
         ));
     }
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so none of its abilities can be activated.
+    if obj.is_phased_out() {
+        return Err(EngineError::ActionNotAllowed(
+            "Phased-out permanents cannot activate abilities (CR 702.26b)".to_string(),
+        ));
+    }
     if obj.controller != player {
         return Err(EngineError::InvalidAction(
             "You don't control this equipment".to_string(),
@@ -20137,7 +20144,9 @@ fn handle_equip_activation(
                 .objects
                 .get(id)
                 .map(|o| {
-                    o.controller == player
+                    // CR 702.26b: a phased-out creature can't be targeted.
+                    o.is_phased_in_permanent()
+                        && o.controller == player
                         && o.card_types
                             .core_types
                             .contains(&crate::types::card_type::CoreType::Creature)
@@ -20199,7 +20208,10 @@ pub fn creature_can_pay_crew(state: &GameState, id: ObjectId, player: PlayerId) 
 
 fn is_tappable_creature_for_cost(state: &GameState, id: ObjectId, player: PlayerId) -> bool {
     state.objects.get(&id).is_some_and(|o| {
-        o.controller == player
+        // CR 702.26b: a phased-out creature is treated as though it does not
+        // exist, so it can't be tapped to pay a cost.
+        o.is_phased_in_permanent()
+            && o.controller == player
             && !o.tapped
             && o.card_types
                 .core_types
@@ -20336,6 +20348,13 @@ fn handle_crew_activation(
     if obj.zone != Zone::Battlefield {
         return Err(EngineError::InvalidAction(
             "Vehicle is not on the battlefield".to_string(),
+        ));
+    }
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so none of its abilities can be activated.
+    if obj.is_phased_out() {
+        return Err(EngineError::ActionNotAllowed(
+            "Phased-out permanents cannot activate abilities (CR 702.26b)".to_string(),
         ));
     }
     if obj.controller != player {
@@ -20578,6 +20597,13 @@ fn handle_station_activation(
             "Spacecraft is not on the battlefield".to_string(),
         ));
     }
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so none of its abilities can be activated.
+    if obj.is_phased_out() {
+        return Err(EngineError::ActionNotAllowed(
+            "Phased-out permanents cannot activate abilities (CR 702.26b)".to_string(),
+        ));
+    }
     if obj.controller != player {
         return Err(EngineError::InvalidAction(
             "You don't control this Spacecraft".to_string(),
@@ -20723,6 +20749,13 @@ fn handle_saddle_activation(
     if obj.zone != Zone::Battlefield {
         return Err(EngineError::InvalidAction(
             "Mount is not on the battlefield".to_string(),
+        ));
+    }
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so none of its abilities can be activated.
+    if obj.is_phased_out() {
+        return Err(EngineError::ActionNotAllowed(
+            "Phased-out permanents cannot activate abilities (CR 702.26b)".to_string(),
         ));
     }
     if obj.controller != player {

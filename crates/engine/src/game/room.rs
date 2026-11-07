@@ -261,7 +261,8 @@ pub fn eligible_doors(
         return Vec::new();
     };
     // CR 709.5f-g: only a battlefield Room has lockable/unlockable doors.
-    if obj.zone != Zone::Battlefield || !is_room(obj) {
+    // CR 702.26b: a phased-out Room is treated as though it does not exist.
+    if !obj.is_phased_in_permanent() || !is_room(obj) {
         return Vec::new();
     }
     let unlocks = obj.room_unlocks.unwrap_or_default();

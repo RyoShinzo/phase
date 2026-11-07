@@ -109,7 +109,9 @@ pub(in crate::game) fn priority_tap_payment_announcements(
     let controller = principal.semantic_holder();
     let can_tap_creature = |object_id: ObjectId| {
         state.objects.get(&object_id).is_some_and(|object| {
-            object.controller == controller
+            // CR 702.26b: a phased-out creature can't be tapped for a cost.
+            object.is_phased_in_permanent()
+                && object.controller == controller
                 && !object.tapped
                 && object.card_types.core_types.contains(&CoreType::Creature)
                 && !super::restrictions::object_cant_tap(state, object_id)
@@ -124,7 +126,8 @@ pub(in crate::game) fn priority_tap_payment_announcements(
         let Some(object) = state.objects.get(&object_id) else {
             continue;
         };
-        if object.controller != controller {
+        // CR 702.26b: a phased-out permanent's abilities can't be activated.
+        if object.controller != controller || !object.is_phased_in_permanent() {
             continue;
         }
         let has_other_tappable = state

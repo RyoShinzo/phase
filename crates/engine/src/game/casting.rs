@@ -28301,6 +28301,9 @@ enum ActivationStructuralEligibility {
     WrongActivator,
     NinjutsuFamily,
     WrongZone(Zone),
+    /// CR 702.26b: the source is a phased-out permanent, treated as though it
+    /// does not exist, so none of its abilities can be activated.
+    PhasedOut,
 }
 
 /// CR 113.6b: True when an activation-restriction condition states `zone` as a
@@ -28375,6 +28378,12 @@ fn activation_structural_eligibility(
     let required_zone = ability_def.activation_zone.unwrap_or(Zone::Battlefield);
     if obj.zone != required_zone && !restriction_states_source_zone {
         return ActivationStructuralEligibility::WrongZone(required_zone);
+    }
+    // CR 702.26b: a phased-out permanent is treated as though it does not
+    // exist, so its activated abilities can't be activated. Mana abilities
+    // apply the same gate on their own path (`mana_abilities`).
+    if obj.is_phased_out_permanent() {
+        return ActivationStructuralEligibility::PhasedOut;
     }
     ActivationStructuralEligibility::Eligible
 }
@@ -30139,6 +30148,11 @@ fn activate_with_cost_carrier(
                 "Object is not in the correct zone (expected {:?})",
                 required_zone
             )));
+        }
+        ActivationStructuralEligibility::PhasedOut => {
+            return Err(EngineError::ActionNotAllowed(
+                "Phased-out permanents cannot activate abilities (CR 702.26b)".to_string(),
+            ));
         }
     }
 

@@ -54,7 +54,10 @@ pub(in crate::game) fn priority_equip_announcements(
         .copied()
         .filter(|&equipment_id| {
             state.objects.get(&equipment_id).is_some_and(|equipment| {
-                equipment.controller == controller
+                // CR 702.26b: a phased-out Equipment's equip can't be activated,
+                // and a phased-out creature can't be its target.
+                equipment.is_phased_in_permanent()
+                    && equipment.controller == controller
                     && equipment
                         .card_types
                         .subtypes
@@ -62,7 +65,8 @@ pub(in crate::game) fn priority_equip_announcements(
                         .any(|subtype| subtype == "Equipment")
                     && state.battlefield.iter().copied().any(|candidate_id| {
                         state.objects.get(&candidate_id).is_some_and(|candidate| {
-                            candidate.controller == controller
+                            candidate.is_phased_in_permanent()
+                                && candidate.controller == controller
                                 && candidate
                                     .card_types
                                     .core_types

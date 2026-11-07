@@ -5149,7 +5149,9 @@ pub(crate) fn priority_actions_with_probe(
             .copied()
             .filter(|&cid| {
                 state.objects.get(&cid).is_some_and(|c| {
-                    c.controller == player
+                    // CR 702.26b: a phased-out creature can't be tapped for a cost.
+                    c.is_phased_in_permanent()
+                        && c.controller == player
                         && !c.tapped
                         && c.card_types.core_types.contains(&CoreType::Creature)
                 })
@@ -5173,7 +5175,8 @@ pub(crate) fn priority_actions_with_probe(
         // it can be activated any time the controller has priority.
         for &obj_id in &state.battlefield {
             if let Some(obj) = state.objects.get(&obj_id) {
-                if obj.controller == player {
+                // CR 702.26b: a phased-out Vehicle's crew can't be activated.
+                if obj.controller == player && obj.is_phased_in_permanent() {
                     for kw in &obj.keywords {
                         if let crate::types::keywords::Keyword::Crew { once_per_turn, .. } = kw {
                             // CR 602.5b: "Activate only once each turn" — don't offer a
@@ -5214,7 +5217,9 @@ pub(crate) fn priority_actions_with_probe(
         if crate::game::restrictions::is_sorcery_speed_window(state, player) {
             for &obj_id in &state.battlefield {
                 if let Some(obj) = state.objects.get(&obj_id) {
-                    if obj.controller != player {
+                    // CR 702.26b: a phased-out permanent's abilities can't be
+                    // activated.
+                    if obj.controller != player || !obj.is_phased_in_permanent() {
                         continue;
                     }
                     if !obj
@@ -5249,7 +5254,9 @@ pub(crate) fn priority_actions_with_probe(
         if crate::game::restrictions::is_sorcery_speed_window(state, player) {
             for &obj_id in &state.battlefield {
                 if let Some(obj) = state.objects.get(&obj_id) {
-                    if obj.controller != player {
+                    // CR 702.26b: a phased-out permanent's abilities can't be
+                    // activated.
+                    if obj.controller != player || !obj.is_phased_in_permanent() {
                         continue;
                     }
                     if !obj
