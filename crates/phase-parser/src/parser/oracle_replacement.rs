@@ -13257,8 +13257,9 @@ fn parse_counter_replacement(lower: &str, original_text: &str) -> Option<Replace
     let mut def = ReplacementDefinition::new(ReplacementEvent::AddCounter)
         .quantity_modification(modification)
         .description(original_text.to_string());
-    if let Some(valid_card) = parse_counter_replacement_valid_card(lower) {
+    if let Some((valid_card, player_leg)) = parse_counter_replacement_valid_card(lower) {
         def = def.valid_card(valid_card);
+        def.counter_player_recipient = player_leg;
     }
     // CR 614.1a: Vorinclex/Halving Season count doublers-and-halvers scope by the
     // player *putting* the counters (the actor), per the official Vorinclex ruling
@@ -13291,16 +13292,33 @@ fn parse_counter_replacement(lower: &str, original_text: &str) -> Option<Replace
     Some(def)
 }
 
-fn parse_counter_replacement_valid_card(lower: &str) -> Option<TargetFilter> {
+/// CR 614.1a: The recipient of a counter-placement replacement: the permanents
+/// it names (`valid_card`) and, when the type phrase is followed by a player leg
+/// ("on a creature or planeswalker you control or on yourself" — Lae'zel,
+/// Vlaakith's Champion), the players it also reaches
+/// (`ReplacementDefinition::counter_player_recipient`).
+fn parse_counter_replacement_valid_card(
+    lower: &str,
+) -> Option<(TargetFilter, Option<ReplacementPlayerScope>)> {
     let (_, (), after_anchor) =
         nom_primitives::scan_preceded(lower, parse_counter_replacement_scope_anchor)?;
     let (filter, rest) = parse_type_phrase_folding(after_anchor);
-    if !is_counter_replacement_object_scope(&filter)
-        || parse_counter_replacement_scope_tail(rest).is_err()
-    {
+    if !is_counter_replacement_object_scope(&filter) {
         return None;
     }
-    Some(filter)
+    let (rest, player_leg) = opt(parse_counter_replacement_player_leg).parse(rest).ok()?;
+    parse_counter_replacement_scope_tail(rest).ok()?;
+    Some((filter, player_leg))
+}
+
+/// CR 614.1a + CR 122.1: The player leg after a counter replacement's type
+/// phrase: " or on yourself" (Lae'zel, Vlaakith's Champion).
+fn parse_counter_replacement_player_leg(input: &str) -> OracleResult<'_, ReplacementPlayerScope> {
+    value(
+        ReplacementPlayerScope::You,
+        tag::<_, _, OracleError<'_>>(" or on yourself"),
+    )
+    .parse(input)
 }
 
 fn is_counter_replacement_object_scope(filter: &TargetFilter) -> bool {
@@ -27550,6 +27568,64 @@ mod tests {
                 ..
             })) if type_filters == &vec![TypeFilter::Artifact]
         ));
+    }
+
+    #[test]
+    fn counter_plus_one_replacement_laezel_permanents_or_yourself() {
+        // CR 614.1a + CR 122.1: "If you would put one or more counters on a creature
+        // or planeswalker you control or on yourself, put that many plus one ..."
+        // (Lae'zel, Vlaakith's Champion). The recipient is the permanents named by
+        // the type phrase or the controller: `valid_card` carries the permanents,
+        // `counter_player_recipient` the player leg, and "you would put" scopes the
+        // actor.
+        let def = parse_replacement_line(
+            "If you would put one or more counters on a creature or planeswalker you control or on yourself, put that many plus one of each of those kinds of counters on that permanent or player instead.",
+            "Lae'zel, Vlaakith's Champion",
+        )
+        .unwrap();
+        assert_eq!(def.event, ReplacementEvent::AddCounter);
+        assert_eq!(
+            def.quantity_modification,
+            Some(QuantityModification::Plus { value: 1 })
+        );
+        assert_eq!(def.counter_match, None);
+        assert_eq!(def.valid_player, Some(ReplacementPlayerScope::You));
+        assert_eq!(
+            def.counter_replacement_subject,
+            CounterReplacementSubject::Actor
+        );
+        assert_eq!(
+            def.counter_player_recipient,
+            Some(ReplacementPlayerScope::You)
+        );
+        assert_eq!(
+            controlled_or_branch_types(def.valid_card),
+            vec![vec![TypeFilter::Creature], vec![TypeFilter::Planeswalker]]
+        );
+    }
+
+    #[test]
+    fn counter_replacement_without_player_leg_reaches_no_player() {
+        // CR 614.1a: a type phrase with no "or on yourself" leaves the recipient
+        // object-only (Hardened Scales, Doc Samson, Lt. Cmdr. Geordi La Forge).
+        for (text, name) in [
+            (
+                "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+                "Hardened Scales",
+            ),
+            (
+                "If you would put one or more counters on a permanent you control, put that many plus one of each of those kinds of counters on that permanent instead.",
+                "Doc Samson, Super Psychiatrist",
+            ),
+            (
+                "If you would put one or more charge counters on an artifact you control, put twice that many charge counters on that artifact instead.",
+                "Lt. Cmdr. Geordi La Forge",
+            ),
+        ] {
+            let def = parse_replacement_line(text, name).unwrap();
+            assert!(def.valid_card.is_some(), "{name}: permanent leg");
+            assert_eq!(def.counter_player_recipient, None, "{name}: no player leg");
+        }
     }
 
     #[test]

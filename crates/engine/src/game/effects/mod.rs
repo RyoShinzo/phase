@@ -9893,6 +9893,7 @@ fn replacement_matchers_read_filter_population(
         source_object: _,
         origin: _,
         counter_replacement_subject: _,
+        counter_player_recipient: _,
         granting_object: _,
         entry_payment_max,
     } = replacement;

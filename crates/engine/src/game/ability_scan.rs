@@ -6933,6 +6933,7 @@ fn replacement_definition_axes(
         source_object: _,
         origin: _,
         counter_replacement_subject: _,
+        counter_player_recipient: _,
         granting_object: _,
         entry_payment_max,
         // The objects these create are scanned once they are live.

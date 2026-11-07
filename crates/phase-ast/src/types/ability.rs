@@ -41959,6 +41959,19 @@ pub struct ReplacementDefinition {
     /// official Vorinclex ruling). Ignored by every non-`AddCounter` event.
     #[serde(default, skip_serializing_if = "CounterReplacementSubject::is_default")]
     pub counter_replacement_subject: CounterReplacementSubject,
+    /// CR 614.1a + CR 122.1: the player leg of an `AddCounter` replacement's
+    /// recipient. A counter replacement whose `valid_card` names the permanents
+    /// it applies to reaches no player, since a player is not an object
+    /// (CR 109.1); this names the players it reaches besides those permanents,
+    /// relative to the replacement source player. "On a creature or planeswalker
+    /// you control or on yourself" (Lae'zel, Vlaakith's Champion) is
+    /// `valid_card` creature-or-planeswalker-you-control plus `Some(You)`, so
+    /// the recipient is "these permanents, or this player". `None` keeps a
+    /// `valid_card` object-only. Without a `valid_card`, player placements are
+    /// scoped by `valid_player` as before and this field is not read. Ignored by
+    /// every non-`AddCounter` event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub counter_player_recipient: Option<ReplacementPlayerScope>,
     /// CR 201.5a: granter stamp; `stamp_granter` decides which nodes carry it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub granting_object: Option<ObjectIncarnationRef>,
@@ -42083,6 +42096,7 @@ impl ReplacementDefinition {
             source_object: None,
             origin: ReplacementOrigin::Characteristic,
             counter_replacement_subject: CounterReplacementSubject::Recipient,
+            counter_player_recipient: None,
             granting_object: None,
             entry_payment_max: None,
         }

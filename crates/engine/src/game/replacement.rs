@@ -6788,6 +6788,19 @@ fn replacement_valid_card_matches(
     {
         return matches_target_filter_on_battlefield_entry(state, event, filter, ctx);
     }
+    // CR 614.1a + CR 109.1: a counter placement on a player has no object, so
+    // the permanent leg of the recipient (`valid_card`) cannot match it. The
+    // recipient's player leg decides: Lae'zel, Vlaakith's Champion's "on a
+    // creature or planeswalker you control or on yourself" reaches its
+    // controller and no other player, Hardened Scales' "a creature you control"
+    // reaches no player at all (`counter_player_recipient: None`).
+    if repl_def.event == ReplacementEvent::AddCounter {
+        if let ProposedEvent::AddCounter { placement, .. } = event {
+            if let Some(recipient) = placement.player_id() {
+                return counter_player_recipient_matches(state, repl_def, recipient, controller);
+            }
+        }
+    }
     // CR 109.2 + CR 110.1: a counter replacement whose `valid_card` describes
     // the object by a card type or subtype without naming a zone — "a creature
     // you control" (Hardened Scales, CR 109.2) — or as "a permanent" (Doubling
@@ -6816,6 +6829,29 @@ fn replacement_valid_card_matches(
         .affected_object_id()
         .map(|oid| matches_target_filter(state, oid, filter, ctx))
         .unwrap_or(false)
+}
+
+/// CR 614.1a + CR 102.3: whether a counter placement on `recipient` is within
+/// the player leg of a counter replacement's recipient
+/// (`ReplacementDefinition::counter_player_recipient`), scoped relative to the
+/// replacement source player `controller`. No player leg, or no known source
+/// player, reaches no player.
+fn counter_player_recipient_matches(
+    state: &GameState,
+    repl_def: &ReplacementDefinition,
+    recipient: PlayerId,
+    controller: Option<PlayerId>,
+) -> bool {
+    let (Some(scope), Some(controller)) = (&repl_def.counter_player_recipient, controller) else {
+        return false;
+    };
+    match scope {
+        crate::types::ability::ReplacementPlayerScope::You => recipient == controller,
+        crate::types::ability::ReplacementPlayerScope::Opponent => {
+            crate::game::players::is_opponent(state, controller, recipient)
+        }
+        crate::types::ability::ReplacementPlayerScope::AnyPlayer => true,
+    }
 }
 
 /// CR 400.7: an exact Connive snapshot must not be converted back into a raw
@@ -26773,6 +26809,132 @@ mod tests {
             )
             .is_empty(),
             "controller-scoped player-counter replacement should match the recipient receiving counters"
+        );
+    }
+
+    /// CR 614.1a + CR 109.1 + CR 122.1: Lae'zel, Vlaakith's Champion — "If you
+    /// would put one or more counters on a creature or planeswalker you control
+    /// or on yourself, put that many plus one ... on that permanent or player
+    /// instead." The recipient is the permanents `valid_card` names or the
+    /// player `counter_player_recipient` names; "you would put" scopes the actor.
+    #[test]
+    fn counter_replacement_recipient_is_permanents_or_yourself() {
+        let source = ObjectId(90);
+        let laezel = |player_leg: Option<ReplacementPlayerScope>| {
+            let mut repl = ReplacementDefinition::new(ReplacementEvent::AddCounter)
+                .quantity_modification(QuantityModification::Plus { value: 1 })
+                .valid_card(TargetFilter::Or {
+                    filters: vec![
+                        TargetFilter::Typed(TypedFilter::creature().controller(ControllerRef::You)),
+                        TargetFilter::Typed(
+                            TypedFilter::new(TypeFilter::Planeswalker)
+                                .controller(ControllerRef::You),
+                        ),
+                    ],
+                });
+            repl.valid_player = Some(ReplacementPlayerScope::You);
+            repl.counter_replacement_subject =
+                crate::types::ability::CounterReplacementSubject::Actor;
+            repl.counter_player_recipient = player_leg;
+            repl
+        };
+        let mut state = test_state_with_object(
+            source,
+            Zone::Battlefield,
+            vec![laezel(Some(ReplacementPlayerScope::You))],
+        );
+        let mut add_permanent = |id: u64, owner: u8, core: CoreType| {
+            let id = ObjectId(id);
+            let mut obj = GameObject::new(
+                id,
+                CardId(id.0),
+                PlayerId(owner),
+                format!("Permanent {}", id.0),
+                Zone::Battlefield,
+            );
+            obj.card_types.core_types = vec![core];
+            state.objects.insert(id, obj);
+            state.battlefield.push_back(id);
+            id
+        };
+        let own_creature = add_permanent(91, 0, CoreType::Creature);
+        let own_planeswalker = add_permanent(92, 0, CoreType::Planeswalker);
+        let own_artifact = add_permanent(93, 0, CoreType::Artifact);
+        let opposing_creature = add_permanent(94, 1, CoreType::Creature);
+        let registry = build_replacement_registry();
+
+        let on_object = |actor: u8, object_id: ObjectId| ProposedEvent::AddCounter {
+            placement: CounterPlacement::Object {
+                actor: PlayerId(actor),
+                object_id,
+                counter_type: CounterType::Plus1Plus1,
+            },
+            count: 1,
+            applied: HashSet::new(),
+        };
+        let on_player = |actor: u8, player: u8| ProposedEvent::AddCounter {
+            placement: CounterPlacement::Player {
+                actor: PlayerId(actor),
+                player_id: PlayerId(player),
+                counter_kind: crate::types::player::PlayerCounterKind::Poison,
+            },
+            count: 1,
+            applied: HashSet::new(),
+        };
+        let applies = |state: &GameState, event: &ProposedEvent| {
+            !find_applicable_replacements(state, event, &registry).is_empty()
+        };
+
+        assert!(applies(&state, &on_object(0, own_creature)), "our creature");
+        assert!(applies(&state, &on_object(0, own_planeswalker)), "our planeswalker");
+        assert!(
+            !applies(&state, &on_object(0, own_artifact)),
+            "a noncreature artifact we control is not a creature or planeswalker"
+        );
+        assert!(
+            !applies(&state, &on_object(0, opposing_creature)),
+            "an opponent's creature is not one we control"
+        );
+        assert!(
+            !applies(&state, &on_object(1, own_creature)),
+            "an opponent putting counters is not \"you would put\""
+        );
+        assert!(applies(&state, &on_player(0, 0)), "on yourself");
+        assert!(
+            applies(
+                &state,
+                &ProposedEvent::AddCounter {
+                    placement: CounterPlacement::Energy {
+                        actor: PlayerId(0),
+                        player_id: PlayerId(0),
+                    },
+                    count: 1,
+                    applied: HashSet::new(),
+                }
+            ),
+            "energy counters we get are counters on ourselves"
+        );
+        assert!(!applies(&state, &on_player(0, 1)), "an opponent is not yourself");
+        assert!(
+            !applies(&state, &on_player(1, 0)),
+            "an opponent putting counters on us is not \"you would put\""
+        );
+
+        let mut events = Vec::new();
+        match replace_event(&mut state, on_player(0, 0), &mut events) {
+            ReplacementResult::Execute(ProposedEvent::AddCounter { count, .. }) => {
+                assert_eq!(count, 2, "that many plus one on yourself")
+            }
+            other => panic!("expected the poison placement to execute, got {other:?}"),
+        }
+
+        // Without the player leg the same permanent scope reaches no player.
+        state.objects.get_mut(&source).unwrap().replacement_definitions =
+            vec![laezel(None)].into();
+        assert!(applies(&state, &on_object(0, own_creature)));
+        assert!(
+            !applies(&state, &on_player(0, 0)),
+            "a permanent-only recipient never reaches a player"
         );
     }
 
