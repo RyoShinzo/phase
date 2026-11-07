@@ -280,6 +280,7 @@ mod cost_zone_pipeline;
 mod costed_mana_abilities_no_recursion;
 mod costed_mana_ability_autotap_order;
 mod costed_mana_ability_demand_aware_autotap;
+mod costed_mana_ability_generic_reservation;
 mod council_of_four_nth_per_turn;
 mod count_form_draw_replacement;
 mod count_slot_fail_closed_runtime;

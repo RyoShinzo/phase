@@ -16145,14 +16145,7 @@ fn auto_tap_mana_sources_inner(
         .iter()
         .find(|p| p.id == player)
         .is_some_and(|p| p.mana_pool.total() > 0);
-    let (
-        AutoTapPlan {
-            mut to_tap,
-            used_sources,
-            ..
-        },
-        nested_row_policy,
-    ) = choose_auto_tap_plan(
+    let (plan, nested_row_policy) = choose_auto_tap_plan(
         state,
         available,
         &needs,
@@ -16161,6 +16154,22 @@ fn auto_tap_mana_sources_inner(
         row_policy,
         floating_mana,
     );
+    let sub_cost_rows_first = match nested_row_policy {
+        AutoTapRowPolicy::WithoutAvoidableDrawbacks => true,
+        AutoTapRowPolicy::AllRows => all_rows_plan_funds_sub_costs_first(
+            state,
+            available,
+            &plan,
+            needs.len() + generic as usize + deferred_generic,
+            floating_mana,
+        ),
+        AutoTapRowPolicy::Choose => false,
+    };
+    let AutoTapPlan {
+        mut to_tap,
+        used_sources,
+        ..
+    } = plan;
 
     // Phase 3: activate each selected mana source.
     //
@@ -16172,9 +16181,10 @@ fn auto_tap_mana_sources_inner(
     // sub-cost at each payment level, and only when the pool was empty
     // (`planned_mana_sub_costs_fundable`); that row resolves first, so its
     // sub-cost is planned against the same empty pool and unused sources the
-    // check planned it against, before any of this plan's mana floats.
+    // check planned it against, before any of this plan's mana floats. A plan
+    // with every row does the same when its rows make no mana beyond the cost
+    // and that check holds (`all_rows_plan_funds_sub_costs_first`).
     // This preserves the plan and `used_sources` reservation; it changes only order.
-    let sub_cost_rows_first = nested_row_policy == AutoTapRowPolicy::WithoutAvoidableDrawbacks;
     to_tap.sort_by_key(|option| {
         let has_sub_cost = option.ability_index.is_some_and(|ability_index| {
             state
@@ -16965,6 +16975,64 @@ fn planned_mana_sub_costs_fundable(
         }
     }
     true
+}
+
+/// CR 605.3b + CR 118.3 + CR 118.10: Whether a plan with every row resolves its
+/// mana sub-cost row first, as a drawback-free plan does.
+///
+/// With every row, Phase 3 lets the other selected sources resolve first and
+/// pays a sub-cost from the mana they float. That works when the plan's rows
+/// make enough mana for the cost and the sub-costs together, as Sol Ring's
+/// `{C}{C}` for a `{1}` leaves a unit for a Signet's `{1}`. When they make
+/// less, the floated mana is the cost's own: the sub-cost's generic pips may
+/// take any of it (the outer cost's color demand reserves only its colored
+/// shards), and the outer cost is then short while a source the plan left
+/// unused stays untapped. Aurelia, the Warleader (`{2}{R}{R}{W}{W}`) from a
+/// Mountain, Sulfur Falls, two Plains, Talisman of Creativity and Boros Signet
+/// fell back to manual payment that way. Then the sub-cost row resolves first when
+/// [`planned_mana_sub_costs_fundable`] holds for the whole row set, which plans
+/// the sub-cost from the unused sources against an empty pool exactly as the
+/// nested payment of Phase 3 will.
+fn all_rows_plan_funds_sub_costs_first(
+    state: &GameState,
+    rows: &[ManaSourceOption],
+    plan: &AutoTapPlan,
+    cost_units: usize,
+    floating_mana: bool,
+) -> bool {
+    if !plan.covers_cost {
+        return false;
+    }
+    let sub_cost_units: usize = plan
+        .to_tap
+        .iter()
+        .filter_map(|option| {
+            let ability_index = option.ability_index?;
+            let ability = state
+                .objects
+                .get(&option.object_id)?
+                .abilities
+                .get(ability_index)?;
+            mana_abilities::mana_sub_cost_of(&ability.cost)
+        })
+        .map(|sub_cost| sub_cost.mana_value() as usize)
+        .sum();
+    if sub_cost_units == 0 {
+        return false;
+    }
+    let produced: usize = plan
+        .to_tap
+        .iter()
+        .map(|option| option.atomic_combination.as_ref().map_or(1, Vec::len))
+        .sum();
+    produced < cost_units + sub_cost_units
+        && planned_mana_sub_costs_fundable(
+            state,
+            rows,
+            plan,
+            &mut plan.used_sources.clone(),
+            floating_mana,
+        )
 }
 
 pub(crate) fn production_override_for_option(
