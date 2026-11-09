@@ -3168,6 +3168,27 @@ pub(crate) fn assemble_effect_chain(ir: &EffectChainIr) -> AbilityDefinition {
                 }
             }
         }
+        // CR 608.2c + CR 701.21a: "that many" right after a sacrifice whose number the
+        // player chose ("you may sacrifice any number of other creatures. If you do,
+        // draw that many cards") is the number sacrificed. Bound to that count, so an
+        // enclosing trigger's own event amount, such as one attacker for "Whenever
+        // Sephiroth attacks", cannot shadow it (Sephiroth, One-Winged Angel).
+        if let Some(prev) = defs.last() {
+            if prev.sub_ability.is_none()
+                && matches!(
+                    &*prev.effect,
+                    Effect::Sacrifice {
+                        count: QuantityExpr::UpTo { .. },
+                        ..
+                    }
+                )
+                && damage_amount_reads_event_context(&def.effect)
+            {
+                def.effect.for_each_quantity_expr_mut(&mut |quantity| {
+                    quantity.rebind_event_context_amount(&QuantityRef::PreviousEffectCount);
+                });
+            }
+        }
         // CR 615.5: A "(When|Whenever|If) damage [from a <type> source] is
         // prevented this way, …" rider is printed as its own sentence but is not
         // an independent instruction — its "this way" back-reference binds to the

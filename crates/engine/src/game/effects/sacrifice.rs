@@ -1726,8 +1726,9 @@ mod tests {
         let chain = scapeshift_ability();
         assert_scapeshift_ast(&chain.effect);
 
-        // SearchLibrary count must carry the EventContextAmount back-reference,
-        // wrapped as UpTo so the searcher picks 0..=that-many.
+        // SearchLibrary count must carry the sacrificed count (PreviousEffectCount,
+        // which an enclosing trigger's event amount cannot shadow), wrapped as UpTo
+        // so the searcher picks 0..=that-many.
         match scapeshift_search_effect(&chain) {
             Effect::SearchLibrary { count, .. } => {
                 let QuantityExpr::UpTo { max } = count else {
@@ -1736,7 +1737,7 @@ mod tests {
                 assert_eq!(
                     *max,
                     QuantityExpr::Ref {
-                        qty: QuantityRef::EventContextAmount
+                        qty: QuantityRef::PreviousEffectCount
                     },
                     "search count must back-reference the sacrificed count"
                 );

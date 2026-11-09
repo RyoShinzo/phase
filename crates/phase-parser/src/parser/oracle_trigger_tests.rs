@@ -43260,3 +43260,35 @@ fn enlightened_confidant_surveil_gate_keeps_life_gained_bound() {
         sub.effect
     );
 }
+
+/// CR 608.2c + CR 701.21a: Sephiroth, One-Winged Angel's "draw that many cards" is the
+/// number of creatures sacrificed, not the attack trigger's own event amount.
+#[test]
+fn sephiroth_attack_draws_the_number_sacrificed() {
+    let def = parse_trigger_line(
+        "Whenever Sephiroth attacks, you may sacrifice any number of other creatures. If you do, draw that many cards.",
+        "Sephiroth, One-Winged Angel",
+    );
+    let execute = def.execute.expect("execute");
+    assert!(
+        matches!(
+            &*execute.effect,
+            Effect::Sacrifice {
+                count: QuantityExpr::UpTo { .. },
+                ..
+            }
+        ),
+        "{:?}",
+        execute.effect
+    );
+    let sub = execute.sub_ability.expect("the draw");
+    let Effect::Draw { count, .. } = &*sub.effect else {
+        panic!("expected a draw, got {:?}", sub.effect);
+    };
+    assert_eq!(
+        *count,
+        QuantityExpr::Ref {
+            qty: QuantityRef::PreviousEffectCount
+        }
+    );
+}
