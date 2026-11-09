@@ -42,6 +42,7 @@ mod riku_modal_spell_trigger;
 mod riot_control_regression;
 mod ripple_reveal_choice_interaction;
 mod ripple_stolen_spell_controller;
+mod ripples_of_undeath_paid_choice;
 mod ripples_of_undeath_regression;
 mod riptide_gearhulk_5994;
 mod rite_of_consumption_damage;

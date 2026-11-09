@@ -38,6 +38,14 @@ fn replay_error(error: EffectError) -> EngineError {
     ))
 }
 
+/// CR 608.2c: the payment is one instruction of the ability that is resolving, so its
+/// shadow resolves below the top level. At depth 0 the top-level prelude would clear that
+/// resolution's state, its chain tracked set among it, and the commit would carry the
+/// cleared state back: Ripples of Undeath's "put a card from among those cards into your
+/// hand" then read an empty set after "you may pay {1} and 3 life". It would also count
+/// the ability's resolution a second time this turn.
+const PAYMENT_DEPTH: u32 = 1;
+
 /// The transaction boundary owns only the Composite PayCost instruction. All
 /// outgoing chain edges stay on the durable root so the ordinary chain walker
 /// can resume them after the payment commits or aborts.
@@ -97,7 +105,12 @@ pub(crate) fn begin(
     shadow.payment_transaction_just_handled = false;
     let mut buffered_events = Vec::new();
     let payment_root = payment_only_root(ability);
-    effects::resolve_ability_chain(&mut shadow, &payment_root, &mut buffered_events, 0)?;
+    effects::resolve_ability_chain(
+        &mut shadow,
+        &payment_root,
+        &mut buffered_events,
+        PAYMENT_DEPTH,
+    )?;
     restore_trigger_context(&mut shadow, resolving_trigger_context.as_ref());
     shadow.payment_transaction_replay = false;
 
@@ -167,8 +180,13 @@ fn replay(
     let mut buffered_events = Vec::new();
     let mut buffered_log_entries: Vec<GameLogEntry> = Vec::new();
     let payment_root = payment_only_root(&transaction.root);
-    effects::resolve_ability_chain(&mut shadow, &payment_root, &mut buffered_events, 0)
-        .map_err(replay_error)?;
+    effects::resolve_ability_chain(
+        &mut shadow,
+        &payment_root,
+        &mut buffered_events,
+        PAYMENT_DEPTH,
+    )
+    .map_err(replay_error)?;
     restore_trigger_context(&mut shadow, transaction.resolving_trigger_context.as_ref());
     // Keep the replay guard live while transcript actions drain the suspended
     // continuation. A remaining Composite must use the ordinary sequential
