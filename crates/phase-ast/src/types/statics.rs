@@ -725,6 +725,11 @@ pub enum TriggerCause {
     /// (Krang, the All-Powerful: "If a player drawing a card causes ...").
     /// Matches `GameEvent::CardDrawn` events of any player.
     CardDrawn,
+    /// CR 119.3 + CR 603.2d: Trigger was caused by the doubler's controller
+    /// gaining life (Dr. Beverly Crusher: "If you gaining life causes ...").
+    /// Matches `GameEvent::LifeChanged` events with a positive amount whose
+    /// player is the doubler's controller.
+    ControllerGainedLife,
     /// CR 603.6a + CR 603.6c: Trigger was caused by a permanent entering
     /// and/or leaving the battlefield (Gandalf the White-class). `enter` /
     /// `leave` select which directions qualify; when both are true, either
@@ -764,6 +769,7 @@ impl fmt::Display for TriggerCause {
             }
             TriggerCause::RoomEntered => write!(f, "RoomEntered"),
             TriggerCause::CardDrawn => write!(f, "CardDrawn"),
+            TriggerCause::ControllerGainedLife => write!(f, "ControllerGainedLife"),
             TriggerCause::BattlefieldTransition {
                 enter,
                 leave,

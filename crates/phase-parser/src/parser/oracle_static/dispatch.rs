@@ -3964,6 +3964,9 @@ pub(crate) fn parse_static_line_inner(
         } else if nom_primitives::scan_contains(tp.lower, "drawing a card causes") {
             // CR 121.1: "a player drawing a card causes" (Krang, the All-Powerful).
             TriggerCause::CardDrawn
+        } else if nom_primitives::scan_contains(tp.lower, "you gaining life causes") {
+            // CR 119.3: "you gaining life causes" (Dr. Beverly Crusher).
+            TriggerCause::ControllerGainedLife
         } else if let Some(cause) = parse_battlefield_transition_cause(tp.lower) {
             cause
         } else if nom_primitives::scan_contains(tp.lower, "entering")

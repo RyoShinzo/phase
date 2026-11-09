@@ -13198,6 +13198,7 @@ pub fn trigger_cause_can_match_control_change(cause: &TriggerCause) -> bool {
         | TriggerCause::ControllerCastOrCopiedSpell { .. }
         | TriggerCause::RoomEntered
         | TriggerCause::CardDrawn
+        | TriggerCause::ControllerGainedLife
         | TriggerCause::BattlefieldTransition { .. } => false,
     }
 }
@@ -13288,6 +13289,16 @@ fn trigger_cause_matches(
             // by drawing carries a `CardDrawn` event. A permanent entering, which
             // then makes a player draw, is not a draw causing the trigger.
             matches!(event, Some(GameEvent::CardDrawn { .. }))
+        }
+        TriggerCause::ControllerGainedLife => {
+            // CR 119.3 + CR 603.2d: only a gain of the doubler's controller
+            // causes the trigger. A creature entering, a loss or another
+            // player's gain is not "you gaining life".
+            matches!(
+                event,
+                Some(GameEvent::LifeChanged { player_id, amount, .. })
+                    if *amount > 0 && *player_id == doubler_controller
+            )
         }
         TriggerCause::RoomEntered => {
             // CR 309.4c: Room abilities of dungeons you own trigger an
@@ -19966,6 +19977,7 @@ pub mod tests {
             },
             TriggerCause::RoomEntered,
             TriggerCause::CardDrawn,
+            TriggerCause::ControllerGainedLife,
             TriggerCause::BattlefieldTransition {
                 enter: true,
                 leave: true,
@@ -20015,6 +20027,31 @@ pub mod tests {
             None,
             PlayerId(0)
         ));
+    }
+
+    #[test]
+    fn controller_gained_life_cause_matches_only_own_gains() {
+        // CR 603.2d + CR 119.3: Dr. Beverly Crusher doubles a trigger its
+        // controller's gain caused, not another player's gain, a loss, or a
+        // trigger caused by a creature entering.
+        let state = setup();
+        let gain = |player: u8, amount: i32| GameEvent::LifeChanged {
+            player_id: PlayerId(player),
+            amount,
+            new_total: Default::default(),
+        };
+        let cause = TriggerCause::ControllerGainedLife;
+        assert!(trigger_cause_matches(&state, &cause, Some(&gain(0, 3)), PlayerId(0)));
+        assert!(!trigger_cause_matches(&state, &cause, Some(&gain(1, 3)), PlayerId(0)));
+        assert!(!trigger_cause_matches(&state, &cause, Some(&gain(0, -2)), PlayerId(0)));
+        let draw = GameEvent::CardDrawn {
+            player_id: PlayerId(0),
+            object_id: ObjectId(1),
+            nth_in_turn: 1,
+            nth_in_step: 1,
+        };
+        assert!(!trigger_cause_matches(&state, &cause, Some(&draw), PlayerId(0)));
+        assert!(!trigger_cause_matches(&state, &cause, None, PlayerId(0)));
     }
 
     #[test]

@@ -716,6 +716,23 @@ fn parses_krang_draw_caused_doubler() {
     );
 }
 
+/// CR 603.2d + CR 119.3: Gain-caused trigger doubler (Dr. Beverly Crusher).
+/// Never the unrestricted `Any` fallback, which doubled every trigger of our
+/// permanents, such as Soul Warden's for a creature entering.
+#[test]
+fn parses_beverly_crusher_gain_caused_doubler() {
+    let def = parse_static_line(
+        "If you gaining life causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+    )
+    .expect("expected DoubleTriggers static for Dr. Beverly Crusher");
+    assert_eq!(
+        def.mode,
+        StaticMode::DoubleTriggers {
+            cause: TriggerCause::ControllerGainedLife
+        }
+    );
+}
+
 /// CR 603.2d + CR 601.2 + CR 707.10: Cast-or-copy-caused trigger doubler
 /// (Veyran, Voice of Duality). "If you casting or copying an instant or
 /// sorcery spell causes ..." must produce a `ControllerCastOrCopiedSpell`
