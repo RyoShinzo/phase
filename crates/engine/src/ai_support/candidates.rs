@@ -1063,6 +1063,7 @@ pub fn candidate_actions_broad_with_probe(
                 target_slots,
                 selection.current_slot,
                 &selection.current_legal_targets,
+                &selection.selected_slots,
             );
             if state.waiting_for.allows_cancel_cast() {
                 actions.push(candidate(
@@ -1083,6 +1084,7 @@ pub fn candidate_actions_broad_with_probe(
             target_slots,
             selection.current_slot,
             &selection.current_legal_targets,
+            &selection.selected_slots,
         ),
         WaitingFor::DeclareAttackers {
             player,
@@ -5515,7 +5517,19 @@ fn target_step_actions(
     target_slots: &[TargetSelectionSlot],
     current_slot: usize,
     current_legal_targets: &[TargetRef],
+    selected_slots: &[Option<TargetRef>],
 ) -> Vec<CandidateAction> {
+    // Every slot is filled or skipped (a reflexive "up to one" with nothing to
+    // choose): the only answer submits the targets chosen so far.
+    if current_slot >= target_slots.len() {
+        return vec![candidate(
+            GameAction::SelectTargets {
+                targets: selected_slots.iter().flatten().cloned().collect(),
+            },
+            TacticalClass::Target,
+            Some(player),
+        )];
+    }
     let mut actions: Vec<CandidateAction> = current_legal_targets
         .iter()
         .cloned()

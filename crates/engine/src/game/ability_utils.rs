@@ -1978,6 +1978,23 @@ pub fn choose_target(
     Ok(TargetSelectionAdvance::InProgress(next_progress))
 }
 
+/// CR 601.2c + CR 701.14a: whether a declared fighter's slot may be left empty. An
+/// ability-wide "up to one" covers every slot; an "up to one target creature" the
+/// subject fights (`multi_target` with a minimum of zero, Bridgeworks Battle) covers
+/// only the slot of the creature fought, never a targeted subject's.
+fn fight_slot_is_optional(
+    ability: &ResolvedAbility,
+    filter: &TargetFilter,
+    target: &TargetFilter,
+) -> bool {
+    ability.optional_targeting
+        || (std::ptr::eq(filter, target)
+            && ability
+                .multi_target
+                .as_ref()
+                .is_some_and(MultiTargetSpec::min_is_fixed_zero))
+}
+
 pub fn choose_target_for_ability(
     state: &GameState,
     ability: &ResolvedAbility,
@@ -5391,14 +5408,15 @@ fn collect_target_slots_inner(
             // cast (Malamet Battle Glyph).
             let legal_targets =
                 legal_targets_for_ability_filter(state, ability, filter, acc.built());
-            if legal_targets.is_empty() && !ability.optional_targeting {
+            let optional = fight_slot_is_optional(ability, filter, target);
+            if legal_targets.is_empty() && !optional {
                 return Err(no_legal_target_slots());
             }
             acc.push(
                 filter,
                 TargetSelectionSlot {
                     legal_targets,
-                    optional: ability.optional_targeting,
+                    optional,
                     chooser: None,
                     effect_kind: acc.current_effect_kind,
                     effect_detail: acc.current_effect_detail,
@@ -7575,7 +7593,7 @@ fn collect_target_slot_specs(
             *next_instance += 1;
             specs.push(TargetSlotSpec {
                 filter: filter.clone(),
-                optional: ability.optional_targeting,
+                optional: fight_slot_is_optional(ability, filter, target),
                 instance: id,
                 group: ability.declares_chosen_group,
                 path: Vec::new(),
@@ -10539,25 +10557,20 @@ fn assign_targets_recursive(
     }
 
     if let Effect::Fight { subject, target } = &ability.effect {
-        let mut filters: Vec<&TargetFilter> = Vec::new();
-        if fight_subject_needs_target_slot(subject) {
-            filters.push(subject);
-        }
-        filters.push(target);
         // Mirror `collect_target_slots`: a context-ref fighter (SelfRef,
         // ParentTarget, ParentTargetSlot, reciprocal-fight TrackedSet)
         // surfaces no slot, so it consumes no selected target here either —
         // otherwise the assign/slot-gen counts diverge and a valid two-target
-        // selection reports a spurious "Missing required target".
-        let slot_count = filters
-            .into_iter()
-            .filter(|filter| !filter.is_context_ref())
-            .count();
-        for _ in 0..slot_count {
+        // selection reports a spurious "Missing required target". Each slot
+        // keeps whether it may be left empty, as `collect_target_slots` says.
+        let slots: Vec<bool> = fight_declared_slot_filters(subject, target)
+            .map(|filter| fight_slot_is_optional(ability, filter, target))
+            .collect();
+        for optional in slots {
             if let Some(chosen) = targets.get(*next_target) {
                 ability.push_chosen_target(chosen.clone());
                 *next_target += 1;
-            } else if !ability.optional_targeting {
+            } else if !optional {
                 return Err(EngineError::InvalidAction(
                     "Missing required target".to_string(),
                 ));
@@ -10953,19 +10966,13 @@ fn assign_selected_slots_recursive(
     }
 
     if let Effect::Fight { subject, target } = &ability.effect {
-        let mut filters: Vec<&TargetFilter> = Vec::new();
-        if fight_subject_needs_target_slot(subject) {
-            filters.push(subject);
-        }
-        filters.push(target);
         // Mirror `collect_target_slots` and `assign_targets_recursive`:
         // context-reference fighters resolve from the ability chain, so they
         // consume no interactive target-selection slot.
-        let slot_count = filters
-            .into_iter()
-            .filter(|filter| !filter.is_context_ref())
-            .count();
-        for _ in 0..slot_count {
+        let slots: Vec<bool> = fight_declared_slot_filters(subject, target)
+            .map(|filter| fight_slot_is_optional(ability, filter, target))
+            .collect();
+        for optional in slots {
             let Some(selected_slot) = selected_slots.get(*next_slot) else {
                 return Err(EngineError::InvalidAction(
                     "Missing target selection".to_string(),
@@ -10973,7 +10980,7 @@ fn assign_selected_slots_recursive(
             };
             match selected_slot {
                 Some(chosen) => ability.push_chosen_target(chosen.clone()),
-                None if ability.optional_targeting => {}
+                None if optional => {}
                 None => {
                     return Err(EngineError::InvalidAction(
                         "Missing required target".to_string(),

@@ -157,6 +157,7 @@ mod brass_knuckles_equipment_threshold;
 mod bre_of_clan_stoutarm_endstep;
 mod breathless_knight_graveyard_origin;
 mod breeches_blastmaker_coin_flip_copy;
+mod bridgeworks_battle_up_to_one_fight;
 mod brightling_pt_disjunction_choice;
 mod brigid_mana_ability;
 mod bring_the_ending_corrupted_instead_branch_5683;

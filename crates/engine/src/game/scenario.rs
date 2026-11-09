@@ -1962,6 +1962,9 @@ impl GameRunner {
                 selection,
                 ..
             } => {
+                if let Some(action) = completed_selection_action(target_slots, selection) {
+                    return apply_as_current(&mut self.state, action);
+                }
                 let slot = &target_slots[selection.current_slot];
                 let target = slot.legal_targets.first().cloned();
                 if target.is_none() && !slot.optional {
@@ -1976,6 +1979,9 @@ impl GameRunner {
                 selection,
                 ..
             } => {
+                if let Some(action) = completed_selection_action(target_slots, selection) {
+                    return apply_as_current(&mut self.state, action);
+                }
                 let slot = &target_slots[selection.current_slot];
                 let target = slot.legal_targets.first().cloned();
                 if target.is_none() && !slot.optional {
@@ -2903,19 +2909,19 @@ impl<'a> SpellCast<'a> {
                     selection,
                     ..
                 } => {
-                    let slot = &target_slots[selection.current_slot];
-                    let choice = pick_slot_target(
-                        slot,
-                        &mut remaining_objects,
-                        &mut remaining_spell_players,
-                        &declared_players,
-                        selection.current_slot,
-                    );
-                    act_collect(
-                        runner,
-                        GameAction::ChooseTarget { target: choice },
-                        &mut events,
-                    )?;
+                    let action = completed_selection_action(target_slots, selection)
+                        .unwrap_or_else(|| {
+                            let slot = &target_slots[selection.current_slot];
+                            let choice = pick_slot_target(
+                                slot,
+                                &mut remaining_objects,
+                                &mut remaining_spell_players,
+                                &declared_players,
+                                selection.current_slot,
+                            );
+                            GameAction::ChooseTarget { target: choice }
+                        });
+                    act_collect(runner, action, &mut events)?;
                 }
                 // CR 603.3d: triggered abilities choose targets after they are
                 // put on the stack. Their intents are independent of the
@@ -2926,19 +2932,19 @@ impl<'a> SpellCast<'a> {
                     selection,
                     ..
                 } => {
-                    let slot = &target_slots[selection.current_slot];
-                    let choice = pick_slot_target(
-                        slot,
-                        &mut remaining_trigger_objects,
-                        &mut remaining_trigger_players,
-                        &declared_players,
-                        selection.current_slot,
-                    );
-                    act_collect(
-                        runner,
-                        GameAction::ChooseTarget { target: choice },
-                        &mut events,
-                    )?;
+                    let action = completed_selection_action(target_slots, selection)
+                        .unwrap_or_else(|| {
+                            let slot = &target_slots[selection.current_slot];
+                            let choice = pick_slot_target(
+                                slot,
+                                &mut remaining_trigger_objects,
+                                &mut remaining_trigger_players,
+                                &declared_players,
+                                selection.current_slot,
+                            );
+                            GameAction::ChooseTarget { target: choice }
+                        });
+                    act_collect(runner, action, &mut events)?;
                 }
                 // CR 601.2a: spell is on the stack — capture the hand baseline.
                 WaitingFor::Priority { .. } => {
@@ -3145,6 +3151,18 @@ impl<'a> CastCommit<'a> {
             life_before,
         })
     }
+}
+
+/// CR 601.2c + CR 115.6: a target prompt whose every slot is already settled, as when
+/// its only slots are optional ones with no legal target (auto-skipped), takes the
+/// chosen targets as a whole: there is no slot left to choose for.
+fn completed_selection_action(
+    target_slots: &[crate::types::game_state::TargetSelectionSlot],
+    selection: &crate::types::game_state::TargetSelectionProgress,
+) -> Option<GameAction> {
+    (selection.current_slot >= target_slots.len()).then(|| GameAction::SelectTargets {
+        targets: selection.selected_slots.iter().flatten().cloned().collect(),
+    })
 }
 
 /// Pick the `ChooseTarget` payload for a single slot from declared intent,
@@ -3520,20 +3538,20 @@ impl<'a> AbilityActivation<'a> {
                     selection,
                     ..
                 } => {
-                    let slot = &target_slots[selection.current_slot];
-                    let choice = pick_slot_target(
-                        slot,
-                        &mut remaining_objects,
-                        &mut remaining_players,
-                        &declared_players,
-                        selection.current_slot,
-                    );
-                    act_collect(
-                        runner,
-                        GameAction::ChooseTarget { target: choice },
-                        &mut events,
-                    )
-                    .expect("ChooseTarget must be accepted");
+                    let action = completed_selection_action(target_slots, selection)
+                        .unwrap_or_else(|| {
+                            let slot = &target_slots[selection.current_slot];
+                            let choice = pick_slot_target(
+                                slot,
+                                &mut remaining_objects,
+                                &mut remaining_players,
+                                &declared_players,
+                                selection.current_slot,
+                            );
+                            GameAction::ChooseTarget { target: choice }
+                        });
+                    act_collect(runner, action, &mut events)
+                        .expect("ChooseTarget must be accepted");
                 }
                 // CR 602.2b: ability is on the stack — capture the baseline.
                 WaitingFor::Priority { .. } => {
@@ -3772,19 +3790,19 @@ fn drive_resolution(
                 selection,
                 ..
             } => {
-                let slot = &target_slots[selection.current_slot];
-                let choice = pick_slot_target(
-                    slot,
-                    &mut remaining_objects,
-                    &mut remaining_players,
-                    declared_players,
-                    selection.current_slot,
-                );
-                act_collect(
-                    runner,
-                    GameAction::ChooseTarget { target: choice },
-                    &mut events,
-                )?;
+                let action =
+                    completed_selection_action(target_slots, selection).unwrap_or_else(|| {
+                        let slot = &target_slots[selection.current_slot];
+                        let choice = pick_slot_target(
+                            slot,
+                            &mut remaining_objects,
+                            &mut remaining_players,
+                            declared_players,
+                            selection.current_slot,
+                        );
+                        GameAction::ChooseTarget { target: choice }
+                    });
+                act_collect(runner, action, &mut events)?;
             }
             // CR 608.2c: Some resolving spell abilities choose targets during
             // resolution. Reuse the same slot-matching policy as cast-time
@@ -3794,19 +3812,19 @@ fn drive_resolution(
                 selection,
                 ..
             } => {
-                let slot = &target_slots[selection.current_slot];
-                let choice = pick_slot_target(
-                    slot,
-                    &mut remaining_objects,
-                    &mut remaining_players,
-                    declared_players,
-                    selection.current_slot,
-                );
-                act_collect(
-                    runner,
-                    GameAction::ChooseTarget { target: choice },
-                    &mut events,
-                )?;
+                let action =
+                    completed_selection_action(target_slots, selection).unwrap_or_else(|| {
+                        let slot = &target_slots[selection.current_slot];
+                        let choice = pick_slot_target(
+                            slot,
+                            &mut remaining_objects,
+                            &mut remaining_players,
+                            declared_players,
+                            selection.current_slot,
+                        );
+                        GameAction::ChooseTarget { target: choice }
+                    });
+                act_collect(runner, action, &mut events)?;
             }
             // CR 601.2c: a variable-count multi-target set is submitted as one
             // SelectCards of the declared object targets that are legal here.

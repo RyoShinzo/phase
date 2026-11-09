@@ -2364,7 +2364,7 @@ pub fn current_target_selection_targets(state: &GameState) -> Option<&[TargetRef
 }
 
 fn target_selection_actions_without_simulation(state: &GameState) -> Option<Vec<GameAction>> {
-    let (target_slots, current_slot) = match &state.waiting_for {
+    let (target_slots, selection) = match &state.waiting_for {
         WaitingFor::TargetSelection {
             target_slots,
             selection,
@@ -2374,9 +2374,16 @@ fn target_selection_actions_without_simulation(state: &GameState) -> Option<Vec<
             target_slots,
             selection,
             ..
-        } => (target_slots, selection.current_slot),
+        } => (target_slots, selection),
         _ => return None,
     };
+    let current_slot = selection.current_slot;
+    // Every slot is filled or skipped: the only answer submits the targets chosen so far.
+    if current_slot >= target_slots.len() {
+        return Some(vec![GameAction::SelectTargets {
+            targets: selection.selected_slots.iter().flatten().cloned().collect(),
+        }]);
+    }
 
     let current_legal_targets = current_target_selection_targets(state)?;
 
