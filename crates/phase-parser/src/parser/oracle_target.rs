@@ -7537,6 +7537,21 @@ fn filter_prop_names_non_battlefield_zone(prop: &FilterProp) -> bool {
     }
 }
 
+/// CR 608.2c: the tail of a reflexive "this way" gate that follows its type
+/// phrase ("If you put a card with mana value less than or equal to the amount
+/// of life you gained this turn into your graveyard this way", Enlightened
+/// Confidant). A dynamic mana-value bound stops before it, so the gate keeps
+/// its filter instead of the bound swallowing the tail and failing.
+fn parse_this_way_tail(input: &str) -> OracleResult<'_, &str> {
+    alt((
+        tag::<_, _, OracleError<'_>>("into your graveyard this way"),
+        tag("into a graveyard this way"),
+        tag("onto the battlefield this way"),
+        tag("this way"),
+    ))
+    .parse(input)
+}
+
 /// CR 202.3: the subject head every mana-value suffix form shares — "with ",
 /// "that have ", "that each have ". Factored out because all three of
 /// [`parse_mana_value_suffix`]'s own heads (parity, elliptical possessive, and
@@ -7833,7 +7848,7 @@ pub(crate) fn parse_mana_value_suffix(
                     // The zone clause is detected via the nom `parse_zone_suffix`
                     // building block, never a `starts_with` string heuristic.
                     let r = rest.trim_start();
-                    r.is_empty() || parse_zone_suffix(r).is_some()
+                    r.is_empty() || parse_zone_suffix(r).is_some() || parse_this_way_tail(r).is_ok()
                 })
         {
             (qty, rest)

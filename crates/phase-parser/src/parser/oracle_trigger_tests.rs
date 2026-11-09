@@ -43201,3 +43201,62 @@ fn overencumbered_beginning_of_combat_only_on_enchanted_opponents_turn() {
     assert_eq!(defs[0].phase, Some(crate::types::phase::Phase::BeginCombat));
     assert_eq!(defs[0].valid_target, Some(TargetFilter::AttachedTo));
 }
+
+/// CR 608.2c + CR 701.25a: Enlightened Confidant — the surveil's reflexive gate
+/// keeps its dynamic mana-value bound ("with mana value less than or equal to
+/// the amount of life you gained this turn") although "into your graveyard this
+/// way" follows it, and "that card" is the surveilled card, not the Confidant.
+#[test]
+fn enlightened_confidant_surveil_gate_keeps_life_gained_bound() {
+    let def = parse_trigger_line(
+        "At the beginning of your end step, if you gained life this turn, surveil 1. If you put a card with mana value less than or equal to the amount of life you gained this turn into your graveyard this way, put that card into your hand.",
+        "Enlightened Confidant",
+    );
+    let execute = def.execute.expect("execute");
+    assert!(
+        matches!(*execute.effect, Effect::Surveil { .. }),
+        "{:?}",
+        execute.effect
+    );
+    let sub = execute.sub_ability.expect("the gated return");
+    let Some(AbilityCondition::ZoneChangedThisWay {
+        filter,
+        destination,
+        ..
+    }) = &sub.condition
+    else {
+        panic!(
+            "expected a ZoneChangedThisWay gate, got {:?}",
+            sub.condition
+        );
+    };
+    assert_eq!(*destination, Some(Zone::Graveyard));
+    let TargetFilter::Typed(typed) = filter else {
+        panic!("expected a typed filter, got {filter:?}");
+    };
+    assert!(
+        typed.properties.iter().any(|prop| matches!(
+            prop,
+            FilterProp::Cmc {
+                comparator: Comparator::LE,
+                value: QuantityExpr::Ref {
+                    qty: QuantityRef::LifeGainedThisTurn { .. }
+                },
+            }
+        )),
+        "{:?}",
+        typed.properties
+    );
+    assert!(
+        matches!(
+            &*sub.effect,
+            Effect::ChangeZone {
+                target: TargetFilter::LastZoneChanged,
+                destination: Zone::Hand,
+                ..
+            }
+        ),
+        "{:?}",
+        sub.effect
+    );
+}
