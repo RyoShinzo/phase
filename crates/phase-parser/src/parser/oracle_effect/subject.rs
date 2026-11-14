@@ -6255,9 +6255,16 @@ fn try_parse_become_basic_land_type_modifications(
 /// - a targeted NON-player subject has no reading at all under CR 725.3 (only a
 ///   player can hold the designation), so it declines and the caller emits an
 ///   honest gap
+/// - an untargeted PLAYER ANAPHOR ("that player becomes the monarch" — Starscream,
+///   Seeker Leader; "its controller becomes the monarch") names the player the
+///   subject phrase resolved into `affected` (CR 608.2c), the damaged player of a
+///   damage trigger, not the ability's controller. `player_anaphor` is set only by
+///   the arms that printed such a phrase, so "you" and the bare imperative keep
+///   the controller default above.
 fn monarch_subject_target(application: &SubjectApplication) -> Option<TargetFilter> {
     match &application.target {
         Some(filter) => filter.is_player_scope().then(|| filter.clone()),
+        None if application.player_anaphor.is_some() => Some(application.affected.clone()),
         None => Some(TargetFilter::Controller),
     }
 }

@@ -23906,6 +23906,36 @@ fn untargeted_become_monarch_keeps_the_controller_default_cr_109_5() {
     }
 }
 
+/// CR 608.2c + CR 725.1: "that player becomes the monarch" in a damage trigger
+/// crowns the damaged player (Starscream, Seeker Leader), not the ability's
+/// controller. The subject is a player anaphor with no target slot, which the
+/// `target` axis used to drop to the controller default.
+#[test]
+fn that_player_becomes_the_monarch_names_the_damaged_player_cr_608_2c() {
+    let parsed = parse(
+        "Whenever Starscream deals combat damage to a player, if there is no monarch, that player becomes the monarch.",
+        "Starscream, Seeker Leader",
+        &[],
+        &["Artifact"],
+        &["Vehicle"],
+    );
+    let trigger = parsed
+        .triggers
+        .first()
+        .expect("the damage trigger must parse");
+    let execute = trigger
+        .execute
+        .as_ref()
+        .expect("the trigger must have an execute body");
+    assert_eq!(
+        *execute.effect,
+        Effect::BecomeMonarch {
+            target: TargetFilter::TriggeringPlayer
+        },
+        "the damaged player must become the monarch"
+    );
+}
+
 /// CR 508.5: the rebind is gated on the trigger clause naming an attacked
 /// PLAYER. `Planeswalker` / `Battle` attack scopes name no player antecedent
 /// (a battle's anaphor would be its protector, CR 310.9d — a different
