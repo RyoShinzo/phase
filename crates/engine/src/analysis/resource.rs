@@ -5931,6 +5931,7 @@ fn floating_replacement_can_name_object(
         planeswalk_scope: _,
         shield_kind: _,
         quantity_modification: _,
+        additional_token_count: _,
         token_owner_scope: _,
         token_owner_redirect: _,
         valid_player: _,

@@ -7,7 +7,7 @@ use crate::game::cost_payability::AbilityCostPayability;
 use crate::game::filter::ReplacementDefinitionFilterExt;
 use crate::game::game_object::ObjectIncarnationRefExt;
 use crate::types::ability::{
-    AbilityCost, AbilityDefinition, CastingPermission, ChoiceType, ChosenAttribute, CoinFlipRun,
+    AbilityCost, AbilityDefinition, AdditionalTokenCount, CastingPermission, ChoiceType, ChosenAttribute, CoinFlipRun,
     CombatDamageScope, ControllerRef, DamageModification, DamageRedirectTarget, DamageTargetFilter,
     DamageTargetPlayerScope, DrawReplacementScope, Duration, Effect, EffectScope,
     EntryAttackDestination, ManaSpendPermission, PermissionGrantee, PostReplacementContinuation,
@@ -5028,13 +5028,14 @@ fn create_token_applier(
     _events: &mut Vec<GameEvent>,
 ) -> ApplyResult {
     use crate::types::ability::QuantityModification;
-    // Extract the seven fields the applier reads, given a def and the controller
+    // Extract the eight fields the applier reads, given a def and the controller
     // that installed it. Shared by the object-hosted branch and the floating
     // (`ObjectId(0)` sentinel) branch so both produce an identical tuple.
     let extract = |def: &ReplacementDefinition, controller: PlayerId| {
         (
             def.quantity_modification.clone(),
             def.additional_token_spec.clone(),
+            def.additional_token_count,
             def.ensure_token_specs.clone(),
             def.token_owner_redirect.clone(),
             // CR 614.1a + CR 111.1: Full token-substitution payload
@@ -5053,6 +5054,7 @@ fn create_token_applier(
     let (
         modification,
         additional_spec,
+        additional_count,
         ensure_specs,
         owner_redirect,
         substitute,
@@ -5071,7 +5073,16 @@ fn create_token_applier(
                 let controller = def.source_controller.unwrap_or(state.active_player);
                 extract(def, controller)
             })
-            .unwrap_or((None, None, None, None, None, false, PlayerId(0)))
+            .unwrap_or((
+                None,
+                None,
+                AdditionalTokenCount::ThatMany,
+                None,
+                None,
+                None,
+                false,
+                PlayerId(0),
+            ))
     } else {
         state
             .objects
@@ -5081,7 +5092,16 @@ fn create_token_applier(
                     .get(rid.index)
                     .map(|def| extract(def, obj.controller))
             })
-            .unwrap_or((None, None, None, None, None, false, PlayerId(0)))
+            .unwrap_or((
+                None,
+                None,
+                AdditionalTokenCount::ThatMany,
+                None,
+                None,
+                None,
+                false,
+                PlayerId(0),
+            ))
     };
 
     if let ProposedEvent::CreateToken {
@@ -5174,8 +5194,11 @@ fn create_token_applier(
         // CR 614.1a + CR 616.1f + CR 616.2: "those tokens plus ..." (Chatterfang
         // Squirrels, Donatello Mutagen) — "instead" yields ONE modified event, so
         // the added batch joins this event rather than becoming a separate event.
-        // It is sized at the already-modified `new_count`, so a replacement the
-        // affected player ordered earlier (CR 616.1) reaches it; every replacement
+        // "That many" is sized at the already-modified `new_count`, so a
+        // replacement the affected player ordered earlier (CR 616.1) reaches it;
+        // "an additional" token is a fixed count however many tokens the event
+        // creates (Stridehangar Automaton, Xorn), and is added once per event
+        // (`apply_replacement_to_token_batches`); every replacement
         // applied afterwards applies to it too, to each batch it matches, under
         // the same ordering (CR 616.1f), and one the added batch newly makes
         // applicable is offered then (CR 616.2). It shares the event's applied set
@@ -5205,7 +5228,10 @@ fn create_token_applier(
                     spec: extra,
                     copy: None,
                     enter_tapped: EtbTapState::Unspecified,
-                    count: new_count,
+                    count: match additional_count {
+                        AdditionalTokenCount::ThatMany => new_count,
+                        AdditionalTokenCount::Fixed(fixed) => fixed,
+                    },
                 },
             );
         }
@@ -11098,6 +11124,12 @@ fn token_batch_admits(
 /// `Prevented` batch is dropped on its own (CR 614.6); the event is `Prevented`
 /// only when no batch survives.
 ///
+/// A fixed "those tokens plus an additional ..." count (Stridehangar Automaton)
+/// is added once to the event, by the first batch it applies to: a second
+/// Automaton adds one Thopter, not one for each batch the first left
+/// (CR 614.1a, CR 614.5). A "that many" addition is sized per batch, which sums
+/// to the event's count.
+///
 /// Applying per batch can run the replacement's applier more than once for the
 /// one event: a mandatory rider stash keeps the resident rider
 /// (`stash_post_replacement_continuation`'s KeepResident policy), consumption
@@ -11121,6 +11153,8 @@ fn apply_replacement_to_token_batches(
         return Ok(ProposedEvent::from_token_batch_views(views)
             .expect("a compound token event's views reassemble"));
     }
+    let adds_once = adds_fixed_token_count(state, rid);
+    let mut added = false;
     let mut survivors = Vec::with_capacity(views.len());
     for (view, admitted) in views.into_iter().zip(admits) {
         if !admitted {
@@ -11128,7 +11162,17 @@ fn apply_replacement_to_token_batches(
             continue;
         }
         match apply_single_replacement(state, view, rid, branch, registry, events) {
-            Ok(applied) => survivors.push(applied),
+            Ok(mut applied) => {
+                // A view starts with no appended batch, so what it holds now is
+                // this replacement's addition.
+                if adds_once && applied.has_appended_token_batches() {
+                    if added {
+                        applied.drop_appended_token_batches();
+                    }
+                    added = true;
+                }
+                survivors.push(applied)
+            }
             Err(ApplyResult::Prevented) => {}
             Err(ApplyResult::Modified(_)) => {
                 unreachable!("apply_single_replacement reports modification through Ok")
@@ -11143,6 +11187,23 @@ fn apply_replacement_to_token_batches(
             unreachable!("a CreateToken replacement leaves every batch a CreateToken")
         }),
     )
+}
+
+/// CR 614.1a: whether replacement `rid` adds a fixed number of tokens to the
+/// event it modifies ("those tokens plus an additional ...").
+fn adds_fixed_token_count(state: &GameState, rid: ReplacementId) -> bool {
+    let def = if rid.source == ObjectId(0) {
+        state.pending_damage_replacements.get(rid.index)
+    } else {
+        state
+            .objects
+            .get(&rid.source)
+            .and_then(|obj| obj.replacement_definitions.get(rid.index))
+    };
+    def.is_some_and(|def| {
+        def.additional_token_spec.is_some()
+            && matches!(def.additional_token_count, AdditionalTokenCount::Fixed(_))
+    })
 }
 
 /// CR 614.1a: how many of this event's tokens replacement `rid` applies to —
@@ -11354,6 +11415,14 @@ enum CommuteClass {
     /// last-applied wins) stay `NonCommuting`.
     EnterTapped,
     EnterUntapped,
+    /// CR 614.1a + CR 616.1: a fixed number of tokens appended to the event
+    /// ("those tokens plus an additional ...", Stridehangar Automaton). Two such
+    /// additions commute (one Thopter each, in either order), but an addition
+    /// does not commute with a count modifier: doubling first and adding a
+    /// Thopter leaves one Thopter, adding first and doubling leaves two
+    /// (Stridehangar Automaton ruling with Anointed Procession), and a per-batch
+    /// `Plus` reaches the added batch only when it is applied after it.
+    FixedTokenAppend,
 }
 
 impl CommuteClass {
@@ -11703,6 +11772,22 @@ fn candidate_materiality(
             return CandidateMateriality::Writes {
                 field: EventField::Damage,
                 commute: damage_commute_class(modification),
+            };
+        }
+        // CR 614.1a + CR 616.1e: a fixed "those tokens plus an additional ..."
+        // writes the event's tokens, and its order against a count modifier
+        // decides how many are added (see `CommuteClass::FixedTokenAppend`). A
+        // "that many" addition scales with the batch it applies to, so it
+        // commutes with a doubler and stays a pass-through here.
+        if repl_def.additional_token_spec.is_some()
+            && matches!(
+                repl_def.additional_token_count,
+                AdditionalTokenCount::Fixed(_)
+            )
+        {
+            return CandidateMateriality::Writes {
+                field: EventField::Count,
+                commute: CommuteClass::FixedTokenAppend,
             };
         }
         // CR 614.1c + CR 616.1e: a `null` `execute` whose MODE carries a

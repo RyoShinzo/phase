@@ -9886,6 +9886,7 @@ fn replacement_matchers_read_filter_population(
         mana_modification: _,
         mana_replacement_scope: _,
         additional_token_spec,
+        additional_token_count: _,
         ensure_token_specs,
         counter_match: _,
         enters_under: _,

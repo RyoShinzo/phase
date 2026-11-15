@@ -12565,8 +12565,8 @@ pub(crate) fn parse_token_replacement(
         TokenReplacementShape::Half => {
             def = def.quantity_modification(QuantityModification::Half);
         }
-        TokenReplacementShape::PlusSpec { spec } => {
-            def = def.additional_token_spec(*spec);
+        TokenReplacementShape::PlusSpec { spec, count } => {
+            def = def.additional_token_spec(*spec).additional_token_count(count);
         }
         TokenReplacementShape::Substitute { token } => {
             // CR 614.1a + CR 111.1: Full token substitution (Divine Visitation).
@@ -12614,6 +12614,7 @@ enum TokenReplacementShape {
     /// "those tokens plus [spec] are created instead" (Chatterfang, Donatello).
     PlusSpec {
         spec: Box<crate::types::token_spec::TokenSpec>,
+        count: crate::types::ability::AdditionalTokenCount,
     },
     /// "that many [spec] are created instead" — full token substitution
     /// (Divine Visitation). The substitute characteristics are carried as an
@@ -12641,9 +12642,10 @@ fn parse_token_replacement_shape(lower: &str) -> Option<TokenReplacementShape> {
     }
 
     // "those tokens plus <spec> (is|are) created instead" → Chatterfang / Donatello.
-    if let Some(spec) = parse_token_plus_spec_shape(lower) {
+    if let Some((spec, count)) = parse_token_plus_spec_shape(lower) {
         return Some(TokenReplacementShape::PlusSpec {
             spec: Box::new(spec),
+            count,
         });
     }
 
@@ -12692,7 +12694,12 @@ fn scan_token_multiplier_factor(lower: &str) -> Option<u32> {
 /// CR 614.1a + CR 111.1: Extract the "those tokens plus <spec> (is|are) created
 /// instead" appended-token spec (Chatterfang / Donatello). Returns the parsed
 /// `TokenSpec` for the appended token, or `None` if the phrase is absent.
-fn parse_token_plus_spec_shape(lower: &str) -> Option<crate::types::token_spec::TokenSpec> {
+fn parse_token_plus_spec_shape(
+    lower: &str,
+) -> Option<(
+    crate::types::token_spec::TokenSpec,
+    crate::types::ability::AdditionalTokenCount,
+)> {
     // Extract the spec descriptor between "those tokens plus " and the trailing
     // "are/is created instead" clause using nom combinators.
     let ((descriptor_start, descriptor_len), _rest) = nom_on_lower(lower, lower, |i| {
@@ -12712,7 +12719,28 @@ fn parse_token_plus_spec_shape(lower: &str) -> Option<crate::types::token_spec::
         .trim();
     let descriptor = normalize_additional_token_descriptor(descriptor)?;
     let token = super::oracle_effect::parse_token_description(&descriptor)?;
-    token_description_to_spec(&token)
+    Some((
+        token_description_to_spec(&token)?,
+        additional_token_count_of(&token.count)?,
+    ))
+}
+
+/// CR 614.1a + CR 111.1: How many tokens an additional-token descriptor adds:
+/// "that many" (`EventContextAmount`, Chatterfang) is the count of the tokens the
+/// replacement applies to; a number ("an additional", normalized to "a") is a
+/// fixed count added once to the event (Stridehangar Automaton, Xorn). Any other
+/// count is not a shape of this class.
+fn additional_token_count_of(
+    count: &QuantityExpr,
+) -> Option<crate::types::ability::AdditionalTokenCount> {
+    use crate::types::ability::AdditionalTokenCount;
+    match count {
+        QuantityExpr::Fixed { value } => u32::try_from(*value).ok().map(AdditionalTokenCount::Fixed),
+        QuantityExpr::Ref {
+            qty: QuantityRef::EventContextAmount,
+        } => Some(AdditionalTokenCount::ThatMany),
+        _ => None,
+    }
 }
 
 /// CR 614.1a + CR 111.1: Extract the "that many <spec> (is|are) created instead"
@@ -12899,7 +12927,7 @@ fn parse_xorn_subtype_token_replacement(
         return None;
     }
 
-    let spec = parse_instead_create_those_tokens_plus_spec(lower)?;
+    let (spec, count) = parse_instead_create_those_tokens_plus_spec(lower)?;
 
     // Capitalize the subtype to match the parser's existing convention
     // (TokenSpec.subtypes uses title-case: "Treasure", not "treasure").
@@ -12915,6 +12943,7 @@ fn parse_xorn_subtype_token_replacement(
             // tokens created by other players (issue #1967).
             .token_owner_scope(ControllerRef::You)
             .additional_token_spec(spec)
+            .additional_token_count(count)
             .description(original_text.to_string()),
     )
 }
@@ -12981,7 +13010,7 @@ fn parse_generic_additional_token_replacement(
     if !nom_primitives::scan_contains(lower, "would create one or more tokens") {
         return None;
     }
-    let spec = parse_instead_create_those_tokens_plus_spec(lower)?;
+    let (spec, count) = parse_instead_create_those_tokens_plus_spec(lower)?;
 
     Some(
         ReplacementDefinition::new(ReplacementEvent::CreateToken)
@@ -12989,6 +13018,7 @@ fn parse_generic_additional_token_replacement(
             // replacement to the source's controller, without Xorn's subtype gate.
             .token_owner_scope(ControllerRef::You)
             .additional_token_spec(spec)
+            .additional_token_count(count)
             .description(original_text.to_string()),
     )
 }
@@ -12998,7 +13028,10 @@ fn parse_generic_additional_token_replacement(
 /// Tippy-Toe-class replacement effects.
 fn parse_instead_create_those_tokens_plus_spec(
     lower: &str,
-) -> Option<crate::types::token_spec::TokenSpec> {
+) -> Option<(
+    crate::types::token_spec::TokenSpec,
+    crate::types::ability::AdditionalTokenCount,
+)> {
     let total_len = lower.len();
     let ((descriptor_start, descriptor_len), _) = nom_on_lower(lower, lower, |i| {
         let (i, _) =
@@ -13018,7 +13051,10 @@ fn parse_instead_create_those_tokens_plus_spec(
         .trim();
     let descriptor = normalize_additional_token_descriptor(descriptor)?;
     let token = super::oracle_effect::parse_token_description(&descriptor)?;
-    token_description_to_spec(&token)
+    Some((
+        token_description_to_spec(&token)?,
+        additional_token_count_of(&token.count)?,
+    ))
 }
 
 /// Title-case a single-word subtype string for canonical TokenSpec storage.
@@ -30260,6 +30296,11 @@ mod tests {
         assert_eq!(spec.characteristics.core_types, vec![CoreType::Creature]);
         assert_eq!(spec.characteristics.subtypes, vec!["Squirrel".to_string()]);
         assert_eq!(spec.characteristics.colors, vec![ManaColor::Green]);
+        // CR 614.1a: "that many" is the count of the tokens it applies to.
+        assert_eq!(
+            def.additional_token_count,
+            crate::types::ability::AdditionalTokenCount::ThatMany
+        );
     }
 
     /// CR 614.1a + CR 111.1: Peregrin Took's "those tokens plus an additional
@@ -30275,6 +30316,11 @@ mod tests {
             .as_ref()
             .expect("additional Food token spec");
         assert_eq!(spec.characteristics.subtypes, vec!["Food".to_string()]);
+        // CR 614.1a: "an additional Food token" is one per event.
+        assert_eq!(
+            def.additional_token_count,
+            crate::types::ability::AdditionalTokenCount::Fixed(1)
+        );
     }
 
     /// CR 614.1a + CR 111.1: Stridehangar Automaton (#654) — artifact-token-gated
@@ -30308,6 +30354,11 @@ mod tests {
                 .any(|k| matches!(k, crate::types::keywords::Keyword::Flying)),
             "Thopter must have flying, got {:?}",
             spec.characteristics.keywords
+        );
+        // CR 614.1a: "an additional ... Thopter" is one per event, not one per token.
+        assert_eq!(
+            def.additional_token_count,
+            crate::types::ability::AdditionalTokenCount::Fixed(1)
         );
     }
 
@@ -30355,6 +30406,11 @@ mod tests {
         let text = "If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.";
         let def =
             parse_replacement_line(text, "Xorn").expect("should parse Xorn token replacement");
+        // CR 614.1a: "an additional Treasure token" is one per event.
+        assert_eq!(
+            def.additional_token_count,
+            crate::types::ability::AdditionalTokenCount::Fixed(1)
+        );
 
         assert_eq!(def.event, ReplacementEvent::CreateToken);
         match &def.condition {

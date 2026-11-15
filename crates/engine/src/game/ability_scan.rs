@@ -6938,6 +6938,7 @@ fn replacement_definition_axes(
         entry_payment_max,
         // The objects these create are scanned once they are live.
         additional_token_spec: _,
+        additional_token_count: _,
         ensure_token_specs: _,
     } = def;
     let mut acc = Axes::NONE;

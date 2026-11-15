@@ -1102,6 +1102,14 @@ impl ProposedEvent {
         matches!(self, ProposedEvent::CreateToken { appended, .. } if !appended.is_empty())
     }
 
+    /// CR 614.1a: removes the batches a replacement added to this CreateToken
+    /// event (or batch view), keeping its own batch. A no-op for other events.
+    pub fn drop_appended_token_batches(&mut self) {
+        if let ProposedEvent::CreateToken { appended, .. } = self {
+            appended.clear();
+        }
+    }
+
     /// The number of tokens a `CreateToken` event (or one batch view of a
     /// compound one) creates; `None` for any other event.
     pub fn create_token_count(&self) -> Option<u32> {

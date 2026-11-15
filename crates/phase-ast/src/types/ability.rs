@@ -41383,6 +41383,28 @@ impl ManaReplacementScope {
     }
 }
 
+/// CR 614.1a + CR 111.1: How many tokens a "those tokens plus …" replacement
+/// adds to the token-creation event it modifies.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum AdditionalTokenCount {
+    /// "those tokens plus that many …" (Chatterfang, Squirrel General): as many
+    /// as the event creates of the tokens it applies to, so it is sized per
+    /// batch of the event.
+    #[default]
+    ThatMany,
+    /// "those tokens plus an additional …" (Stridehangar Automaton, Xorn,
+    /// Peregrin Took): a fixed number, added once to the one modified event
+    /// however many tokens or batches it creates.
+    Fixed(u32),
+}
+
+impl AdditionalTokenCount {
+    pub fn is_that_many(&self) -> bool {
+        matches!(self, Self::ThatMany)
+    }
+}
+
 /// CR 614.1a: Player axis for damage-recipient replacement filters.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -41816,11 +41838,16 @@ pub struct ReplacementDefinition {
     /// pattern class (Chatterfang, Squirrel General; Donatello, Sol Invictus).
     /// The stored spec carries static characteristics only; `source_id` and
     /// `controller` are filled from the replacement source at apply time.
-    /// Count equals the primary event's `count` at apply time, so additional
-    /// replacements (e.g., Doubling Season) ordered before Chatterfang are
-    /// reflected in the Squirrel count per CR 616.
+    /// How many tokens of this spec are added is `additional_token_count`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub additional_token_spec: Option<Box<crate::types::token_spec::TokenSpec>>,
+    /// CR 614.1a + CR 616.1: How many `additional_token_spec` tokens are added.
+    /// `ThatMany` equals the count of the batch it applies to at apply time, so
+    /// replacements (e.g., Doubling Season) ordered before Chatterfang are
+    /// reflected in the Squirrel count; `Fixed` adds that many once per event
+    /// (Stridehangar Automaton's one Thopter).
+    #[serde(default, skip_serializing_if = "AdditionalTokenCount::is_that_many")]
+    pub additional_token_count: AdditionalTokenCount,
     /// CR 614.1a + CR 111.1: Ensure-all token-creation replacement. Used by
     /// Academy Manufactor ("If you would create a Clue, Food, or Treasure
     /// token, instead create one of each"). Each listed spec whose subtype
@@ -42089,6 +42116,7 @@ impl ReplacementDefinition {
             mana_modification: None,
             mana_replacement_scope: ManaReplacementScope::Any,
             additional_token_spec: None,
+            additional_token_count: AdditionalTokenCount::ThatMany,
             ensure_token_specs: None,
             counter_match: None,
             enters_under: None,
@@ -42371,6 +42399,13 @@ impl ReplacementDefinition {
     /// overwritten with the replacement source at apply time.
     pub fn additional_token_spec(mut self, spec: crate::types::token_spec::TokenSpec) -> Self {
         self.additional_token_spec = Some(Box::new(spec));
+        self
+    }
+
+    /// CR 614.1a: How many additional-spec tokens are added ("that many" or a
+    /// fixed "an additional"); the default is `ThatMany`.
+    pub fn additional_token_count(mut self, count: AdditionalTokenCount) -> Self {
+        self.additional_token_count = count;
         self
     }
 
