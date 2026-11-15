@@ -25345,6 +25345,22 @@ fn static_other_monocolored_creatures_get_plus() {
 }
 
 #[test]
+fn static_historic_creatures_have_flying() {
+    // CR 700.6: "Historic creatures you control have flying." Historic is a
+    // property (legendary, artifact or Saga), not a creature subtype.
+    let def = parse_static_line("Historic creatures you control have flying.").unwrap();
+    assert_eq!(def.mode, StaticMode::Continuous);
+    assert_eq!(
+        def.affected,
+        Some(TargetFilter::Typed(
+            TypedFilter::creature()
+                .controller(ControllerRef::You)
+                .properties(vec![FilterProp::Historic]),
+        ))
+    );
+}
+
+#[test]
 fn static_ygra_additive_food_artifact_grants_food_ability() {
     let def = parse_static_line(
             "Other creatures are Food artifacts in addition to their other types and have \"{2}, {T}, Sacrifice this permanent: You gain 3 life.\"",

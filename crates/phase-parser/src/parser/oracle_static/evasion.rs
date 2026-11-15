@@ -2099,6 +2099,17 @@ pub(crate) fn parse_property_descriptor(
         ));
     }
 
+    // CR 700.6: "historic creatures" — legendary, artifact or Saga, a property
+    // and no subtype (On the Shoulders of Giants).
+    if desc_lower == "historic" {
+        props.push(FilterProp::Historic);
+        return Some(TargetFilter::Typed(
+            TypedFilter::creature()
+                .controller(ControllerRef::You)
+                .properties(props),
+        ));
+    }
+
     None
 }
 
