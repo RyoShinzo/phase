@@ -420,6 +420,7 @@ mod noncreature_loses_creature_types;
 mod normal_cost_grant_no_mana_cost_9751;
 mod norman_osborn_transform_mayhem;
 mod notion_thief_opponent_draw_redirect;
+mod notorious_throng_damage_and_prowl;
 mod nth_spell_ordinal_cost_reduction;
 mod null_summoner_exiled_card_cast;
 mod number_quality_gate_reach;

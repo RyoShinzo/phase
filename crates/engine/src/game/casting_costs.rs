@@ -14482,6 +14482,17 @@ fn finalize_cast_with_phyrexian_choices_inner(
             ));
         }
     }
+    // CR 702.76a + CR 608.2c: the same for prowl, so a resolving prowl instant or
+    // sorcery reads "if this spell's prowl cost was paid" (Notorious Throng's
+    // extra turn). A prowl permanent is stamped again as it enters (`stack.rs`).
+    if casting_variant == CastingVariant::Prowl {
+        if let Some(obj) = state.objects.get_mut(&object_id) {
+            obj.cast_variant_paid = Some((
+                crate::types::ability::CastVariantPaid::Prowl,
+                state.turn_number,
+            ));
+        }
+    }
     // CR 702.102b + CR 709.4d: A fused split spell on the stack has the combined
     // characteristics of its two halves. The front face supplies the left half;
     // union in the right (Split back face) half's card types (CR 709.4c) and

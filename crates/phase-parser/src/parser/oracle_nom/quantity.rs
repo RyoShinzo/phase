@@ -4337,6 +4337,29 @@ fn parse_damage_dealt_this_turn_ref(input: &str) -> OracleResult<'_, QuantityRef
             },
             tag("total amount of noncombat damage dealt to your opponents this turn"),
         ),
+        // CR 120.1 + CR 120.9: Notorious Throng's "the damage dealt to your
+        // opponents this turn" counts every source's damage, combat and
+        // noncombat, to each opponent (its ruling: "all damage dealt by all
+        // sources to players who are currently your opponents").
+        value(
+            QuantityRef::DamageDealtThisTurn {
+                source: Box::new(TargetFilter::Any),
+                target: Box::new(TargetFilter::And {
+                    filters: vec![
+                        TargetFilter::Player,
+                        TargetFilter::Typed(
+                            TypedFilter::default().controller(ControllerRef::Opponent),
+                        ),
+                    ],
+                }),
+                aggregate: AggregateFunction::Sum,
+                group_by: None,
+                damage_kind: DamageKindFilter::Any,
+
+                channel: DamageChannel::Total,
+            },
+            tag("damage dealt to your opponents this turn"),
+        ),
         value(
             QuantityRef::DamageDealtThisTurn {
                 source: Box::new(TargetFilter::Any),
@@ -15472,6 +15495,36 @@ mod tests {
                 .unwrap();
         assert_eq!(rest, "");
         assert_eq!(q_the, q);
+    }
+
+    /// CR 120.1 + CR 120.9: Notorious Throng's "the damage dealt to your
+    /// opponents this turn" is every source's damage, combat and noncombat,
+    /// to the opponents.
+    #[test]
+    fn test_parse_damage_dealt_to_your_opponents_this_turn() {
+        let (rest, q) =
+            parse_damage_dealt_this_turn_ref("the damage dealt to your opponents this turn")
+                .unwrap();
+        assert_eq!(rest, "");
+        assert_eq!(
+            q,
+            QuantityRef::DamageDealtThisTurn {
+                source: Box::new(TargetFilter::Any),
+                target: Box::new(TargetFilter::And {
+                    filters: vec![
+                        TargetFilter::Player,
+                        TargetFilter::Typed(
+                            TypedFilter::default().controller(ControllerRef::Opponent),
+                        ),
+                    ],
+                }),
+                aggregate: AggregateFunction::Sum,
+                group_by: None,
+                damage_kind: DamageKindFilter::Any,
+
+                channel: DamageChannel::Total,
+            }
+        );
     }
 
     /// Regression: Chandra's Incinerator phrasing still parses to the
