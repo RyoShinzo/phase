@@ -2243,6 +2243,29 @@ pub(in crate::game) fn priority_activate_ability_announcements(
         .collect()
 }
 
+/// CR 702.190a + CR 601.2a + CR 118.9b: whether `player` may cast `object_id`
+/// with its sneak ability from the zone it is in: their hand, where sneak
+/// works by itself, or a graveyard under a permission that admits the sneak
+/// method (Ninja Teen: "You may cast creature spells from your graveyard using
+/// their sneak abilities."). Whether the card has sneak is asked apart
+/// (`keywords::effective_sneak_cost`).
+pub(crate) fn sneak_cast_zone_admits(
+    state: &GameState,
+    player: PlayerId,
+    object_id: ObjectId,
+) -> bool {
+    let Some(obj) = state.objects.get(&object_id) else {
+        return false;
+    };
+    match obj.zone {
+        Zone::Hand => obj.owner == player,
+        Zone::Graveyard => graveyard_permission_candidates(state, player, object_id)
+            .iter()
+            .any(|candidate| candidate.admits_cast_method(Some(KeywordKind::Sneak))),
+        _ => false,
+    }
+}
+
 /// Enumerates Sneak casts through the existing keyword-cost, affordability,
 /// and combat authorities for the active player in declare blockers.
 pub(in crate::game) fn priority_sneak_announcements(
@@ -2264,12 +2287,21 @@ pub(in crate::game) fn priority_sneak_announcements(
         .collect();
     let mana_source_selections =
         super::mana_sources::activatable_mana_source_selections(state, player);
+    // CR 702.190a + CR 118.9b: cards in hand, and cards in the graveyard that a
+    // permission lets the player cast with sneak (Ninja Teen).
     state
         .players
         .iter()
         .find(|candidate| candidate.id == player)
         .into_iter()
-        .flat_map(|candidate| candidate.hand.iter().copied())
+        .flat_map(|candidate| {
+            candidate
+                .hand
+                .iter()
+                .chain(state.graveyard_of(candidate.id).iter())
+                .copied()
+        })
+        .filter(|object_id| sneak_cast_zone_admits(state, player, *object_id))
         .filter_map(|hand_object| {
             crate::game::keywords::effective_sneak_cost(state, hand_object)?;
             state
@@ -10039,7 +10071,9 @@ fn prepare_spell_cast_announced(
     // declare-blockers timing (CR 702.190a), returns the unblocked attacker
     // as cost payment, and — for permanent spells only (CR 702.190b) —
     // places the permanent tapped+attacking on resolution.
-    let sneak_cost = if obj.zone == Zone::Hand {
+    // CR 118.9b: a graveyard card reaches the Sneak path only through a
+    // permission admitting the sneak method (`sneak_cast_zone_admits`).
+    let sneak_cost = if matches!(obj.zone, Zone::Hand | Zone::Graveyard) {
         super::keywords::effective_sneak_cost(state, object_id)
     } else {
         None
@@ -17212,9 +17246,10 @@ pub fn handle_cast_spell_as_sneak_with_payment_mode(
     payment_mode: CastPaymentMode,
     events: &mut Vec<GameEvent>,
 ) -> Result<WaitingFor, EngineError> {
-    // Sanity: object exists, matches card_id, and is in the caster's hand.
-    // CR 702.190a: Sneak is a hand-cast alt-cost; graveyard/exile casts are
-    // not legal under this keyword.
+    // Sanity: object exists, matches card_id, and is in the caster's hand, or
+    // in a graveyard under a permission admitting the sneak method.
+    // CR 702.190a + CR 118.9b: Sneak casts from hand by itself; from a
+    // graveyard only with such a permission (Ninja Teen).
     let obj = state.objects.get(&hand_object).ok_or_else(|| {
         EngineError::InvalidAction(format!("Object {hand_object:?} does not exist"))
     })?;
@@ -17223,9 +17258,9 @@ pub fn handle_cast_spell_as_sneak_with_payment_mode(
             "Object {hand_object:?} does not match card_id {card_id:?}",
         )));
     }
-    if obj.zone != Zone::Hand || obj.owner != player {
+    if !sneak_cast_zone_admits(state, player, hand_object) {
         return Err(EngineError::ActionNotAllowed(
-            "Sneak-cast requires a hand card owned by the caster".to_string(),
+            "Sneak-cast requires a hand card owned by the caster or a graveyard card a permission lets them cast with sneak".to_string(),
         ));
     }
 

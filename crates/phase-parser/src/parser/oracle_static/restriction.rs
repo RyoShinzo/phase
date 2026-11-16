@@ -2022,11 +2022,16 @@ pub(crate) fn try_parse_max_hand_size(tp: &TextPair<'_>, text: &str) -> Option<S
 
 /// CR 118.9b: the casting methods a "using its <keyword> ability" graveyard
 /// permission can be honored with, because the engine casts them from the
-/// graveyard: Blitz (Sabin, Master Monk; Tenacious Underdog) and Bestow
-/// (Detective's Phoenix). Warp, Sneak and Mutate have no graveyard cast route,
-/// so a permission requiring them is declined rather than modeled.
+/// graveyard: Blitz (Sabin, Master Monk; Tenacious Underdog), Bestow
+/// (Detective's Phoenix) and Sneak (Ninja Teen, CR 702.190a: the cast in the
+/// declare blockers step returning an unblocked attacker). Warp and Mutate have
+/// no graveyard cast route, so a permission requiring them is declined rather
+/// than modeled.
 fn graveyard_cast_method_is_modeled(kind: KeywordKind) -> bool {
-    matches!(kind, KeywordKind::Blitz | KeywordKind::Bestow)
+    matches!(
+        kind,
+        KeywordKind::Blitz | KeywordKind::Bestow | KeywordKind::Sneak
+    )
 }
 
 /// Handles three patterns, each with an optional alt-cost rider:

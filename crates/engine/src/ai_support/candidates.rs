@@ -5382,11 +5382,21 @@ pub(crate) fn priority_actions_with_probe(
             })
             .collect();
         if !unblocked.is_empty() {
+            // CR 702.190a + CR 118.9b: cards in hand, and graveyard cards a
+            // permission lets the player cast with sneak (Ninja Teen), through
+            // the one zone authority the cast handler checks.
             let hand_ids: Vec<ObjectId> = state
                 .players
                 .iter()
                 .find(|p| p.id == player)
-                .map(|p| p.hand.iter().copied().collect::<Vec<_>>())
+                .map(|p| {
+                    p.hand
+                        .iter()
+                        .chain(state.graveyard_of(p.id).iter())
+                        .copied()
+                        .filter(|&id| casting::sneak_cast_zone_admits(state, player, id))
+                        .collect::<Vec<_>>()
+                })
                 .unwrap_or_default();
             for hand_id in hand_ids {
                 if keywords::effective_sneak_cost(state, hand_id).is_none() {

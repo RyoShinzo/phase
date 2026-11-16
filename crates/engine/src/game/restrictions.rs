@@ -219,8 +219,7 @@ pub fn spell_confined_to_sorcery_timing(
             )
             .is_some()
             || super::casting_costs::can_pay_offering_additional_cost(state, player, object_id)
-            || (obj.zone == Zone::Hand
-                && obj.owner == player
+            || (super::casting::sneak_cast_zone_admits(state, player, object_id)
                 && super::keywords::effective_sneak_cost(state, object_id).is_some());
     !instant_speed_route_open
 }

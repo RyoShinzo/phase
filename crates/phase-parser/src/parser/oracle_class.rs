@@ -269,8 +269,8 @@ pub(crate) fn parse_class_oracle_text(
             }
 
             // CR 601.2a + CR 118.9b: a cast-from-graveyard permission line the
-            // permission parser declined (Ninja Teen's "using their sneak
-            // abilities") is a strict gap, as in the main dispatch: falling
+            // permission parser declined (a "using its warp ability" rider,
+            // which has no graveyard route) is a strict gap, as in the main dispatch: falling
             // through to the effect fallback would read it as a one-shot cast
             // effect and drop both the method requirement and the level gate.
             if is_graveyard_cast_permission_lead(&lower) {

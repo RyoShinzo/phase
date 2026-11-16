@@ -2097,8 +2097,8 @@ pub(crate) fn add_bears_to_graveyard(scenario: &mut GameScenario, name: &str) ->
 
 /// CR 601.2a + CR 118.9b: a printed-cost graveyard cast commits to a permission
 /// that leaves the method open, even when a method-restricted one is scanned
-/// first. A sneak-only permission (Ninja Teen's shape, built directly because
-/// the parser declines Ninja Teen) sits before Muldrotha; the printed Grizzly
+/// first. A sneak-only permission (Ninja Teen's shape, built directly) sits
+/// before Muldrotha; the printed Grizzly
 /// Bears cast spends Muldrotha's creature slot, so a second creature is refused.
 #[test]
 fn printed_cast_commits_to_an_open_permission_scanned_after_a_restricted_one() {
@@ -2353,12 +2353,12 @@ fn a_printed_option_through_a_blitz_only_permission_is_refused() {
     assert_eq!(runner.state().players[0].mana_pool.total(), 4);
 }
 
-/// CR 118.9b: Timeline Culler ("using its warp ability") and Ninja Teen
-/// ("using their sneak abilities") require methods the engine can't cast from
-/// the graveyard, so their permissions are honest gaps: not modeled as a
-/// graveyard permission, and left unimplemented.
+/// CR 118.9b: Timeline Culler ("using its warp ability") requires a method the
+/// engine can't cast from the graveyard, so its permission is an honest gap: not
+/// modeled as a graveyard permission, and left unimplemented. Ninja Teen's sneak
+/// permission is modeled and cast (`ninja_teen_sneak_from_graveyard`).
 #[test]
-fn warp_and_sneak_graveyard_permissions_are_honest_gaps() {
+fn warp_graveyard_permission_is_an_honest_gap() {
     let culler = parse_oracle_text(
         "Haste\nYou may cast this card from your graveyard using its warp ability.\nWarp\u{2014}{B}, Pay 2 life. (You may cast this card from your hand or graveyard for its warp cost. If you do, exile this creature at the beginning of the next end step, then you may cast it from exile on a later turn.)",
         "Timeline Culler",
@@ -2366,24 +2366,15 @@ fn warp_and_sneak_graveyard_permissions_are_honest_gaps() {
         &["Creature".into()],
         &["Drix".into(), "Warlock".into()],
     );
-    let teen = parse_oracle_text(
-        "(Gain the next level as a sorcery to add its ability.)\nWhenever a creature you control leaves the battlefield, each opponent loses 1 life.\n{1}{B}: Level 2\nCreatures you control get +1/+0 and have menace.\n{B}: Level 3\nCreature cards in your graveyard have sneak {3}{B}.\nYou may cast creature spells from your graveyard using their sneak abilities.",
-        "Ninja Teen",
-        &[],
-        &["Enchantment".into()],
-        &["Class".into()],
+    let rendered = format!("{culler:?}");
+    assert!(
+        !rendered.contains("GraveyardCastPermission"),
+        "Timeline Culler: the method-restricted permission must not be modeled"
     );
-    for (name, parsed) in [("Timeline Culler", &culler), ("Ninja Teen", &teen)] {
-        let rendered = format!("{parsed:?}");
-        assert!(
-            !rendered.contains("GraveyardCastPermission"),
-            "{name}: the method-restricted permission must not be modeled"
-        );
-        assert!(
-            rendered.contains("Unimplemented"),
-            "{name}: the declined clause must stay an explicit gap"
-        );
-    }
+    assert!(
+        rendered.contains("Unimplemented"),
+        "Timeline Culler: the declined clause must stay an explicit gap"
+    );
 }
 
 /// CR 118.9b: the method survives persistence. Underdog's blitz-only permission

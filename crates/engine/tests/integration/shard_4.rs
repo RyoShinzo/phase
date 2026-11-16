@@ -410,6 +410,7 @@ mod necrodominance_pay_any_life_draw;
 mod negated_turn_spell_cost_reduction;
 mod nettling_imp_continuity_target;
 mod niko_light_of_hope;
+mod ninja_teen_sneak_from_graveyard;
 mod ninjutsu_cluster;
 mod nissa_ascended_animist_loyalty_token_6012;
 mod nix_counter_no_mana_spent;

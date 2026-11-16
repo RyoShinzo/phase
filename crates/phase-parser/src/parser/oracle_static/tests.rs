@@ -17341,22 +17341,20 @@ fn assert_rider_reaches_the_rider_branch(text: &str, rider: &str, expected: Opti
     assert_eq!(read, expected, "{rider:?}");
 }
 
-/// CR 118.9b: Ninja Teen's Level 3 rider requires sneak, which the engine can't
-/// cast from the graveyard, so the permission is declined (an honest gap)
-/// rather than modeled with a method that has no legal cast.
+/// CR 118.9b + CR 702.190a: Ninja Teen's Level 3 rider requires sneak, which
+/// the engine casts from the graveyard, so the permission is modeled with
+/// sneak as its required casting method.
 #[test]
-fn graveyard_cast_permission_ninja_teen_sneak_rider_is_declined() {
+fn graveyard_cast_permission_ninja_teen_sneak_rider_is_modeled() {
     let text = "You may cast creature spells from your graveyard using their sneak abilities.";
-    assert_rider_reaches_the_rider_branch(
-        text,
-        " using their sneak abilities",
-        Some(KeywordKind::Sneak),
-    );
-    assert!(
-        parse_static_line(text)
-            .is_none_or(|def| !matches!(def.mode, StaticMode::GraveyardCastPermission { .. })),
-        "a sneak-only graveyard permission must not be modeled"
-    );
+    let def = parse_static_line(text).expect("a graveyard cast permission");
+    match def.mode {
+        StaticMode::GraveyardCastPermission {
+            required_cast_keyword,
+            ..
+        } => assert_eq!(required_cast_keyword, Some(KeywordKind::Sneak)),
+        other => panic!("expected GraveyardCastPermission, got {other:?}"),
+    }
 }
 
 /// CR 118.9b: a "using its <keyword> ability" rider is the permission's typed
