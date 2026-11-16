@@ -35694,3 +35694,38 @@ fn holy_frazzle_cannon_counters_each_creature_sharing_a_type() {
         } if matches!(reference.as_ref(), TargetFilter::TriggeringSource)
     )));
 }
+
+/// CR 721.1 + CR 721.2a: a station card that is no Spacecraft — Adagia,
+/// Windswept Bastion, a Planet land — gates its "12+ |" ability on twelve
+/// charge counters like a Spacecraft does; it parsed with no threshold.
+#[test]
+fn planet_station_threshold_ability_is_gated_on_charge_counters() {
+    let r = parse_with_keyword_names(
+        "This land enters tapped.\n{T}: Add {W}.\nStation (Tap another creature you control: Put charge counters equal to its power on this Planet. Station only as a sorcery.)\n12+ | {3}{W}, {T}: Create a token that's a copy of target artifact or enchantment you control, except it's legendary. Activate only as a sorcery.",
+        "Adagia, Windswept Bastion",
+        &["station"],
+        &["Land"],
+        &["Planet"],
+    );
+    let copy = r
+        .abilities
+        .iter()
+        .find(|a| matches!(*a.effect, Effect::CopyTokenOf { .. }))
+        .expect("the 12+ copy ability");
+    assert!(
+        copy.activation_restrictions.iter().any(|r| matches!(
+            r,
+            ActivationRestriction::CounterThreshold {
+                counters: CounterMatch::OfType(CounterType::Generic(name)),
+                minimum: 12,
+                maximum: None,
+            } if name == "charge"
+        )),
+        "12+ gate missing: {:?}",
+        copy.activation_restrictions
+    );
+    assert!(copy
+        .activation_restrictions
+        .iter()
+        .any(|r| matches!(r, ActivationRestriction::AsSorcery)));
+}

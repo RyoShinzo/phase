@@ -6321,7 +6321,14 @@ fn parse_normalized_oracle_ir(
     // itself comes from MTGJSON, and the creature-shift at the highest symbol
     // (CR 721.2b) is synthesized post-parse in `database::synthesis::synthesize_station`
     // where `face.power` / `face.toughness` are available for the base P/T.
-    let spacecraft_consumed = if subtypes.iter().any(|s| s == "Spacecraft") {
+    // CR 721.1 + CR 721.2a: every station card has station symbols, not only a
+    // Spacecraft: a Planet land with station (Adagia, Windswept Bastion) gates its
+    // "12+ |" ability on charge counters the same way.
+    let is_station_card = subtypes.iter().any(|s| s == "Spacecraft")
+        || mtgjson_keyword_names
+            .iter()
+            .any(|k| k.eq_ignore_ascii_case("station"));
+    let spacecraft_consumed = if is_station_card {
         // CR 707.9a: Pass the running trigger count so any "has this ability"
         // retain modification inside a Spacecraft threshold trigger body
         // resolves to the correct printed-trigger slot.
