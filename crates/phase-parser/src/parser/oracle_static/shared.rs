@@ -1894,8 +1894,26 @@ fn parse_multi_sentence_statics(text: &str) -> Option<Vec<StaticDefinition>> {
     }
     let mut defs = Vec::new();
     let mut attached_scope: Option<TargetFilter> = None;
+    let mut plural_antecedent: Option<String> = None;
     for segment in &segments {
-        let mut segment_defs = parse_static_line_multi_inner(segment);
+        // CR 611.3a + CR 613.1f: a continuation sentence whose subject is the
+        // plural pronoun "they" names the preceding sentence's plural subject
+        // (Radiant Destiny: "Creatures you control of the chosen type get +1/+1.
+        // As long as you have the city's blessing, they also have vigilance.").
+        // The pronoun is replaced by that subject phrase, so the sentence parses
+        // with the grant grammar a written-out subject gets; left as "they" it
+        // parsed as the source itself with no modifications.
+        let resolved = plural_antecedent
+            .as_deref()
+            .and_then(|antecedent| substitute_plural_pronoun_subject(segment, antecedent));
+        let parsed_text = resolved.as_deref().unwrap_or(segment);
+        let mut segment_defs = parse_static_line_multi_inner(parsed_text);
+        if resolved.is_some() {
+            for def in &mut segment_defs {
+                def.description = Some(segment.clone());
+            }
+        }
+        plural_antecedent = plural_subject_phrase(parsed_text);
         // CR 608.2c: In an Aura/Equipment, a continuation sentence whose subject is
         // the pronoun "It" refers to the enchanted/equipped creature, not the
         // Aura/Equipment object itself. Its static parses with `SelfRef` (the
@@ -1940,6 +1958,42 @@ fn parse_multi_sentence_statics(text: &str) -> Option<Vec<StaticDefinition>> {
         defs.extend(segment_defs);
     }
     Some(defs)
+}
+
+/// CR 611.3a: the subject phrase of a static sentence when it names a group of
+/// objects ("Creatures you control of the chosen type" in "… get +1/+1."), the
+/// antecedent a following sentence's "they" refers to. `None` for a pronoun,
+/// self-reference or player subject, which a plural "they" cannot name.
+fn plural_subject_phrase(sentence: &str) -> Option<String> {
+    let start = crate::parser::oracle_effect::subject::find_predicate_start(sentence)?;
+    let subject = sentence.get(..start)?.trim();
+    if subject.is_empty() {
+        return None;
+    }
+    match parse_continuous_subject_filter(subject)? {
+        TargetFilter::Typed(_) => Some(subject.to_string()),
+        _ => None,
+    }
+}
+
+/// CR 611.3a: `segment` with its subject pronoun "they" replaced by
+/// `antecedent`, in both the plain form ("They have …") and the inverted gate
+/// form ("As long as <condition>, they [also] have …"). `None` when the
+/// sentence's subject is not "they".
+fn substitute_plural_pronoun_subject(segment: &str, antecedent: &str) -> Option<String> {
+    let lower = segment.to_lowercase();
+    let tp = TextPair::new(segment, &lower);
+    if let Some(split) = try_split_inverted_as_long_as(&tp) {
+        let effect_lower = split.effect_text.to_lowercase();
+        let predicate = nom_tag_tp(&TextPair::new(&split.effect_text, &effect_lower), "they ")?;
+        return Some(format!(
+            "As long as {}, {antecedent} {}.",
+            split.condition_text,
+            predicate.original.trim()
+        ));
+    }
+    let predicate = nom_tag_tp(&tp, "they ")?;
+    Some(format!("{antecedent} {}", predicate.original.trim()))
 }
 
 /// CR 608.2c: True iff the sentence's subject is the bare pronoun "It" — an

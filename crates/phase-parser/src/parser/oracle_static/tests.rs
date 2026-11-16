@@ -42581,3 +42581,39 @@ fn repaired_grammar_neighbours_parse_to_their_meaning_or_an_explicit_gap() {
         );
     }
 }
+
+/// CR 611.3a + CR 613.1f: "they" in a following sentence names the preceding
+/// sentence's plural subject (Radiant Destiny): the city's-blessing gate grants
+/// vigilance to creatures we control of the chosen type, not to the source.
+#[test]
+fn plural_pronoun_continuation_binds_previous_subject() {
+    let defs = parse_static_line_multi(
+        "Creatures you control of the chosen type get +1/+1. As long as you have the city's blessing, they also have vigilance.",
+    );
+    assert_eq!(defs.len(), 2, "{defs:?}");
+    let subject = defs[0].affected.clone().expect("anthem subject");
+    assert!(matches!(subject, TargetFilter::Typed(_)), "{subject:?}");
+    assert_eq!(defs[1].affected.as_ref(), Some(&subject));
+    assert_eq!(defs[1].condition, Some(StaticCondition::HasCityBlessing));
+    assert_eq!(
+        defs[1].modifications,
+        vec![ContinuousModification::AddKeyword {
+            keyword: Keyword::Vigilance
+        }]
+    );
+    assert_eq!(
+        defs[1].description.as_deref(),
+        Some("As long as you have the city's blessing, they also have vigilance.")
+    );
+
+    // The plain form without a gate binds the same way.
+    let defs = parse_static_line_multi("Other Elves you control get +1/+1. They have trample.");
+    assert_eq!(defs.len(), 2, "{defs:?}");
+    assert_eq!(defs[1].affected, defs[0].affected);
+    assert_eq!(
+        defs[1].modifications,
+        vec![ContinuousModification::AddKeyword {
+            keyword: Keyword::Trample
+        }]
+    );
+}

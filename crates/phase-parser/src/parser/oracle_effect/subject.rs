@@ -9190,7 +9190,7 @@ fn is_embedded_relative_clause_verb(
         || is_embedded_relative_copula_negation(prev_token, token)
 }
 
-pub(super) fn find_predicate_start(text: &str) -> Option<usize> {
+pub(crate) fn find_predicate_start(text: &str) -> Option<usize> {
     let lower = text.to_lowercase();
     let mut word_start = None;
     let mut prev_token: Option<&str> = None;
