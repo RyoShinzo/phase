@@ -2052,6 +2052,29 @@ fn quote_closes_sentence_before_sequence(current: &str, remainder: &str) -> bool
         return true;
     }
 
+    // CR 701.15a + CR 701.15b: "The token is goaded for the rest of the game."
+    // after the created token's quoted ability (Nettling Nuisance) is the goad
+    // follow-up of the token creation, which `parse_followup_continuation_ast`
+    // reads only as a clause of its own. Kept attached to the quote, the token
+    // parse swallowed it: its duration became the token effect's and the goad
+    // was dropped. Only the sentence right after the quote is tested, and only
+    // when the quote is a created token's ability ("… token with \"…\"").
+    let current_lower = current.to_ascii_lowercase();
+    let quote_is_created_tokens = nom_primitives::scan_at_word_boundaries(&current_lower, |i| {
+        alt((
+            tag::<_, _, OracleError<'_>>("token with \""),
+            tag("tokens with \""),
+        ))
+        .parse(i)
+    })
+    .is_some();
+    let next_sentence = take_until::<_, _, OracleError<'_>>(". ")
+        .parse(trimmed_lower.as_str())
+        .map_or(trimmed_lower.as_str(), |(_, sentence)| sentence);
+    if quote_is_created_tokens && try_parse_tokens_goaded_continuation(next_sentence).is_some() {
+        return true;
+    }
+
     // CR 611.2a + CR 111.3 (issue class: Circle of Power): a token/permanent
     // granted-ability quote that ends a sentence can also be followed by a fresh
     // sibling sentence whose subject is a TYPED GROUP rather than a bare
@@ -11692,14 +11715,63 @@ mod tests {
 
     #[test]
     fn quoted_grant_keeps_nonrecognized_capitalized_continuation() {
-        // CR 608.2c: a granted quote followed by a capitalized continuation that
-        // is NOT a "may have" causative sentence ("The token is goaded …",
-        // Nettling Nuisance-style) must stay a single chunk — the prior
-        // uppercase-letter fallback over-split these.
+        // CR 608.2c: a granted quote followed by a capitalized anaphoric
+        // continuation that is NOT a "may have" causative sentence must stay a
+        // single chunk — the prior uppercase-letter fallback over-split these.
         let chunks = clause_texts(
-            "create a 1/1 red Goblin creature token with \"This creature attacks each combat if able.\" The token is goaded.",
+            "create a 1/1 red Goblin creature token with \"This creature attacks each combat if able.\" It gains haste until end of turn.",
         );
         assert_eq!(chunks.len(), 1, "unexpected split: {chunks:?}");
+    }
+
+    #[test]
+    fn quoted_grant_splits_before_token_goaded_followup() {
+        // CR 701.15a + CR 701.15b: Nettling Nuisance — "The token is goaded for
+        // the rest of the game." after the token's quoted ability is the goad
+        // follow-up, a clause of its own; attached, the token parse dropped it.
+        for followup in ["The token is goaded.", "The token is goaded for the rest of the game."] {
+            let chunks = clause_texts(&format!(
+                "that player creates a 4/2 red Pirate creature token with \"This token can't block.\" {followup}"
+            ));
+            assert_eq!(chunks.len(), 2, "expected the goad follow-up split off: {chunks:?}");
+        }
+    }
+
+    /// CR 701.15a + CR 701.15b: the token keeps its quoted "can't block" and is
+    /// goaded for the rest of the game (Nettling Nuisance).
+    #[test]
+    fn token_with_quoted_ability_then_goaded_chain() {
+        use super::super::parse_effect_chain;
+
+        let def = parse_effect_chain(
+            "that player creates a 4/2 red Pirate creature token with \"This token can't block.\" The token is goaded for the rest of the game.",
+            AbilityKind::Spell,
+        );
+        assert!(
+            matches!(def.effect.as_ref(), Effect::Token { static_abilities, .. } if static_abilities.iter().any(|s| s.mode == StaticMode::CantBlock)),
+            "token with its quoted can't-block: {:?}",
+            def.effect
+        );
+        assert_eq!(def.duration, None, "the goad's duration is not the token's");
+        let sub = def.sub_ability.as_ref().expect("goad sub_ability");
+        match sub.effect.as_ref() {
+            Effect::GenericEffect {
+                static_abilities,
+                duration,
+                target,
+                ..
+            } => {
+                assert_eq!(*target, Some(TargetFilter::LastCreated));
+                assert_eq!(*duration, Some(Duration::Permanent));
+                assert!(static_abilities[0].modifications.iter().any(|m| matches!(
+                    m,
+                    ContinuousModification::AddStaticMode {
+                        mode: StaticMode::Goaded
+                    }
+                )));
+            }
+            other => panic!("expected GenericEffect goad sub, got {other:?}"),
+        }
     }
 
     #[test]
