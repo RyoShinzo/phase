@@ -12197,6 +12197,29 @@ fn parent_target_shared_quality_values(
                     lki_shared_quality_values(&snapshot.lki, quality, &state.all_creature_types)
                 })
         })
+        .or_else(|| {
+            // CR 608.2c: in a resolving ability that chose no object and names no
+            // other object, "it" is the ability's source — tier 2 of
+            // `targeting::resolved_targets`, which binds an untargeted
+            // `ParentTarget` to the source. Titan of Littjara: "Whenever this
+            // creature enters or attacks, you may draw a card for each other
+            // creature you control that shares a creature type with it." An
+            // announcement left empty (an illegal or unchosen target) supplies
+            // no referent instead (CR 608.2b).
+            let ability = source.ability?;
+            if target_id.is_some() || ability.parent_target_missing_reason.is_some() {
+                return None;
+            }
+            Some(
+                state
+                    .objects
+                    .get(&source.id)
+                    .map(|obj| object_shared_quality_values(obj, quality, &state.all_creature_types))
+                    .unwrap_or_else(|| {
+                        lki_shared_quality_values(&source.lki, quality, &state.all_creature_types)
+                    }),
+            )
+        })
 }
 
 fn evaluate_shares_quality(

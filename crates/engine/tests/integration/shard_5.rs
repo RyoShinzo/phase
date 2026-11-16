@@ -289,6 +289,7 @@ mod timely_ward_regression;
 mod timesifter_extra_turn_contest;
 mod tinybones_joins_up_multi_target;
 mod tinybones_pocket_nuisance;
+mod titan_of_littjara_shares_type_with_itself;
 mod tobita_master_of_winds_flying_grant;
 mod token_abilities_from_creating_effect;
 mod token_art_descriptor;
