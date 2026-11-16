@@ -3245,7 +3245,7 @@ fn characteristic_leaf_perturbed_by_entry(
 ) -> bool {
     match source {
         CardTypeSetSource::Objects { filter } => {
-            matches_target_filter(state, entered.id, filter, ctx)
+            entered_object_joins_population(state, entered, ctx, filter)
         }
         // Unrolled by the bounded walker below; a union never reaches this arm.
         CardTypeSetSource::AnyOf { .. } => false,
@@ -3275,6 +3275,33 @@ fn characteristic_leaf_perturbed_by_entry(
 /// THERE is `false` HERE (an object entering can never perturb a value the
 /// classifier already proved population-independent), and every `true` arm
 /// there is narrowed HERE to "does THIS entered object join the population?".
+/// CR 611.3a + CR 613.4c: Would `entered` join the population `filter` counts?
+///
+/// A filter that reads the recipient's characteristics ("each other creature
+/// that shares a creature type with it", Coat of Arms) names a different
+/// population for each affected object, and `ctx` binds no recipient, so the
+/// unbound probe can never match it. Such a filter is probed once per
+/// battlefield object bound as the recipient: the entrant perturbs the count
+/// when it joins the population of any of them. Every battlefield object is a
+/// superset of the effect's affected set, so the probe errs only toward a
+/// recount, never toward a stale one.
+fn entered_object_joins_population(
+    state: &GameState,
+    entered: &crate::game::game_object::GameObject,
+    ctx: &FilterContext<'_>,
+    filter: &TargetFilter,
+) -> bool {
+    matches_target_filter(state, entered.id, filter, ctx)
+        || (filter_recipient_read(filter) == RecipientRead::Characteristics
+            && state.battlefield.iter().any(|&recipient| {
+                let bound = FilterContext {
+                    recipient_id: Some(recipient),
+                    ..*ctx
+                };
+                matches_target_filter(state, entered.id, filter, &bound)
+            }))
+}
+
 fn entered_object_perturbs_quantity_ref(
     state: &GameState,
     entered: &crate::game::game_object::GameObject,
@@ -3310,7 +3337,7 @@ fn entered_object_perturbs_quantity_ref(
         // `Or` contributes 4). The upgrade is a plain `=> true` if either divergence
         // case becomes reachable.
         | QuantityRef::BattlefieldEntriesThisTurn { filter, .. } => {
-            matches_target_filter(state, entered.id, filter, ctx)
+            entered_object_joins_population(state, entered, ctx, filter)
         }
         QuantityRef::DistinctCardTypes { source }
         | QuantityRef::SharedCardTypes { source }
