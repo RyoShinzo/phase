@@ -1468,11 +1468,16 @@ fn parse_it_has_keywords(input: &str) -> Option<(&str, Vec<ContinuousModificatio
     // falls through to `skip_to_next_conjunction` and the keywords are dropped
     // (Rebuild the City's "and they have vigilance and menace"). Matching the
     // neighbours exactly also keeps the gendered forms from drifting apart.
+    // A token-making copy may name its subject "the token" instead of "it"
+    // (Irenicus's Vile Duplication: "except the token has flying and it isn't
+    // legendary"); without that form the flying was dropped.
     let (rest, _) = alt((
         tag::<_, _, OracleError<'_>>("it has "),
         tag("he has "),
         tag("she has "),
         tag("they have "),
+        tag("the token has "),
+        tag("the tokens have "),
     ))
     .parse(input)
     .ok()?;
@@ -3753,6 +3758,29 @@ mod tests {
                 }
             )),
             "missing AddType(Creature); got {mods:?}"
+        );
+    }
+
+    /// CR 707.9a: "the token has flying" is the same keyword grant as "it has
+    /// flying" (Irenicus's Vile Duplication); the flying used to be dropped.
+    #[test]
+    fn irenicuss_vile_duplication_token_has_flying_and_is_not_legendary() {
+        let (_, mods) = parse_except_clause(
+            ", except the token has flying and it isn't legendary.",
+            "Irenicus's Vile Duplication",
+            &ParseContext::default(),
+        )
+        .unwrap();
+        assert!(
+            mods.contains(&ContinuousModification::AddKeyword {
+                keyword: Keyword::Flying,
+            }),
+            "the token must get flying; got {mods:?}"
+        );
+        assert!(
+            mods.iter()
+                .any(|m| matches!(m, ContinuousModification::RemoveSupertype { .. })),
+            "the token must not be legendary; got {mods:?}"
         );
     }
 
