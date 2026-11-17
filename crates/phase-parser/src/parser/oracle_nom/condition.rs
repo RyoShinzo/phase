@@ -9054,6 +9054,13 @@ fn parse_you_drew_prefix(input: &str) -> OracleResult<'_, ()> {
 /// more cards last turn" with no new tags; "since your last turn ended" has
 /// no draw counter and is declined.
 fn parse_drawn_cards_in_window(input: &str) -> OracleResult<'_, StaticCondition> {
+    // "more than one card" (Proft's Eidetic Memory): strictly more than N is
+    // N + 1 or more.
+    if let Ok((rest, n)) = preceded(tag("more than "), parse_number).parse(input) {
+        let (rest, _) = alt((tag(" cards "), tag(" card "))).parse(rest)?;
+        let (rest, window) = parse_history_window(rest)?;
+        return draw_window_condition(input, rest, window, n + 1);
+    }
     if let Ok((rest, n)) = parse_ge_threshold(input) {
         let (rest, _) = tag("cards ").parse(rest)?;
         let (rest, window) = parse_history_window(rest)?;

@@ -35770,3 +35770,19 @@ fn then_for_each_counter_repeats_the_instruction() {
         sub.repeat_for
     );
 }
+
+/// CR 121.1: "if you've drawn more than one card this turn" (Proft's Eidetic
+/// Memory) is two or more cards drawn this turn.
+#[test]
+fn drawn_more_than_one_card_this_turn_condition() {
+    let d = parse_effect_chain(
+        "If you've drawn more than one card this turn, put X +1/+1 counters on target creature you control, where X is the number of cards you've drawn this turn minus one.",
+        AbilityKind::Spell,
+    );
+    assert!(matches!(&*d.effect, Effect::PutCounter { .. }), "{:?}", d.effect);
+    let Some(AbilityCondition::QuantityCheck { comparator, rhs, .. }) = &d.condition else {
+        panic!("expected a quantity check, got {:?}", d.condition);
+    };
+    assert_eq!(*comparator, Comparator::GE);
+    assert_eq!(*rhs, QuantityExpr::Fixed { value: 2 });
+}
