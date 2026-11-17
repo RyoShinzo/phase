@@ -826,6 +826,49 @@ pub fn resolve(
     ability: &ResolvedAbility,
     events: &mut Vec<GameEvent>,
 ) -> Result<Option<EffectResolutionResult>, EffectError> {
+    // CR 115.1d + CR 400.12: "exile any number of target players' graveyards"
+    // (Thraben Charm) names zones, not cards: each target player's whole
+    // graveyard moves, as "exile target player's graveyard" does for one
+    // (`ChangeZoneAll` with a player filter). A player chosen no longer in the
+    // game was dropped by target validation; choosing none moves nothing.
+    if let Effect::ChangeZone {
+        origin: Some(origin),
+        destination,
+        target: TargetFilter::Player,
+        ..
+    } = &ability.effect
+    {
+        if *origin != Zone::Battlefield {
+            let players: Vec<PlayerId> = ability
+                .targets
+                .iter()
+                .filter_map(|target| match target {
+                    TargetRef::Player(player) => Some(*player),
+                    TargetRef::Object(_) => None,
+                })
+                .collect();
+            for player in players {
+                let mut each = ability.clone();
+                each.effect = Effect::ChangeZoneAll {
+                    origin: Some(*origin),
+                    destination: *destination,
+                    target: TargetFilter::Player,
+                    enters_under: None,
+                    enter_tapped: crate::types::zones::EtbTapState::Unspecified,
+                    enters_attacking: false,
+                    enter_with_counters: vec![],
+                    face_down_profile: None,
+                    library_position: None,
+                    library_shuffle: Default::default(),
+                    random_order: false,
+                };
+                each.multi_target = None;
+                each.set_unpinned_targets(vec![TargetRef::Player(player)]);
+                resolve_all(state, &each, events)?;
+            }
+            return Ok(None);
+        }
+    }
     let events_before = events.len();
     let (
         origin,

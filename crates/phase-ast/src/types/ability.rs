@@ -26224,9 +26224,18 @@ fn phase_out_or_in_filter_is_mass(filter: &TargetFilter) -> bool {
     match filter {
         TargetFilter::Controller | TargetFilter::Player | TargetFilter::ScopedPlayer => true,
         TargetFilter::Typed(tf) => {
-            tf.type_filters == [TypeFilter::Permanent]
+            (tf.type_filters == [TypeFilter::Permanent]
                 && tf.controller.is_some()
-                && tf.properties.is_empty()
+                && tf.properties.is_empty())
+                // CR 115.1 + CR 109.4: "each creature target player controls phases
+                // out" (Galadriel's Dismissal, kicked) targets the player, not a
+                // creature: the population the chosen player controls is expanded at
+                // resolution, and the player slot comes from the companion
+                // `TargetPlayer` slot.
+                || matches!(
+                    tf.controller,
+                    Some(ControllerRef::TargetPlayer | ControllerRef::TargetOpponent)
+                )
         }
         _ => false,
     }

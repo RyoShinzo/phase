@@ -434,12 +434,20 @@ pub(crate) fn resolution_chosen_color(
     state: &GameState,
     source_id: crate::types::identifiers::ObjectId,
 ) -> Option<ManaColor> {
-    state.chosen_color_this_resolution.or_else(|| {
-        state
-            .objects
-            .get(&source_id)
-            .and_then(|src| src.chosen_color())
-    })
+    // CR 608.2d: a printed `Choose a color.` that does not persist (Brave the
+    // Elements: "Choose a color. White creatures you control gain protection from
+    // the chosen color until end of turn.") announces its answer only in
+    // `named_color_this_resolution`; that answer is still the one THIS resolution
+    // made, so it comes before the source's linked choice.
+    state
+        .chosen_color_this_resolution
+        .or(state.named_color_this_resolution)
+        .or_else(|| {
+            state
+                .objects
+                .get(&source_id)
+                .and_then(|src| src.chosen_color())
+        })
 }
 
 /// CR 608.2d then CR 607.2d, in that order: the subtype (creature type or basic

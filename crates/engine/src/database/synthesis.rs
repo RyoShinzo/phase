@@ -10413,6 +10413,29 @@ fn build_oracle_face_inner(
         })
     });
 
+    // CR 702 + CR 113.3: a keyword offered as a choice ("choose first strike,
+    // vigilance, or lifelink. Creatures you control gain that ability",
+    // Angelic Skirmisher; "gains your choice of flying, vigilance, or lifelink",
+    // Steel Seraph) is granted by that ability, not had by the card, yet the
+    // card data's keyword list can carry it. Drop such a keyword unless a keyword
+    // line corroborates it: one whose word appears in the Oracle text only on
+    // lines that offer a choice.
+    keywords.retain(|kw| {
+        if oracle_corroborated.iter().any(|entry| entry == kw) {
+            return true;
+        }
+        let token = kw.to_string().to_lowercase();
+        let lines_with_token: Vec<Vec<String>> = raw_oracle_text
+            .lines()
+            .map(counter_scan_words)
+            .filter(|words| words_contain_phrase(words, &token))
+            .collect();
+        lines_with_token.is_empty()
+            || !lines_with_token
+                .iter()
+                .all(|words| words.iter().any(|w| w == "choose" || w == "choice"))
+    });
+
     // Merge keywords extracted from Oracle text with MTGJSON keywords via the
     // shared `merge_extracted_keywords` authority (also used by the scenario test
     // harness so the two pipelines cannot diverge). It reconciles parameterized

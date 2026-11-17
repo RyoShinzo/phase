@@ -4703,6 +4703,81 @@ fn parse_trigger_event_target_damaged_by_source_this_turn(input: &str) -> Oracle
     }
 }
 
+/// CR 603.4 + CR 102.1 + CR 506.2: "that player has more cards in hand than each
+/// other player", "that player has more life than each other player" and "that
+/// player controls more lands than each other player", where "that player" is
+/// the player a combat damage trigger's creature dealt damage to: its defending
+/// player (Battle Angels of Tyr; the rulings check each condition as the trigger
+/// resolves). "More than each other player" is strict: that player is the only
+/// one whose value is at least theirs, so the count of players with a value of at
+/// least that player's is exactly one.
+fn parse_that_player_unique_leader_condition(condition_text: &str) -> Option<AbilityCondition> {
+    #[derive(Clone)]
+    enum Property {
+        HandSize,
+        Life,
+        Lands,
+    }
+    let (rest, property) = preceded(
+        tag::<_, _, OracleError<'_>>("that player "),
+        alt((
+            value(Property::HandSize, tag("has more cards in hand")),
+            value(Property::Life, tag("has more life")),
+            value(Property::Lands, tag("controls more lands")),
+        )),
+    )
+    .parse(condition_text)
+    .ok()?;
+    all_consuming(tag::<_, _, OracleError<'_>>(" than each other player"))
+        .parse(rest)
+        .ok()?;
+    let player_attribute = |attr: QuantityRef, value: QuantityRef| {
+        crate::types::ability::PlayerFilter::PlayerAttribute {
+            relation: crate::types::ability::PlayerRelation::All,
+            attr: Box::new(attr),
+            comparator: Comparator::GE,
+            value: Box::new(QuantityExpr::Ref { qty: value }),
+        }
+    };
+    let filter = match property {
+        Property::HandSize => player_attribute(
+            QuantityRef::HandSize {
+                player: PlayerScope::ScopedPlayer,
+            },
+            QuantityRef::HandSize {
+                player: PlayerScope::DefendingPlayer,
+            },
+        ),
+        Property::Life => player_attribute(
+            QuantityRef::LifeTotal {
+                player: PlayerScope::ScopedPlayer,
+            },
+            QuantityRef::LifeTotal {
+                player: PlayerScope::DefendingPlayer,
+            },
+        ),
+        Property::Lands => crate::types::ability::PlayerFilter::ControlsCount {
+            relation: crate::types::ability::PlayerRelation::All,
+            filter: TargetFilter::Typed(TypedFilter::land()),
+            comparator: Comparator::GE,
+            count: Box::new(QuantityExpr::Ref {
+                qty: QuantityRef::ObjectCount {
+                    filter: TargetFilter::Typed(
+                        TypedFilter::land().controller(ControllerRef::DefendingPlayer),
+                    ),
+                },
+            }),
+        },
+    };
+    Some(AbilityCondition::QuantityCheck {
+        lhs: QuantityExpr::Ref {
+            qty: QuantityRef::PlayerCount { filter },
+        },
+        comparator: Comparator::EQ,
+        rhs: QuantityExpr::Fixed { value: 1 },
+    })
+}
+
 /// CR 702.110b + CR 608.2c: trailing "if it exploited that creature" is
 /// a resolution-time rider on a trigger effect (e.g. Silumgar Scavenger).
 fn parse_trigger_event_target_exploited_by_source(input: &str) -> OracleResult<'_, ()> {
@@ -4825,6 +4900,15 @@ pub(super) fn strip_routed_suffix_conditional(
     // rather than misfire an event-bound gate against a spell target.
     if ctx.in_trigger {
         if let Some(cond) = parse_zone_change_object_has_keyword_condition(condition_text) {
+            return (general(cond), text[..if_pos].trim().to_string());
+        }
+    }
+    // CR 603.4 + CR 608.2c + CR 102.1: "if that player has more cards in hand /
+    // more life than each other player" and "if that player controls more lands
+    // than each other player" (Battle Angels of Tyr) are checked as the trigger
+    // resolves (its rulings), against the player the combat damage was dealt to.
+    if ctx.in_trigger {
+        if let Some(cond) = parse_that_player_unique_leader_condition(condition_text) {
             return (general(cond), text[..if_pos].trim().to_string());
         }
     }

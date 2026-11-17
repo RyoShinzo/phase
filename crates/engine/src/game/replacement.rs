@@ -8128,6 +8128,24 @@ fn object_replacement_candidate_applies(
             return false;
         }
     }
+    // CR 614.1a + CR 500.7: "If an opponent would begin an extra turn"
+    // (Trouble in Pairs, Stranglehold) skips only an opponent's turn. A turn
+    // replacement without a scope ("If a player would begin an extra turn",
+    // Ugin's Nexus) applies to every player, so `None` keeps that reading.
+    if let ProposedEvent::BeginTurn { player_id, .. } = event {
+        let player_ok = match &repl_def.valid_player {
+            Some(crate::types::ability::ReplacementPlayerScope::Opponent) => {
+                crate::game::players::is_opponent(state, replacement_player, *player_id)
+            }
+            Some(crate::types::ability::ReplacementPlayerScope::You) => {
+                *player_id == replacement_player
+            }
+            Some(crate::types::ability::ReplacementPlayerScope::AnyPlayer) | None => true,
+        };
+        if !player_ok {
+            return false;
+        }
+    }
     if let ProposedEvent::SearchFound { searcher, .. } = event {
         let player_ok = match &repl_def.valid_player {
             Some(crate::types::ability::ReplacementPlayerScope::Opponent) => {

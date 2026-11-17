@@ -97341,3 +97341,89 @@ fn self_and_up_to_one_target_phase_out() {
         }
     ));
 }
+
+/// CR 115.1 + CR 109.4: kicked Galadriel's Dismissal targets the player, and
+/// each creature that player controls phases out; no creature is targeted.
+#[test]
+fn each_creature_target_player_controls_phases_out_targets_only_the_player() {
+    let def = parse_effect_chain(
+        "each creature target player controls phases out",
+        AbilityKind::Spell,
+    );
+    assert!(
+        matches!(&*def.effect, Effect::PhaseOut { .. }),
+        "{:?}",
+        def.effect
+    );
+    assert_eq!(extract_target_filter_from_effect(&def.effect), None);
+}
+
+/// CR 603.4 + CR 102.1: Battle Angels of Tyr's three conditions are each a
+/// strict lead of the damaged player, checked as the trigger resolves; none is
+/// dropped.
+#[test]
+fn battle_angels_of_tyr_conditions_are_that_players_strict_lead() {
+    let parsed = parse_oracle_text(
+        "Flying, myriad\nWhenever this creature deals combat damage to a player, draw a card if that player has more cards in hand than each other player. Then you create a Treasure token if that player controls more lands than each other player. Then you gain 3 life if that player has more life than each other player.",
+        "Battle Angels of Tyr",
+        &["flying".to_string(), "myriad".to_string()],
+        &["Creature".to_string()],
+        &["Angel".to_string(), "Knight".to_string()],
+    );
+    let trigger = parsed
+        .triggers
+        .iter()
+        .find(|t| t.mode == crate::types::triggers::TriggerMode::DamageDone)
+        .expect("the combat damage trigger");
+    let mut node = trigger.execute.as_deref();
+    let mut effects = Vec::new();
+    while let Some(def) = node {
+        let leader = matches!(
+            &def.condition,
+            Some(AbilityCondition::QuantityCheck {
+                lhs: QuantityExpr::Ref {
+                    qty: QuantityRef::PlayerCount { .. }
+                },
+                comparator: Comparator::EQ,
+                rhs: QuantityExpr::Fixed { value: 1 },
+            })
+        );
+        assert!(leader, "{:?}", def.condition);
+        // CR 608.2c: each later sentence is evaluated on its own guard when the
+        // one before it is false.
+        if !effects.is_empty() {
+            assert_eq!(
+                def.sibling_condition,
+                crate::types::ability::SiblingCondition::ReplicatedOrBranch
+            );
+        }
+        effects.push(std::mem::discriminant(&*def.effect));
+        node = def.sub_ability.as_deref();
+    }
+    assert_eq!(effects.len(), 3);
+}
+
+/// CR 614.1a + CR 500.7: "If an opponent would begin an extra turn" skips only
+/// an opponent's extra turn; "If a player would" leaves the scope open.
+#[test]
+fn extra_turn_skip_is_scoped_to_its_player() {
+    let opponent = parse_oracle_text(
+        "If an opponent would begin an extra turn, that player skips that turn instead.",
+        "Trouble in Pairs",
+        &[],
+        &["Enchantment".to_string()],
+        &[],
+    );
+    assert_eq!(
+        opponent.replacements[0].valid_player,
+        Some(crate::types::ability::ReplacementPlayerScope::Opponent)
+    );
+    let any = parse_oracle_text(
+        "If a player would begin an extra turn, that player skips that turn instead.",
+        "Ugin's Nexus",
+        &[],
+        &["Artifact".to_string()],
+        &[],
+    );
+    assert_eq!(any.replacements[0].valid_player, None);
+}

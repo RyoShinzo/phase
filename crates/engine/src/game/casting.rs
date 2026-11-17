@@ -20572,8 +20572,14 @@ pub(crate) fn requires_additional_cost_declaration_before_targets(
             if matches!(
                 sub_ability.condition,
                 Some(AbilityCondition::AdditionalCostPaidInstead)
-            ) && crate::types::ability::extract_target_filter_from_effect(&sub_ability.effect)
+            ) && (crate::types::ability::extract_target_filter_from_effect(&sub_ability.effect)
                 .is_some()
+                // CR 115.1 + CR 109.4: an override that targets only a player
+                // ("each creature target player controls phases out instead",
+                // Galadriel's Dismissal) declares that player as its target.
+                || crate::game::ability_utils::ability_needs_companion_target_player_slot(
+                    sub_ability,
+                ))
             {
                 return true;
             }

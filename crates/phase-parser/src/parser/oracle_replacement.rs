@@ -15850,11 +15850,20 @@ fn parse_event_substitution_replacement(
     if nom_primitives::scan_contains(norm_lower, "would begin an extra turn")
         || nom_primitives::scan_contains(norm_lower, "would take an extra turn")
     {
-        return Some(
-            ReplacementDefinition::new(ReplacementEvent::BeginTurn)
-                .condition(ReplacementCondition::OnlyExtraTurn)
-                .description(original_text.to_string()),
-        );
+        let mut def = ReplacementDefinition::new(ReplacementEvent::BeginTurn)
+            .condition(ReplacementCondition::OnlyExtraTurn)
+            .description(original_text.to_string());
+        // CR 614.1a: whose extra turn is skipped — "an opponent" (Trouble in
+        // Pairs, Stranglehold) or "you"; "a player" (Ugin's Nexus) leaves the
+        // scope open, which applies to every player.
+        def.valid_player = if nom_primitives::scan_contains(norm_lower, "if an opponent would ") {
+            Some(ReplacementPlayerScope::Opponent)
+        } else if nom_primitives::scan_contains(norm_lower, "if you would ") {
+            Some(ReplacementPlayerScope::You)
+        } else {
+            None
+        };
+        return Some(def);
     }
 
     // "would lose the game" — Platinum Angel, Lich's Mastery

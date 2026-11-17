@@ -513,6 +513,45 @@ fn bind_transient_effect(
         }
     }
 
+    // CR 611.2c + CR 508.1c + CR 509.1b: a duration-bound combat PROHIBITION
+    // over a population ("If this spell was kicked, creatures can't attack this
+    // turn", Orim's Chant) modifies no characteristics either: it modifies the
+    // rules, so a creature that enters later that turn, such as one with haste,
+    // can't attack either. Keep the population filter live on one TCE, as the
+    // requirement branch above does. Only a filter whose player reference the TCE
+    // can still read after the ability is gone (none, "you" or "your opponents",
+    // read from the TCE's `controller`) stays live; a declared target player or
+    // an inherited target falls through to the binding arms below.
+    if modifications.iter().any(|m| {
+        matches!(
+            m,
+            ContinuousModification::AddStaticMode {
+                mode: crate::types::statics::StaticMode::CantAttack
+                    | crate::types::statics::StaticMode::CantBlock
+                    | crate::types::statics::StaticMode::CantAttackOrBlock,
+            }
+        )
+    }) {
+        if let Some(affected @ TargetFilter::Typed(typed)) = static_def.affected.as_ref() {
+            if matches!(
+                typed.controller,
+                None | Some(ControllerRef::You) | Some(ControllerRef::Opponent)
+            ) && typed.properties.is_empty()
+            {
+                install_transient(
+                    state,
+                    end_permission,
+                    ability,
+                    duration.clone(),
+                    affected.clone(),
+                    modifications,
+                    static_def.condition.clone(),
+                );
+                return;
+            }
+        }
+    }
+
     // CR 608.2c (issue #323 class): SelfRef is the printed-name anaphor and
     // always refers to the source object regardless of `ability.targets`.
     // Short-circuit BEFORE the chosen-targets branch so chained Effect
