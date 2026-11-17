@@ -2718,6 +2718,10 @@ fn starts_prefix_clause(current_lower: &str) -> bool {
         tag("when "),
         tag("whenever "),
         tag("for each "),
+        // CR 608.2c: "Then for each [qty], [effect]" (Rottenmouth Viper) — the
+        // repeat count heads the sentence that its comma closes, as without
+        // "Then".
+        tag("then for each "),
         tag("then if "),
         // "then, if ..." (with comma after "then") — same scoping as "then if".
         // Regression: A Good Thing ("Then, if you have 1,000 or more life, you

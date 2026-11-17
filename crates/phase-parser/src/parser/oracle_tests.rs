@@ -35748,3 +35748,25 @@ fn token_named_everywhere_is_every_basic_land_type() {
         assert!(types.iter().any(|x| x == t), "{t} missing from {types:?}");
     }
 }
+
+/// CR 608.2c: "Then for each blight counter on it, each opponent loses 4 life
+/// unless …" (Rottenmouth Viper) repeats the instruction once per counter; the
+/// leading "Then" must not split the repeat count off its instruction.
+#[test]
+fn then_for_each_counter_repeats_the_instruction() {
+    let d = parse_effect_chain(
+        "Put a blight counter on it. Then for each blight counter on it, each opponent loses 4 life unless that player sacrifices a nonland permanent of their choice or discards a card.",
+        AbilityKind::Spell,
+    );
+    let sub = d.sub_ability.as_ref().expect("the loss instruction");
+    assert!(matches!(&*sub.effect, Effect::LoseLife { .. }), "{:?}", sub.effect);
+    assert!(sub.unless_pay.is_some());
+    assert!(
+        matches!(
+            &sub.repeat_for,
+            Some(QuantityExpr::Ref { qty: QuantityRef::CountersOn { .. } })
+        ),
+        "{:?}",
+        sub.repeat_for
+    );
+}

@@ -2500,15 +2500,12 @@ pub(super) fn handle_ward_discard_choice(
         return Ok(state.waiting_for.clone());
     }
 
-    events.push(GameEvent::EffectResolved {
-        kind: EffectKind::from(&pending_effect.effect),
-        source_id: pending_effect.source_id,
-        subject: None,
-    });
-
+    // CR 118.12 + CR 608.2c: a cost paid by a chosen card or permanent is a
+    // paid unless cost like any other: the effect is suppressed, but the
+    // instructions after it (the next opponent's leg of an "each opponent …
+    // unless" fan-out, Rottenmouth Viper) still resolve.
     set_active_priority(state);
-    resume_pending_continuation_if_priority(state, events)?;
-    Ok(state.waiting_for.clone())
+    finish_successful_unless_payment(state, &pending_effect, &None, events)
 }
 
 fn eligible_unless_sacrifice_permanents(
@@ -2596,15 +2593,12 @@ fn finish_ward_sacrifice_payment(
             .current_player;
         return advance_player_scope_token_unless_payment(state, player, true, events);
     }
-    events.push(GameEvent::EffectResolved {
-        kind: EffectKind::from(&pending_effect.effect),
-        source_id: pending_effect.source_id,
-        subject: None,
-    });
-
+    // CR 118.12 + CR 608.2c: a cost paid by a chosen card or permanent is a
+    // paid unless cost like any other: the effect is suppressed, but the
+    // instructions after it (the next opponent's leg of an "each opponent …
+    // unless" fan-out, Rottenmouth Viper) still resolve.
     set_active_priority(state);
-    resume_pending_continuation_if_priority(state, events)?;
-    Ok(state.waiting_for.clone())
+    finish_successful_unless_payment(state, &pending_effect, &None, events)
 }
 
 /// CR 702.21a + CR 701.21 + CR 614.1 + CR 616.1: Resume only the ward
@@ -3038,15 +3032,12 @@ fn finish_unless_bounce_payment(
         return Ok(state.waiting_for.clone());
     }
 
-    events.push(GameEvent::EffectResolved {
-        kind: EffectKind::from(&pending_effect.effect),
-        source_id: pending_effect.source_id,
-        subject: None,
-    });
-
+    // CR 118.12 + CR 608.2c: a cost paid by a chosen card or permanent is a
+    // paid unless cost like any other: the effect is suppressed, but the
+    // instructions after it (the next opponent's leg of an "each opponent …
+    // unless" fan-out, Rottenmouth Viper) still resolve.
     set_active_priority(state);
-    resume_pending_continuation_if_priority(state, events)?;
-    Ok(state.waiting_for.clone())
+    finish_successful_unless_payment(state, &pending_effect, &None, events)
 }
 
 /// CR 118.11 + CR 118.12 + CR 616.1: Resume the typed unless-return cost
