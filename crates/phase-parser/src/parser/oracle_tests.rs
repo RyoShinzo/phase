@@ -35729,3 +35729,22 @@ fn planet_station_threshold_ability_is_gated_on_charge_counters() {
         .iter()
         .any(|r| matches!(r, ActivationRestriction::AsSorcery)));
 }
+
+/// CR 111.4 + CR 205.3i: Overlord of the Hauntwoods' token is named Everywhere
+/// and has the five basic land types (and so their mana abilities, CR 305.6).
+#[test]
+fn token_named_everywhere_is_every_basic_land_type() {
+    let d = parse_effect_chain(
+        "Create a tapped colorless land token named Everywhere that is every basic land type.",
+        AbilityKind::Spell,
+    );
+    let Effect::Token { name, types, tapped, colors, .. } = &*d.effect else {
+        panic!("expected a token, got {:?}", d.effect);
+    };
+    assert_eq!(name, "Everywhere");
+    assert!(*tapped);
+    assert!(colors.is_empty());
+    for t in ["Land", "Plains", "Island", "Swamp", "Mountain", "Forest"] {
+        assert!(types.iter().any(|x| x == t), "{t} missing from {types:?}");
+    }
+}

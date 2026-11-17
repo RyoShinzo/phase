@@ -802,12 +802,21 @@ fn parse_token_description_with_context(
     if is_all_colors {
         colors = ManaColor::ALL.to_vec();
     }
+    // CR 205.3i + CR 305.6: "that is every basic land type" (Overlord of the
+    // Hauntwoods' Everywhere) gives the token the five basic land types, and
+    // with them their intrinsic mana abilities.
+    let (suffix, is_every_basic_land_type) = strip_token_every_basic_land_type_suffix(suffix);
     // CR 107.1a: Parse and apply standalone trailing rounding suffix.
     if let Some(rounding) = parse_rounding_suffix_only(suffix) {
         rewrite_quantity_expr_rounding(&mut count, rounding);
     }
     let mut keywords = parse_token_keyword_clause(suffix);
-    let (mut name, types) = parse_token_identity(descriptor, ctx.card_name.as_deref())?;
+    let (mut name, mut types) = parse_token_identity(descriptor, ctx.card_name.as_deref())?;
+    if is_every_basic_land_type {
+        for basic in ["Plains", "Island", "Swamp", "Mountain", "Forest"] {
+            push_unique_string(&mut types, basic);
+        }
+    }
 
     // CR 111.4 + CR 111.1: When the token is a registry-defined named token
     // (descriptor is a bare catalog name such as "Vibranium" / "Mutavault" with
@@ -1133,6 +1142,48 @@ fn strip_token_supertypes(mut text: &str) -> (Vec<Supertype>, &str) {
 ///
 /// Building block for the whole class of "create <token> ... that's all colors"
 /// effects, not just Mechtitan Core.
+/// The relative clause of a token's characteristics that ends its name
+/// ("named Reliquary Dragon that's all colors", "named Everywhere that is every
+/// basic land type"): CR 111.4 sets the name, the clause the colors or types.
+fn parse_token_that_is_characteristic(input: &str) -> OracleResult<'_, ()> {
+    let (input, _) =
+        alt((tag("that's"), tag("that is"), tag("thats"), tag("that are"))).parse(input)?;
+    alt((
+        value((), tag(" all colors")),
+        value((), tag(" every basic land type")),
+    ))
+    .parse(input)
+}
+
+/// Strip a trailing "that is every basic land type" clause from a token
+/// suffix, as [`strip_token_all_colors_suffix`] does for colors.
+///
+/// CR 205.3i: the basic land types are Plains, Island, Swamp, Mountain and
+/// Forest; a token that "is every basic land type" has all five subtypes.
+fn strip_token_every_basic_land_type_suffix(text: &str) -> (&str, bool) {
+    fn clause(i: &str) -> OracleResult<'_, ()> {
+        let (i, _) =
+            alt((tag("that's"), tag("that is"), tag("thats"), tag("that are"))).parse(i)?;
+        let (i, _) = value((), tag(" every basic land type")).parse(i)?;
+        let (i, _) = alt((value((), eof), value((), tag(".")), value((), tag(", where ")))).parse(i)?;
+        Ok((i, ()))
+    }
+
+    let lower = text.to_lowercase();
+    if clause(&lower).is_ok() {
+        return ("", true);
+    }
+    for (pos, ch) in text.char_indices() {
+        if ch != ' ' {
+            continue;
+        }
+        if clause(&lower[pos + 1..]).is_ok() {
+            return (text[..pos].trim_end(), true);
+        }
+    }
+    (text, false)
+}
+
 fn strip_token_all_colors_suffix(text: &str) -> (&str, bool) {
     fn all_colors_clause(i: &str) -> OracleResult<'_, ()> {
         let (i, _) =
@@ -1250,6 +1301,7 @@ fn parse_token_name_terminator(input: &str) -> OracleResult<'_, ()> {
         // token clause. For example, `Osgood, Operation Double` is a complete
         // supported token name, while `, where X is …` remains a suffix.
         value((), parse_token_name_comma_clause),
+        value((), preceded(tag(" "), parse_token_that_is_characteristic)),
         value((), tag(".")),
         value((), eof),
     ))
