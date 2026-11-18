@@ -23816,6 +23816,23 @@ fn resolve_chain_body(
                     .chain_tracked_set_id
                     .and_then(|id| state.tracked_object_sets.get(&id).cloned())
                     .unwrap_or_default(),
+                // CR 608.2c + CR 702.96a: the filtered peer — "For each
+                // creature exiled this way, its controller searches" (Winds of
+                // Abandon overloaded exiles several). Binds the members its
+                // count counts, from the one authority, so the i-th iteration's
+                // `ParentTargetController` is the i-th exiled creature's
+                // controller instead of falling back to the caster.
+                Some(QuantityExpr::Ref {
+                    qty: QuantityRef::FilteredTrackedSetSize { filter, caused_by },
+                }) if effect_refs_parent_target(&effective.effect) => {
+                    let ctx = filter::FilterContext::from_ability_with_controller(
+                        effective,
+                        effective.original_controller.unwrap_or(effective.controller),
+                    );
+                    crate::game::quantity::filtered_tracked_set_member_ids(
+                        state, filter, *caused_by, &ctx,
+                    )
+                }
                 Some(QuantityExpr::Ref {
                     qty: QuantityRef::ObjectCount { filter },
                 }) if effect_iterates_over_parent_target(&effective.effect) => {

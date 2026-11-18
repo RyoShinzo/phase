@@ -40,15 +40,35 @@ use crate::types::ability::{AbilityDefinition, Effect, EffectScope};
 /// effect into its all-matching counterpart and recurse into `sub_ability`,
 /// `else_ability`, and `mode_abilities`.
 pub fn transform_ability_def(def: &mut AbilityDefinition) {
-    transform_effect_in_place(def.effect.as_mut());
+    transform_node(def, false);
+}
+
+/// CR 702.96a + CR 601.2c: `after_deferred` marks a node on the sub-ability
+/// chain of an effect that hands its chosen cards on (`SearchLibrary`, `Dig`,
+/// …). A move there ("Those players put those cards onto the battlefield
+/// tapped", Winds of Abandon) acts on those cards and announces no target —
+/// the same rule the target-slot builder applies — so it has no "target" for
+/// overload to change and stays a single move of the chosen cards. Promoting
+/// it would move every card of every library.
+fn transform_node(def: &mut AbilityDefinition, after_deferred: bool) {
+    use crate::game::ability_utils::{
+        defers_sub_ability_target_selection, skips_stack_targets_after_deferred_effect,
+    };
+    let consumes_chosen_cards =
+        after_deferred && skips_stack_targets_after_deferred_effect(&def.effect);
+    let sub_after_deferred =
+        consumes_chosen_cards || defers_sub_ability_target_selection(&def.effect);
+    if !consumes_chosen_cards {
+        transform_effect_in_place(def.effect.as_mut());
+    }
     if let Some(sub) = def.sub_ability.as_mut() {
-        transform_ability_def(sub);
+        transform_node(sub, sub_after_deferred);
     }
     if let Some(els) = def.else_ability.as_mut() {
-        transform_ability_def(els);
+        transform_node(els, false);
     }
     for mode in def.mode_abilities.iter_mut() {
-        transform_ability_def(mode);
+        transform_node(mode, false);
     }
 }
 
@@ -473,6 +493,44 @@ mod tests {
             exile.effect
         );
     }
+
+    /// CR 702.96a + CR 601.2c: Winds of Abandon overloaded — the exile
+    /// promotes to `ChangeZoneAll`, but "Those players put those cards onto
+    /// the battlefield tapped" moves the searched cards and announces no
+    /// target, so it stays a single `ChangeZone` of the chosen cards (still
+    /// entering tapped) and its shuffle is untouched. Promoting it would put
+    /// every card of every library onto the battlefield. The tree is the
+    /// parser's output for the card.
+    #[test]
+    fn move_of_searched_cards_not_promoted() {
+        let mut def: AbilityDefinition = serde_json::from_str(WINDS_OF_ABANDON).expect("tree");
+        transform_ability_def(&mut def);
+        assert!(
+            matches!(*def.effect, Effect::ChangeZoneAll { destination: Zone::Exile, .. }),
+            "the exile promotes, got {:?}",
+            def.effect
+        );
+        let search = def.sub_ability.as_ref().expect("search");
+        assert!(matches!(*search.effect, Effect::SearchLibrary { .. }));
+        let put = search.sub_ability.as_ref().expect("put");
+        assert!(
+            matches!(
+                *put.effect,
+                Effect::ChangeZone {
+                    destination: Zone::Battlefield,
+                    enter_tapped: crate::types::zones::EtbTapState::Tapped,
+                    ..
+                }
+            ),
+            "the searched cards' move stays single, got {:?}",
+            put.effect
+        );
+        let shuffle = put.sub_ability.as_ref().expect("shuffle");
+        assert!(matches!(*shuffle.effect, Effect::Shuffle { .. }));
+    }
+
+    /// Winds of Abandon's ability as the parser builds it.
+    const WINDS_OF_ABANDON: &str = r#"{"condition": null, "cost": null, "description": "Exile target creature you don't control. For each creature exiled this way, its controller searches their library for a basic land card. Those players put those cards onto the battlefield tapped, then shuffle.", "duration": null, "effect": {"destination": "Exile", "enter_tapped": false, "enter_transformed": false, "enters_attacking": false, "origin": null, "owner_library": false, "target": {"controller": "Opponent", "properties": [], "type": "Typed", "type_filters": ["Creature"]}, "type": "ChangeZone"}, "forward_result": false, "kind": "Spell", "optional": false, "optional_targeting": false, "sub_ability": {"condition": null, "cost": null, "description": null, "duration": null, "effect": {"count": {"type": "Fixed", "value": 1}, "filter": {"controller": null, "properties": [{"type": "HasSupertype", "value": "Basic"}], "type": "Typed", "type_filters": ["Land"]}, "reveal": false, "target_player": {"type": "ParentTargetController"}, "type": "SearchLibrary"}, "forward_result": false, "kind": "Spell", "optional": false, "optional_targeting": false, "repeat_for": {"qty": {"caused_by": "Exiled", "filter": {"controller": null, "properties": [], "type": "Typed", "type_filters": ["Creature"]}, "type": "FilteredTrackedSetSize"}, "type": "Ref"}, "sub_ability": {"condition": null, "cost": null, "description": null, "duration": null, "effect": {"destination": "Battlefield", "enter_tapped": true, "enter_transformed": false, "enters_attacking": false, "origin": "Library", "owner_library": false, "target": {"type": "Any"}, "type": "ChangeZone"}, "forward_result": false, "kind": "Spell", "optional": false, "optional_targeting": false, "sub_ability": {"condition": null, "cost": null, "description": null, "duration": null, "effect": {"target": {"type": "ParentTargetController"}, "type": "Shuffle"}, "forward_result": false, "kind": "Spell", "optional": false, "optional_targeting": false, "sub_ability": null, "target_prompt": null}, "target_prompt": null}, "sub_link": "SequentialSibling", "target_prompt": null}, "target_prompt": null}"#;
 
     #[test]
     fn counter_preserved_unchanged() {

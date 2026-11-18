@@ -9047,7 +9047,7 @@ fn defers_conditional_target_selection(sub: &ResolvedAbility) -> bool {
             && !matches!(sub.effect, Effect::PutSticker { .. }))
 }
 
-fn defers_sub_ability_target_selection(effect: &Effect) -> bool {
+pub(crate) fn defers_sub_ability_target_selection(effect: &Effect) -> bool {
     matches!(
         effect,
         Effect::Scry { .. }
@@ -9060,7 +9060,7 @@ fn defers_sub_ability_target_selection(effect: &Effect) -> bool {
     )
 }
 
-fn skips_stack_targets_after_deferred_effect(effect: &Effect) -> bool {
+pub(crate) fn skips_stack_targets_after_deferred_effect(effect: &Effect) -> bool {
     matches!(
         effect,
         Effect::ChangeZone { .. } | Effect::Shuffle { .. } | Effect::PutAtLibraryPosition { .. }
