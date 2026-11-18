@@ -19437,6 +19437,16 @@ fn handle_play_land(
             super::casting::graveyard_land_play_frequency(state, player, object_id, source),
         )
     });
+    // CR 611.2c + CR 613.1f: the rider the admitting grant gives the land it
+    // lets be played ("If you do, it gains …": Serra Paragon), read while the
+    // land is still in the graveyard the grant reads.
+    let gy_permission_rider = gy_permission_source
+        .map(|source| {
+            super::casting::graveyard_land_play_enters_modifications(
+                state, player, object_id, source,
+            )
+        })
+        .unwrap_or_default();
 
     // CR 401.5 + CR 305.1: Check top of library for
     // `TopOfLibraryCastPermission { play_mode: Play }` (Future Sight,
@@ -19578,7 +19588,18 @@ fn handle_play_land(
         Zone::Library
     };
 
-    match commit_land_play(
+    // CR 611.2c + CR 400.7: the rider applies to the permanent the land becomes
+    // as it enters, so it waits for the entry (`zone_pipeline` installs it), which
+    // an as-enters choice can pause. The cast side's `enters_modifications`
+    // applies the same rider at cast finalization.
+    if super::casting_costs::enters_rider_applies(state, object_id, &gy_permission_rider) {
+        state.pending_enters_modifications.push((
+            object_id,
+            player,
+            gy_permission_rider.modifications,
+        ));
+    }
+    let commit = commit_land_play(
         state,
         player,
         object_id,
@@ -19587,7 +19608,19 @@ fn handle_play_land(
         exile_play_authorization,
         library_permission_src,
         events,
-    ) {
+    );
+    // A play that was prevented, or whose land went elsewhere, leaves nothing
+    // pending for a later entry of that card. A paused entry keeps it.
+    let entered = state
+        .objects
+        .get(&object_id)
+        .is_some_and(|obj| obj.zone == Zone::Battlefield);
+    if entered || matches!(commit, LandPlayCommit::Prevented | LandPlayCommit::Entered) {
+        state
+            .pending_enters_modifications
+            .retain(|(oid, _, _)| *oid != object_id);
+    }
+    match commit {
         // Player retains priority after playing a land
         LandPlayCommit::Entered => Ok(WaitingFor::Priority { player }),
         LandPlayCommit::AwaitingEntryChoice(waiting_for) => Ok(*waiting_for),

@@ -25085,6 +25085,19 @@ declare_game_state! {
     /// Consumed when the object enters the battlefield. Each entry: (object_id, counter_type, count).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub pending_etb_counters: Vec<(ObjectId, CounterType, u32)>,
+    /// CR 611.2c + CR 613.1f: modifications a land gets as it enters the
+    /// battlefield from being played through a graveyard permission with an
+    /// "If you do, it gains …" rider (Serra Paragon), kept until the land
+    /// enters, since an as-enters choice can pause the play before it does.
+    /// Consumed when the object enters the battlefield, and dropped by the
+    /// land play when it does not. Each entry: (object_id, controller,
+    /// modifications).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pending_enters_modifications: Vec<(
+        ObjectId,
+        PlayerId,
+        Vec<crate::types::ability::ContinuousModification>,
+    )>,
 
     /// Modal modes chosen this turn per source incarnation: (source, mode_index).
     /// CR 700.2: "choose one that hasn't been chosen this turn".
@@ -33486,6 +33499,7 @@ impl GameState {
             pending_spell_cost_reductions: Vec::new(),
             pending_next_spell_modifiers: Vec::new(),
             pending_etb_counters: Vec::new(),
+            pending_enters_modifications: Vec::new(),
             modal_modes_chosen_this_turn: HashSet::new(),
             modal_modes_chosen_this_game: HashSet::new(),
             revealed_cards: HashSet::new(),
@@ -37298,6 +37312,7 @@ fn _gamestate_partition_is_total(s: &GameState) {
         pending_spell_cost_reductions: _,
         pending_next_spell_modifiers: _,
         pending_etb_counters: _,
+        pending_enters_modifications: _,
         modal_modes_chosen_this_turn: _,
         modal_modes_chosen_this_game: _,
         revealed_cards: _,
@@ -37693,6 +37708,7 @@ impl PartialEq for GameState {
             && self.pending_spell_cost_reductions == other.pending_spell_cost_reductions
             && self.pending_next_spell_modifiers == other.pending_next_spell_modifiers
             && self.pending_etb_counters == other.pending_etb_counters
+            && self.pending_enters_modifications == other.pending_enters_modifications
             && self.modal_modes_chosen_this_turn == other.modal_modes_chosen_this_turn
             && self.modal_modes_chosen_this_game == other.modal_modes_chosen_this_game
             && self.revealed_cards == other.revealed_cards

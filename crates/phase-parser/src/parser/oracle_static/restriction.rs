@@ -2184,13 +2184,11 @@ pub(crate) fn try_parse_graveyard_cast_permission(
     // single-verb dispatch below because the disjunctive lead shares the
     // "once during each of your turns, you may" prefix with the cast-only form.
     //
-    // The granted leave-battlefield rider ("If you do, it gains \"…exile…\"")
-    // that may follow is a CR 614.1a Moved replacement on the *resolved*
-    // permanent (origin Battlefield → Exile), NOT the stack-exit
-    // `graveyard_destination_replacement` (which is structurally unreachable for
-    // permanent spells). Attaching it requires a resolution-grant carrier on the
-    // permission. Until that exists, decline this parser so the unmodeled rider
-    // remains an honest coverage gap instead of being silently dropped.
+    // The granted rider ("If you do, it gains \"…\"") that may follow is
+    // carried on the permission's `enters_modifications` and granted to the
+    // permanent played or cast through it, NOT the stack-exit
+    // `graveyard_destination_replacement` (structurally unreachable for
+    // permanent spells).
     if let Some(def) = try_parse_disjunctive_graveyard_cast_permission(text, lower) {
         return Some(def);
     }
@@ -2938,10 +2936,10 @@ fn inject_owner_you_filter_prop(filter: TargetFilter) -> Option<TargetFilter> {
 /// filter (The Eighth Doctor: both "historic permanent"), the union collapses
 /// to that single filter; otherwise it emits `TargetFilter::Or`.
 ///
-/// A trailing rider ("If you do, it gains \"…\"") is intentionally rejected:
-/// the granted leave-battlefield exile rider is a CR 614.1a Moved replacement
-/// on the resolved permanent. Parsing only the permission would make coverage
-/// report support while dropping rules text.
+/// A trailing rider ("If you do, it gains \"…\"") is carried on the
+/// permission's `enters_modifications` and granted to the permanent played or
+/// cast through it; a rider body that does not parse whole declines the
+/// permission, so coverage never reports support while dropping rules text.
 fn try_parse_disjunctive_graveyard_cast_permission(
     text: &str,
     lower: &str,
@@ -2960,9 +2958,35 @@ fn try_parse_disjunctive_graveyard_cast_permission(
     .or_else(|| {
         nom_tag_lower(lower, lower, "once each turn, you may play ").map(|rest| (rest, false))
     })?;
-    if nom_primitives::scan_contains(rest, "if you do, it gains") {
-        return None;
-    }
+    // CR 611.2c + CR 613.1f: the "If you do, it gains \"…\"" rider names the
+    // permanent played or cast through the permission (Serra Paragon's granted
+    // "When this permanent is put into a graveyard from the battlefield, exile
+    // it and you gain 2 life."). It rides the permission's
+    // `enters_modifications`, which the cast path applies to the spell at
+    // finalization and the land-play path to the land as it is played. A rider
+    // whose body is not fully modelled declines the whole permission so it
+    // stays an honest gap rather than a silent drop.
+    let (rest, enters_modifications) =
+        match nom_primitives::split_once_on(rest, ". if you do, ").ok() {
+            Some((_, (permission, rider))) => {
+                let (remainder, modifications) =
+                    crate::parser::oracle_effect::try_parse_cast_this_way_gains_rider_body(
+                        rider,
+                    )?;
+                if !is_punctuation_only(remainder) {
+                    return None;
+                }
+                (
+                    permission,
+                    crate::types::ability::PendingEntersModifications {
+                        modifications,
+                        cast_filter: None,
+                    },
+                )
+            }
+            None if nom_primitives::scan_contains(rest, "if you do") => return None,
+            None => (rest, Default::default()),
+        };
 
     // CR 305.1 + CR 601.2a: The disjunction connector " or cast " splits the
     // land-play branch from the spell-cast branch. `split_once_on` is the
@@ -3050,7 +3074,7 @@ fn try_parse_disjunctive_graveyard_cast_permission(
         pool: GraveyardPermissionPool::OwnGraveyard,
         cast_limit: PermissionCastLimit::Unlimited,
         mana_spend_permission: None,
-        enters_modifications: Default::default(),
+        enters_modifications,
     })
     .affected(affected)
     .description(text.to_string());

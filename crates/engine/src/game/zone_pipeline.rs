@@ -4167,6 +4167,11 @@ pub(crate) fn deliver_replaced_zone_change(
             if let Some(profile) = &face_down_profile {
                 apply_face_down_entry_profile(state, object_id, profile);
             }
+            // CR 611.2c + CR 613.1f: a land played through a graveyard
+            // permission's "If you do, it gains …" rider (Serra Paragon) gets
+            // it as the new object it became on entering (CR 400.7), as a
+            // `Duration::Permanent` effect scoped to it.
+            apply_pending_enters_modifications(state, object_id);
             // CR 608.2c: a permanent the instruction just produced is the
             // chain's most-recent created referent, so a following "it" / "that
             // creature" anaphor (`TargetFilter::LastCreated`) binds to it —
@@ -7815,5 +7820,29 @@ mod hand_entry_receiver_tests {
         assert!(state.players[1].hand.contains(&first));
         assert!(state.players[1].hand.contains(&second));
         assert_eq!(rebound_owners(&state), vec![Some(P0), Some(P0)]);
+    }
+}
+
+/// CR 611.2c + CR 613.1f: install the modifications pending for `object_id`'s
+/// entry (`GameState::pending_enters_modifications`) as a `Duration::Permanent`
+/// effect on the permanent it became, and consume them.
+fn apply_pending_enters_modifications(state: &mut GameState, object_id: ObjectId) {
+    if state.pending_enters_modifications.is_empty() {
+        return;
+    }
+    let (pending, rest): (Vec<_>, Vec<_>) = std::mem::take(&mut state.pending_enters_modifications)
+        .into_iter()
+        .partition(|(oid, _, _)| *oid == object_id);
+    state.pending_enters_modifications = rest;
+    for (_, controller, modifications) in pending {
+        state.add_transient_continuous_effect(
+            object_id,
+            controller,
+            Duration::Permanent,
+            crate::types::ability::TargetFilter::SpecificObject { id: object_id },
+            modifications,
+            None,
+        );
+        crate::game::layers::mark_layers_full(state);
     }
 }

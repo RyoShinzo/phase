@@ -16711,8 +16711,41 @@ fn neighbouring_cast_permissions_keep_their_parse() {
         "Serra Paragon",
         &["Flying"],
     );
-    assert!(serra.statics.is_empty());
-    assert_eq!(unimplemented_names(&serra), ["static_structure"]);
+    assert!(unimplemented_names(&serra).is_empty());
+    let [permission] = serra.statics.as_slice() else {
+        panic!("one permission: {:?}", serra.statics);
+    };
+    let StaticMode::GraveyardCastPermission {
+        frequency: CastFrequency::OncePerTurn,
+        play_mode: CardPlayMode::Play,
+        enters_modifications,
+        ..
+    } = &permission.mode
+    else {
+        panic!("once-per-turn play permission: {:?}", permission.mode);
+    };
+    assert_eq!(permission.condition, Some(StaticCondition::DuringYourTurn));
+    assert!(enters_modifications.cast_filter.is_none());
+    let [ContinuousModification::GrantTrigger { trigger }] =
+        enters_modifications.modifications.as_slice()
+    else {
+        panic!("the granted trigger: {enters_modifications:?}");
+    };
+    assert!(
+        trigger.execute.as_deref().is_some_and(|execute| !matches!(
+            &*execute.effect,
+            Effect::Unimplemented { .. }
+        )),
+        "{trigger:?}"
+    );
+}
+
+/// CR 611.2c: a rider after the disjunctive once-per-turn permission whose body
+/// does not parse declines the whole permission rather than dropping it.
+#[test]
+fn disjunctive_graveyard_permission_with_unparsed_rider_declines() {
+    let text = "Once during each of your turns, you may play a land from your graveyard or cast a permanent spell with mana value 3 or less from your graveyard. If you do, it perpetually becomes a Zombie.";
+    assert!(parse_static_line(text).is_none());
 }
 
 #[test]
@@ -17171,12 +17204,28 @@ fn graveyard_cast_permission_muldrotha_legacy_and() {
     ));
 }
 
+/// CR 611.2c + CR 614.1a: The Eighth Doctor's granted leave-battlefield
+/// replacement rides the permission's `enters_modifications`, granted to the
+/// permanent played or cast through it.
 #[test]
-fn graveyard_cast_permission_disjunctive_rejects_unmodeled_granted_rider() {
+fn graveyard_cast_permission_disjunctive_carries_granted_replacement_rider() {
     let text = "Once during each of your turns, you may play a historic land or cast a historic permanent spell from your graveyard. If you do, it gains \"If ~ would leave the battlefield, exile it instead of putting it anywhere else.\"";
+    let def = parse_static_line(text).expect("the permission with its rider");
+    let StaticMode::GraveyardCastPermission {
+        frequency: CastFrequency::OncePerTurn,
+        play_mode: CardPlayMode::Play,
+        enters_modifications,
+        ..
+    } = &def.mode
+    else {
+        panic!("once-per-turn play permission: {:?}", def.mode);
+    };
     assert!(
-        parse_static_line(text).is_none(),
-        "unmodeled granted leave-battlefield replacement must remain an honest coverage gap"
+        matches!(
+            enters_modifications.modifications.as_slice(),
+            [ContinuousModification::GrantReplacement { .. }]
+        ),
+        "{enters_modifications:?}"
     );
 }
 

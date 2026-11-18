@@ -7512,7 +7512,7 @@ pub fn graveyard_lands_playable_by_permission(
     results.extend(
         graveyard_land_play_grants(state, player)
             .into_iter()
-            .map(|(land, source, _)| (land, source)),
+            .map(|grant| (grant.land, grant.source)),
     );
     results
 }
@@ -7534,10 +7534,7 @@ pub fn graveyard_lands_playable_by_permission(
 /// option per grant; see `graveyard_permission_candidates`). So the frequency
 /// recorded for the play is always the admitting grant's own, never another
 /// grant's on the same source.
-fn graveyard_land_play_grants(
-    state: &GameState,
-    player: PlayerId,
-) -> Vec<(ObjectId, ObjectId, CastFrequency)> {
+fn graveyard_land_play_grants(state: &GameState, player: PlayerId) -> Vec<GraveyardLandPlayGrant> {
     let Some(player_data) = state.players.iter().find(|p| p.id == player) else {
         return Vec::new();
     };
@@ -7579,7 +7576,12 @@ fn graveyard_land_play_grants(
                 [first, ..] if admitting.iter().all(|grant| !grant.is_bounded()) => *first,
                 _ => continue,
             };
-            grants.push((land, source_id, grant.frequency));
+            grants.push(GraveyardLandPlayGrant {
+                land,
+                source: source_id,
+                frequency: grant.frequency,
+                enters_modifications: grant.enters_modifications.clone(),
+            });
         }
     }
     grants
@@ -7595,10 +7597,42 @@ pub(crate) fn graveyard_land_play_frequency(
     land: ObjectId,
     source: ObjectId,
 ) -> Option<CastFrequency> {
+    graveyard_land_play_grant(state, player, land, source).map(|grant| grant.frequency)
+}
+
+/// CR 611.2c + CR 613.1f: what the graveyard Play grant on `source` that admits
+/// playing `land` gives the land as it is played ("If you do, it gains …":
+/// Serra Paragon), read before the land leaves the graveyard. Empty when the
+/// grant carries no rider or no graveyard Play grant admits the land.
+pub(crate) fn graveyard_land_play_enters_modifications(
+    state: &GameState,
+    player: PlayerId,
+    land: ObjectId,
+    source: ObjectId,
+) -> crate::types::ability::PendingEntersModifications {
+    graveyard_land_play_grant(state, player, land, source)
+        .map(|grant| grant.enters_modifications)
+        .unwrap_or_default()
+}
+
+fn graveyard_land_play_grant(
+    state: &GameState,
+    player: PlayerId,
+    land: ObjectId,
+    source: ObjectId,
+) -> Option<GraveyardLandPlayGrant> {
     graveyard_land_play_grants(state, player)
         .into_iter()
-        .find(|(candidate, grant_source, _)| *candidate == land && *grant_source == source)
-        .map(|(_, _, frequency)| frequency)
+        .find(|grant| grant.land == land && grant.source == source)
+}
+
+/// A graveyard permission grant that admits playing one land: the land, the
+/// grant's source, its frequency and the rider it gives the land.
+struct GraveyardLandPlayGrant {
+    land: ObjectId,
+    source: ObjectId,
+    frequency: CastFrequency,
+    enters_modifications: crate::types::ability::PendingEntersModifications,
 }
 
 /// The elected authority for a land play from exile. The object-attached and
