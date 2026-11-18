@@ -3317,6 +3317,7 @@ pub fn candidate_actions_broad_with_probe(
             eligible,
             min,
             max,
+            selection_constraint,
             ..
         } => {
             let mut unique = Vec::with_capacity(eligible.len());
@@ -3341,6 +3342,25 @@ pub fn candidate_actions_broad_with_probe(
                 SELECTION_CANDIDATE_CAP,
             )
             .into_iter()
+            // CR 608.2c: drop sets that break the printed relation among the
+            // chosen objects ("with different powers"), as the submission
+            // handler would refuse them.
+            .filter(|targets| {
+                selection_constraint.is_none() || {
+                    let chosen: Vec<ObjectId> = targets
+                        .iter()
+                        .filter_map(|target| match target {
+                            TargetRef::Object(id) => Some(*id),
+                            TargetRef::Player(_) => None,
+                        })
+                        .collect();
+                    crate::game::effects::search_library::selection_satisfies_constraint(
+                        state,
+                        &chosen,
+                        selection_constraint,
+                    )
+                }
+            })
             .map(|targets| {
                 candidate(
                     GameAction::SelectTargets { targets },
@@ -7814,6 +7834,7 @@ mod tests {
             eligible,
             min: 0,
             max: Some(2),
+            selection_constraint: Default::default(),
             trigger_event: None,
         };
 
@@ -7851,6 +7872,7 @@ mod tests {
             ],
             min: 2,
             max: Some(2),
+            selection_constraint: Default::default(),
             trigger_event: None,
         };
         let required_actions = candidate_actions(&state);

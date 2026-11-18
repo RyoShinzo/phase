@@ -23667,6 +23667,7 @@ fn resolve_chain_body(
                     eligible: candidates,
                     min: 1,
                     max: Some(1),
+                    selection_constraint: Default::default(),
                     trigger_event: state.current_trigger_event.clone(),
                 };
                 return Ok(ResolutionProgress::Waiting);

@@ -1862,10 +1862,15 @@ pub(crate) enum ChooseImperativeAst {
     /// `min`/`max` carry the printed quantifier ("a"/"an"/"another" → `(1, Some(1))`,
     /// "up to N" → `(0, Some(N))` with a dynamic N collapsing to `None`,
     /// "any number of" → `(0, None)`).
+    ///
+    /// `selection_constraint` is a printed relation the chosen set must hold
+    /// among its members ("with different powers"); `None` for every other
+    /// choice.
     BattlefieldObject {
         filter: TargetFilter,
         min: u32,
         max: Option<u32>,
+        selection_constraint: SearchSelectionConstraint,
     },
     /// CR 115.10a + CR 608.2d: "choose an object and a player" makes two
     /// untargeted choices during resolution, in the printed order.

@@ -4073,8 +4073,12 @@ fn effect_details(effect: &Effect) -> Vec<(String, String)> {
             max,
             cardinality,
             eligibility,
+            selection_constraint,
         } => {
             d.push(("chooser".into(), fmt_target(chooser)));
+            if !selection_constraint.is_none() {
+                d.push(("selection".into(), format!("{selection_constraint:?}")));
+            }
             d.push(("filter".into(), fmt_target(filter)));
             d.push(("min".into(), min.to_string()));
             d.push((
@@ -16904,6 +16908,7 @@ mod tests {
             max: None,
             cardinality,
             eligibility,
+            selection_constraint: Default::default(),
         };
         let default = effect_details(&selection(None, None));
         assert!(

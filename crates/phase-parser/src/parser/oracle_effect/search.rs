@@ -321,7 +321,7 @@ fn scan_distinct_qualities_constraint(lower: &str) -> Option<SearchSelectionCons
         .map(|(constraint, _)| constraint)
 }
 
-fn parse_quality_list_constraint(
+pub(super) fn parse_quality_list_constraint(
     input: &str,
 ) -> Result<(&str, SearchSelectionConstraint), nom::Err<OracleError<'_>>> {
     map(parse_search_selection_quality_list, |qualities| {

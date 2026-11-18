@@ -189,6 +189,7 @@ fn choose_objects_runtime_rejects_fewer_than_required_minimum() {
             max: Some(2),
             cardinality: None,
             eligibility: None,
+            selection_constraint: Default::default(),
         },
     );
     let host = {

@@ -17243,6 +17243,7 @@ fn apply_non_priority_pass_action(
                 eligible,
                 min,
                 max,
+                selection_constraint,
                 trigger_event,
             },
             GameAction::SelectTargets { targets },
@@ -17254,6 +17255,7 @@ fn apply_non_priority_pass_action(
                 eligible,
                 min: *min,
                 max: *max,
+                selection_constraint,
                 trigger_event: trigger_event.clone(),
                 targets,
             },
@@ -17269,6 +17271,7 @@ fn apply_non_priority_pass_action(
                 eligible,
                 min,
                 max: max @ Some(1),
+                selection_constraint,
                 trigger_event,
             },
             GameAction::ChooseTarget { target },
@@ -17280,6 +17283,7 @@ fn apply_non_priority_pass_action(
                 eligible,
                 min: *min,
                 max: *max,
+                selection_constraint,
                 trigger_event: trigger_event.clone(),
                 targets: target.into_iter().collect(),
             },
@@ -18153,6 +18157,7 @@ struct ChooseObjectsSubmission<'a> {
     eligible: &'a [TargetRef],
     min: u32,
     max: Option<u32>,
+    selection_constraint: &'a crate::types::ability::SearchSelectionConstraint,
     trigger_event: Option<GameEvent>,
     targets: Vec<TargetRef>,
 }
@@ -18184,6 +18189,7 @@ fn apply_choose_objects_selection(
         eligible: eligible_set,
         min,
         max,
+        selection_constraint,
         trigger_event: pending_event,
         targets,
     } = submission;
@@ -18221,6 +18227,27 @@ fn apply_choose_objects_selection(
         if !selected.insert(t.clone()) {
             return Err(EngineError::InvalidAction(
                 "Duplicate object in object selection".to_string(),
+            ));
+        }
+    }
+    // CR 608.2c: the chosen set must hold the printed relation among its own
+    // members ("creatures with different powers") — the same authority the
+    // library search's set constraint uses.
+    if !selection_constraint.is_none() {
+        let chosen: Vec<ObjectId> = targets
+            .iter()
+            .filter_map(|target| match target {
+                TargetRef::Object(id) => Some(*id),
+                TargetRef::Player(_) => None,
+            })
+            .collect();
+        if !effects::search_library::selection_satisfies_constraint(
+            state,
+            &chosen,
+            selection_constraint,
+        ) {
+            return Err(EngineError::InvalidAction(
+                "Object selection does not satisfy its selection constraint".to_string(),
             ));
         }
     }

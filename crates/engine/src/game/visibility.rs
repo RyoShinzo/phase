@@ -6496,6 +6496,7 @@ mod tests {
                     eligible: Vec::new(),
                     min: 0,
                     max: None,
+                    selection_constraint: Default::default(),
                     trigger_event: Some(event.clone()),
                 },
             ),

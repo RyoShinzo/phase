@@ -10170,6 +10170,7 @@ fn try_parse_choose_and_pay_per_object(
         max,
         cardinality: None,
         eligibility: None,
+        selection_constraint: Default::default(),
     });
     clause.sub_ability = Some(Box::new(pay_ability));
     // CR 603.4: The "that player may" modal makes the whole clause optional —
@@ -19089,6 +19090,7 @@ fn parse_keeper_dispose_rest_ir(
                             max: Some(max),
                             cardinality: None,
                             eligibility: None,
+                            selection_constraint: Default::default(),
                         }),
                         Some(head.connector.boundary()),
                         ClauseDisposition::Emit {
@@ -29582,6 +29584,7 @@ fn lift_untargeted_declared_slot_destroy(
         max: Some(max),
         cardinality: None,
         eligibility: None,
+        selection_constraint: Default::default(),
     };
     let mut destroy = AbilityDefinition::new(
         AbilityKind::Spell,
@@ -39394,6 +39397,10 @@ pub fn publishes_tracked_set_from_resolution(effect: &Effect) -> bool {
         // Seek publishes its sought cards the same way ("Seek two cards. You may
         // shuffle them into your library." — Choice of Fortunes).
         || matches!(effect, Effect::Seek { .. })
+        // CR 608.2c: a resolution-time battlefield choice publishes the chosen
+        // objects as a fresh tracked set, so "those creatures" after it names
+        // exactly the choice (Sigarda's Vanguard).
+        || matches!(effect, Effect::ChooseObjectsIntoTrackedSet { .. })
         || matches!(
             effect,
             Effect::PutCounter { .. }
@@ -43562,6 +43569,7 @@ fn maybe_convert_choose_head_into_tracked_set(def: &mut AbilityDefinition) {
         max,
         cardinality: None,
         eligibility: None,
+        selection_constraint: Default::default(),
     };
     def.multi_target = None;
 }
@@ -44344,6 +44352,7 @@ fn parse_exile_pile_shuffle_cloak_ir(
                 max: None,
                 cardinality: None,
                 eligibility: None,
+                selection_constraint: Default::default(),
             }),
             Some(ClauseBoundary::Comma),
             ClauseDisposition::Emit {
@@ -49195,8 +49204,13 @@ fn parse_effect_chain_ir_body(
         }
 
         let (text_no_temporal, delayed_condition) = strip_temporal_suffix(&text);
+        // CR 608.2c + CR 608.2d: a resolution-time battlefield choice under a set
+        // relation ("choose any number of creatures with different powers") owns
+        // its quantifier as the selection's cardinality; it declares no targets.
         let (text_no_qty, mut multi_target) =
-            if imperative::aggregate_return_choice_cardinality(text_no_temporal, ctx).is_some() {
+            if imperative::aggregate_return_choice_cardinality(text_no_temporal, ctx).is_some()
+                || imperative::is_choose_objects_with_set_relation(text_no_temporal)
+            {
                 (text_no_temporal.to_string(), None)
             } else {
                 strip_any_number_quantifier(text_no_temporal)

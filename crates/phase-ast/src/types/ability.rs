@@ -969,6 +969,11 @@ impl SearchSelectionConstraint {
     pub fn permits_partial_find(&self) -> bool {
         !matches!(self, SearchSelectionConstraint::None)
     }
+
+    /// No restriction on the chosen set beyond its count.
+    pub fn is_none(&self) -> bool {
+        matches!(self, SearchSelectionConstraint::None)
+    }
 }
 
 /// CR 400.11 + CR 406.3: Candidate pool for outside-game searches. The
@@ -24967,6 +24972,15 @@ pub enum Effect {
         /// `None` preserves legacy selection behavior and wire format.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         eligibility: Option<ObjectSelectionEligibility>,
+        /// CR 608.2c + CR 608.2d: a relation the chosen set must hold among its
+        /// own members ("choose any number of creatures with different powers",
+        /// Sigarda's Vanguard). Shares the library search's set constraint and
+        /// its one validation authority. `None` keeps the legacy wire format.
+        #[serde(
+            default,
+            skip_serializing_if = "is_default_search_selection_constraint"
+        )]
+        selection_constraint: SearchSelectionConstraint,
     },
     /// CR 101.4 + CR 701.21a: Each player chooses one permanent per type category
     /// from among the permanents they control, then sacrifices the rest.

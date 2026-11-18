@@ -1436,6 +1436,7 @@ fn patch_circus_commander_choice(mut root: ResolvedAbility) -> ResolvedAbility {
             max: Some(1),
             cardinality: Some(ObjectSelectionCardinality::Exactly { count: 1 }),
             eligibility: None,
+            selection_constraint: Default::default(),
         },
         Vec::new(),
         root.source_id,

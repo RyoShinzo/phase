@@ -4945,7 +4945,61 @@ fn try_parse_choose_battlefield_object(
         return None;
     }
     let (filter, min, max) = parse_battlefield_object_choice_core(rest, rest_lower, ctx)?;
-    Some(ChooseImperativeAst::BattlefieldObject { filter, min, max })
+    Some(ChooseImperativeAst::BattlefieldObject {
+        filter,
+        min,
+        max,
+        selection_constraint: SearchSelectionConstraint::None,
+    })
+}
+
+/// CR 608.2c + CR 608.2d: a standalone, non-target battlefield-object choice
+/// whose chosen set must hold a printed relation among its members — "choose
+/// any number of creatures with different powers" (Sigarda's Vanguard,
+/// Sigarda's Imposter), "… creatures with different mana values" (Plots That
+/// Span Centuries' scheme), "… tokens you control with different names". The
+/// objects are chosen as the effect resolves, not targeted, and a set
+/// differs in a quality only if no two of its members share a value of it.
+///
+/// The quantifier and the object class come from the shared choice core; the
+/// relation from the library search's quality grammar, so both readings of
+/// "with different <qualities>" stay one authority. Returns `None` unless the
+/// whole clause is consumed (an optional terminal "." aside).
+fn parse_choose_objects_with_set_relation(
+    rest: &str,
+    rest_lower: &str,
+    ctx: &mut ParseContext,
+) -> Option<(TargetFilter, u32, Option<u32>, SearchSelectionConstraint)> {
+    let (after_relation, (head_lower, _)) = (
+        take_until::<_, _, OracleError<'_>>(" with different "),
+        tag(" with different "),
+    )
+        .parse(rest_lower)
+        .ok()?;
+    let (remainder, selection_constraint) =
+        super::search::parse_quality_list_constraint(after_relation).ok()?;
+    opt(tag::<_, _, OracleError<'_>>("."))
+        .parse(remainder.trim_end())
+        .ok()
+        .filter(|(rest, _)| rest.trim().is_empty())?;
+    let head = &rest[..head_lower.len()];
+    let (filter, min, max) = parse_battlefield_object_choice_core(head, head_lower, ctx)?;
+    Some((filter, min, max, selection_constraint))
+}
+
+/// CR 608.2c: Does this "choose …" clause choose battlefield objects under a
+/// set relation ([`parse_choose_objects_with_set_relation`])? The effect
+/// chain asks before it strips an "any number of" / "up to N" quantifier
+/// into a target count: this choice is no target, and its quantifier is the
+/// selection's own cardinality.
+pub(super) fn is_choose_objects_with_set_relation(text: &str) -> bool {
+    let lower = text.to_lowercase();
+    let Ok((rest_lower, _)) = tag::<_, _, OracleError<'_>>("choose ").parse(lower.trim()) else {
+        return false;
+    };
+    let rest = &text.trim()[text.trim().len() - rest_lower.len()..];
+    parse_choose_objects_with_set_relation(rest, rest_lower, &mut ParseContext::default())
+        .is_some()
 }
 
 /// CR 115.10a + CR 608.2d: the object and player are chosen during resolution.
@@ -5133,6 +5187,20 @@ pub(super) fn parse_choose_ast(
         // otherwise take the clause as the degraded targeting fallback.
         if let Some(ast) = try_parse_choose_battlefield_object(rest, rest_lower, lower, ctx) {
             return Some(ast);
+        }
+
+        // CR 608.2c + CR 608.2d: "choose any number of creatures with different
+        // powers" — chosen as the effect resolves, under a set relation. Must
+        // precede `is_choose_as_targeting`, which would read it as targets.
+        if let Some((filter, min, max, selection_constraint)) =
+            parse_choose_objects_with_set_relation(rest, rest_lower, ctx)
+        {
+            return Some(ChooseImperativeAst::BattlefieldObject {
+                filter,
+                min,
+                max,
+                selection_constraint,
+            });
         }
 
         if let Some(ast) = try_parse_choose_object_and_player(rest, rest_lower, ctx) {
@@ -7282,16 +7350,20 @@ pub(super) fn lower_choose_ast(ast: ChooseImperativeAst) -> Effect {
         // choice is what makes the pick durable for the chain's
         // "the chosen ‹object›" reader (the linked-ability relation is
         // reconciled at assembly by `reconcile_object_choice_durability`).
-        ChooseImperativeAst::BattlefieldObject { filter, min, max } => {
-            Effect::ChooseObjectsIntoTrackedSet {
-                chooser: TargetFilter::Controller,
-                filter,
-                min,
-                max,
-                cardinality: None,
-                eligibility: None,
-            }
-        }
+        ChooseImperativeAst::BattlefieldObject {
+            filter,
+            min,
+            max,
+            selection_constraint,
+        } => Effect::ChooseObjectsIntoTrackedSet {
+            chooser: TargetFilter::Controller,
+            filter,
+            min,
+            max,
+            cardinality: None,
+            eligibility: None,
+            selection_constraint,
+        },
     }
 }
 
@@ -17133,6 +17205,7 @@ pub(super) fn lower_imperative_family_ast(ast: ImperativeFamilyAst) -> ParsedEff
                     count: selection_count,
                 }),
                 eligibility: Some(ObjectSelectionEligibility::RemovableCounter { counter_type }),
+                selection_constraint: Default::default(),
             });
             clause.sub_ability = Some(Box::new(removal));
             clause

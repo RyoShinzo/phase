@@ -19290,6 +19290,12 @@ pub enum WaitingFor {
         /// Maximum number selectable (`None` = all eligible objects).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         max: Option<u32>,
+        /// CR 608.2c + CR 608.2d: the relation the chosen set must hold among
+        /// its own members, from `Effect::ChooseObjectsIntoTrackedSet`
+        /// ("with different powers"). Enforced by the submission handler and
+        /// used by the AI candidate enumerator to prune illegal sets.
+        #[serde(default, skip_serializing_if = "SearchSelectionConstraint::is_none")]
+        selection_constraint: SearchSelectionConstraint,
         /// CR 608.2: triggering event of the ability whose `ChooseObjectsIntoTrackedSet`
         /// or described damage recipient raised this prompt. Restored around the
         /// continuation drain so a stashed `PayCost { payer: TriggeringPlayer }` (or
@@ -53523,6 +53529,7 @@ mod tests {
             eligible: vec![TargetRef::Object(ObjectId(1))],
             min: 1,
             max: Some(2),
+            selection_constraint: Default::default(),
             trigger_event: None,
         };
         let json = serde_json::to_value(&waiting).expect("serialize bounded prompt");

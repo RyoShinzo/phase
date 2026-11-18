@@ -18718,6 +18718,7 @@ mod tests {
             eligible: vec![TargetRef::Object(first), TargetRef::Object(second)],
             min: 1,
             max: Some(2),
+            selection_constraint: Default::default(),
             trigger_event: None,
         };
 

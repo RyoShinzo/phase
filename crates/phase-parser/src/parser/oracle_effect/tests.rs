@@ -912,6 +912,7 @@ fn target_only_publishes_a_target_set_binding() {
             max: None,
             cardinality: None,
             eligibility: None,
+            selection_constraint: Default::default(),
         },
     );
     assert_eq!(
@@ -78835,6 +78836,7 @@ fn zenos_trigger_one_pump_lowers_to_the_choice_chain() {
         max,
         cardinality,
         eligibility,
+        selection_constraint,
     } = def.effect.as_ref()
     else {
         panic!(
@@ -78851,6 +78853,7 @@ fn zenos_trigger_one_pump_lowers_to_the_choice_chain() {
     assert_eq!((*min, *max), (1, Some(1)));
     assert_eq!(*cardinality, None);
     assert_eq!(*eligibility, None);
+    assert!(selection_constraint.is_none());
 
     let remember = def
         .sub_ability
@@ -79319,6 +79322,7 @@ fn gate_a_requires_chain_context_head_and_reader() {
             ),
             min: 1,
             max: Some(1),
+            selection_constraint: SearchSelectionConstraint::None,
         }),
         "Gate A must recognize the Zenos head chunk"
     );
@@ -79367,6 +79371,7 @@ fn gate_a_requires_chain_context_head_and_reader() {
         filter: TargetFilter::Typed(tf),
         min: 1,
         max: Some(1),
+        selection_constraint: SearchSelectionConstraint::None,
     }) = tmb_head_led
     else {
         panic!("the head-led TMB chunk must fire, got {tmb_head_led:?}");
@@ -79449,6 +79454,7 @@ fn battlefield_object_choice_another_scopes_out_the_source() {
             filter: with_another.clone(),
             min: 1,
             max: Some(1),
+            selection_constraint: SearchSelectionConstraint::None,
         }),
         "\"choose another …\" must carry FilterProp::Another"
     );
@@ -79461,6 +79467,7 @@ fn battlefield_object_choice_another_scopes_out_the_source() {
             filter: with_another_composite.clone(),
             min: 1,
             max: Some(1),
+            selection_constraint: SearchSelectionConstraint::None,
         }),
         "\"choose another …\" must reach EVERY typed leg of a composite class"
     );
@@ -79473,6 +79480,7 @@ fn battlefield_object_choice_another_scopes_out_the_source() {
             filter: plain.clone(),
             min: 1,
             max: Some(1),
+            selection_constraint: SearchSelectionConstraint::None,
         }),
         "\"choose a …\" must stay a bare count of 1 with no source exclusion"
     );
@@ -79485,6 +79493,7 @@ fn battlefield_object_choice_another_scopes_out_the_source() {
             filter: plain_an,
             min: 1,
             max: Some(1),
+            selection_constraint: SearchSelectionConstraint::None,
         }),
         "\"choose an …\" must stay a bare count of 1 with no source exclusion"
     );
@@ -79957,6 +79966,7 @@ fn object_choice_appender_requires_a_choice_head_and_a_continuation() {
             max: Some(1),
             cardinality: None,
             eligibility: None,
+            selection_constraint: Default::default(),
         },
     )
     .sub_ability(pump.clone());
@@ -79978,6 +79988,7 @@ fn object_choice_appender_requires_a_choice_head_and_a_continuation() {
             max: Some(1),
             cardinality: None,
             eligibility: None,
+            selection_constraint: Default::default(),
         },
     );
     ensure_remember_card_after_object_choice(&mut head_without_continuation);
@@ -80767,6 +80778,7 @@ fn keeper_dispose_controller_branch_ast_unchanged() {
                 max: Some(expected_max),
                 cardinality: None,
                 eligibility: None,
+                selection_constraint: Default::default(),
             },
             "{name}"
         );
@@ -97426,4 +97438,68 @@ fn extra_turn_skip_is_scoped_to_its_player() {
         &[],
     );
     assert_eq!(any.replacements[0].valid_player, None);
+}
+
+/// CR 608.2c + CR 608.2d: "choose any number of <objects> with different
+/// <qualities>" is a resolution-time battlefield choice, not targeting: its
+/// quantifier is the selection's own cardinality, the relation travels as the
+/// set constraint, and "those creatures" after it names the chosen set.
+#[test]
+fn choose_any_number_with_different_quality_is_a_constrained_object_choice() {
+    use crate::types::ability::SharedQualityRelation;
+    for (text, quality) in [
+        (
+            "choose any number of creatures with different powers. Those creatures gain double strike until end of turn.",
+            SharedQuality::Power,
+        ),
+        (
+            "choose any number of creatures with different mana values. Destroy those creatures.",
+            SharedQuality::ManaValue,
+        ),
+    ] {
+        let def = parse_effect_chain(text, AbilityKind::Spell);
+        let Effect::ChooseObjectsIntoTrackedSet {
+            chooser,
+            filter,
+            min,
+            max,
+            selection_constraint,
+            ..
+        } = &*def.effect
+        else {
+            panic!("{text}: expected ChooseObjectsIntoTrackedSet, got {:?}", def.effect);
+        };
+        assert_eq!(*chooser, TargetFilter::Controller, "{text}");
+        assert_eq!(*filter, TargetFilter::Typed(TypedFilter::creature()), "{text}");
+        assert_eq!((*min, *max), (0, None), "{text}: \"any number of\" → 0..");
+        assert_eq!(
+            *selection_constraint,
+            SearchSelectionConstraint::SharesQualities {
+                qualities: vec![quality],
+                relation: SharedQualityRelation::DoesNotShare,
+            },
+            "{text}"
+        );
+        assert!(def.multi_target.is_none(), "{text}: the choice declares no targets");
+        let sub = def.sub_ability.as_deref().expect("the follow-up instruction");
+        let reads_set = match &*sub.effect {
+            Effect::GenericEffect {
+                static_abilities, ..
+            } => static_abilities.iter().all(|s| {
+                matches!(s.affected, Some(TargetFilter::TrackedSet { .. }))
+            }),
+            Effect::Destroy { target, .. } => matches!(target, TargetFilter::TrackedSet { .. }),
+            other => panic!("{text}: unexpected follow-up {other:?}"),
+        };
+        assert!(reads_set, "{text}: \"those creatures\" names the chosen set: {:?}", sub.effect);
+    }
+    // Without the relation, "choose any number of creatures" keeps its parse.
+    let plain = parse_effect_chain("choose any number of creatures with flying", AbilityKind::Spell);
+    assert!(!matches!(
+        &*plain.effect,
+        Effect::ChooseObjectsIntoTrackedSet {
+            selection_constraint: SearchSelectionConstraint::SharesQualities { .. },
+            ..
+        }
+    ));
 }

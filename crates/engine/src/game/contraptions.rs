@@ -173,6 +173,7 @@ pub fn perform_contraption_upkeep_turn_based_action(
         eligible,
         min: 0,
         max: None,
+        selection_constraint: Default::default(),
         trigger_event: None,
     };
     let _ = events;

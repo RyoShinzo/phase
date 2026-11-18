@@ -12036,6 +12036,7 @@ mod tests {
             ],
             min: 1,
             max: Some(4),
+            selection_constraint: Default::default(),
             trigger_event: None,
         };
         let projection = target_sequence_projection(&waiting)

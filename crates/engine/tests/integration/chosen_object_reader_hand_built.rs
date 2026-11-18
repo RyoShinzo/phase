@@ -55,6 +55,7 @@ fn choice_head() -> AbilityDefinition {
             max: Some(1),
             cardinality: None,
             eligibility: None,
+            selection_constraint: Default::default(),
         },
     )
 }
