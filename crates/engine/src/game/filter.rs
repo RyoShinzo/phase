@@ -9282,6 +9282,25 @@ fn source_is_current_object(
     object_matches_trigger_source(state, object_id, source.id, source.trigger_source)
 }
 
+/// CR 400.7e + CR 603.10a: a leaves-the-battlefield trigger can find the new
+/// object its source became in a public zone, and "another" excludes that
+/// object too: Resplendent Marshal's dies trigger may not exile the Marshal
+/// card it became in the graveyard as "another creature card". Only the
+/// immediate successor of the source's own triggering move counts
+/// (`ResolvedAbility::finds_source_successor`), never a later object that
+/// reused the id, and not a forward-result continuation rebound to another
+/// object.
+fn is_source_successor(state: &GameState, source: &SourceContext<'_>, object_id: ObjectId) -> bool {
+    source.ability.is_some_and(|ability| {
+        ability.source_id == object_id
+            && ability
+                .trigger_source
+                .as_ref()
+                .is_some_and(|trigger| trigger.identity.reference.object_id == object_id)
+            && ability.finds_source_successor(state)
+    })
+}
+
 fn object_matches_trigger_source(
     state: &GameState,
     object_id: ObjectId,
@@ -10643,7 +10662,10 @@ fn matches_filter_prop(
         // recipient when it belongs to the reference population
         // (`object_shares_quality_with_reference_filter`).
         FilterProp::Another => source.recipient_id.map_or_else(
-            || !source_is_current_object(state, source, object_id),
+            || {
+                !source_is_current_object(state, source, object_id)
+                    && !is_source_successor(state, source, object_id)
+            },
             |recipient| object_id != recipient,
         ),
         // CR 702.95b: An unpaired creature is one that is not paired.
