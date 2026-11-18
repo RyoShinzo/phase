@@ -37,37 +37,55 @@ pub fn resolve(
         .into_iter()
         .filter(|opponent| *opponent != defending_player)
         .collect();
+    if opponents.is_empty() {
+        events.push(GameEvent::EffectResolved {
+            kind: crate::types::ability::EffectKind::Myriad,
+            source_id: ability.source_id,
+            subject: None,
+        });
+        return Ok(());
+    }
+
+    // CR 702.116a: "for each opponent other than defending player, you may
+    // create a token that's a copy of this creature that's tapped and attacking
+    // that player" is one instruction, so its tokens are created in one batch
+    // and enter the battlefield at the same time (Herald of the Host and Battle
+    // Angels of Tyr rulings). One batch makes each entry replacement that counts
+    // the permanents already there (Giada, Font of Hope) see none of the other
+    // copies, and lets a token-count replacement modify the whole event once.
+    // The copies are created under the source creature's controller's control,
+    // so `owner` stays the default `Controller`.
+    let copy_effect = Effect::CopyTokenOf {
+        target: TargetFilter::SelfRef,
+        owner: TargetFilter::Controller,
+        source_filter: None,
+        enters_attacking: false,
+        attack_destination: TokenAttackDestination::ControllerChooses,
+        tapped: true,
+        count: QuantityExpr::Fixed {
+            value: i32::try_from(opponents.len()).unwrap_or(i32::MAX),
+        },
+        extra_keywords: vec![],
+        additional_modifications: vec![],
+    };
+    let copy_ability =
+        crate::game::effects::token_copy::own_source_copy_ability(copy_effect, ability);
+    crate::game::effects::token_copy::resolve(state, &copy_ability, events)?;
+
+    // CR 508.4: each copy attacks its own opponent, in creation order; extra
+    // copies a token-count replacement adds go round the opponents the same way
+    // (`TokenAttackRequest::for_entrant`).
     let mut created = Vec::new();
-
-    for opponent in opponents {
-        // CR 702.116a: Myriad copies are created under the source creature's
-        // controller's control, so `owner` stays the default `Controller`.
-        let copy_effect = Effect::CopyTokenOf {
-            target: TargetFilter::SelfRef,
-            owner: TargetFilter::Controller,
-            source_filter: None,
-            enters_attacking: false,
-            attack_destination: TokenAttackDestination::ControllerChooses,
-            tapped: true,
-            count: QuantityExpr::Fixed { value: 1 },
-            extra_keywords: vec![],
-            additional_modifications: vec![],
-        };
-        let copy_ability =
-            crate::game::effects::token_copy::own_source_copy_ability(copy_effect, ability);
-        crate::game::effects::token_copy::resolve(state, &copy_ability, events)?;
-
-        let token_ids = state.last_created_token_ids.clone();
-        for token_id in token_ids {
-            combat::place_attacking_alongside(
-                state,
-                token_id,
-                opponent,
-                combat::AttackTarget::Player(opponent),
-                events,
-            );
-            created.push(token_id);
-        }
+    for (index, token_id) in state.last_created_token_ids.clone().into_iter().enumerate() {
+        let opponent = opponents[index % opponents.len()];
+        combat::place_attacking_alongside(
+            state,
+            token_id,
+            opponent,
+            combat::AttackTarget::Player(opponent),
+            events,
+        );
+        created.push(token_id);
     }
 
     if !created.is_empty() {
