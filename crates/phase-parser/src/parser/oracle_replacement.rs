@@ -8828,6 +8828,7 @@ fn damage_target_filter_to_prevent_target(
             DamageTargetPlayerScope::Controller => Some(TargetFilter::Controller),
             DamageTargetPlayerScope::Opponent
             | DamageTargetPlayerScope::SourceChosenPlayer
+            | DamageTargetPlayerScope::EnchantedPlayer
             | DamageTargetPlayerScope::Specific(_) => None,
         },
         Some(DamageTargetFilter::CreatureOnly) => None,
@@ -10824,6 +10825,15 @@ fn parse_damage_target_phrase(
                 player: DamageTargetPlayerScope::SourceChosenPlayer,
             },
             tag("to the chosen player"),
+        ),
+        // CR 303.4 + CR 614.1a: "to enchanted player" (Curse of Bloodletting)
+        // — only the player the Aura enchants. Without this arm the scan runs
+        // on to the later "to that player" and the shield covers every player.
+        value(
+            DamageTargetFilter::Player {
+                player: DamageTargetPlayerScope::EnchantedPlayer,
+            },
+            tag("to enchanted player"),
         ),
         value(
             DamageTargetFilter::CreatureOnly,
@@ -26605,6 +26615,24 @@ mod tests {
         assert_eq!(def.damage_source_filter, Some(TargetFilter::SelfRef));
         assert_eq!(def.combat_scope, Some(CombatDamageScope::CombatOnly));
         assert_eq!(def.damage_target_filter, Some(damage_target_any_player()));
+    }
+
+    /// CR 303.4 + CR 614.1a: "to enchanted player" scopes the shield to the
+    /// player the Aura enchants, not the later "to that player" (any player).
+    #[test]
+    fn damage_curse_of_bloodletting_enchanted_player() {
+        let def = parse_replacement_line(
+            "If a source would deal damage to enchanted player, it deals double that damage to that player instead.",
+            "Curse of Bloodletting",
+        )
+        .unwrap();
+        assert_eq!(def.damage_modification, Some(DamageModification::Double));
+        assert_eq!(
+            def.damage_target_filter,
+            Some(DamageTargetFilter::Player {
+                player: DamageTargetPlayerScope::EnchantedPlayer,
+            })
+        );
     }
 
     // ── Clone replacement tests ──

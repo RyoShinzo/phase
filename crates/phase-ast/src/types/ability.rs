@@ -41441,6 +41441,10 @@ pub enum DamageTargetPlayerScope {
     /// replacement source by a linked persisted choice, or a permanent that
     /// player controls for `PlayerOrPermanentsControlledBy`.
     SourceChosenPlayer,
+    /// CR 303.4 + CR 614.1a: Damage recipient is the player the replacement
+    /// source (an Aura with "enchant player", such as a Curse) is attached to:
+    /// "would deal damage to enchanted player" (Curse of Bloodletting).
+    EnchantedPlayer,
     Specific(PlayerId),
 }
 

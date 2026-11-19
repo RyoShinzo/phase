@@ -6642,6 +6642,15 @@ fn matches_damage_target_filter(
                 crate::game::game_object::source_chosen_player(state, repl_source)
                     .is_some_and(|chosen| player == chosen)
             }
+            // CR 303.4 + CR 614.1a: "enchanted player" — the player the
+            // replacement source is attached to. An Aura not attached to a
+            // player matches no one.
+            DamageTargetPlayerScope::EnchantedPlayer => state
+                .objects
+                .get(&repl_source)
+                .and_then(|obj| obj.attached_to)
+                .and_then(|host| host.as_player())
+                .is_some_and(|enchanted| player == enchanted),
             DamageTargetPlayerScope::Specific(specific) => player == *specific,
         }
     }
