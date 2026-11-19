@@ -2163,6 +2163,13 @@ pub(super) fn matching_attack_events(
             // CR 508.3d + CR 508.5a: "[player] attacks [opponent]" triggers
             // once per attacked defending player, not once per attacking
             // creature, while still carrying a single defending-player context.
+            // CR 508.1 + CR 603.4: each firing carries every attacker of the
+            // declaration grouped under its defending player, first attacker
+            // first, so an intervening-if that counts "those creatures" by
+            // attack target (Mangara, the Diplomat: "if two or more of those
+            // creatures are attacking you and/or planeswalkers you control")
+            // sees all of them, and an attack on that player and one of their
+            // planeswalkers is one firing that counts both.
             let Some(attacking_player) = attacker_ids
                 .iter()
                 .find_map(|id| state.objects.get(id).map(|o| o.controller))
@@ -2172,42 +2179,39 @@ pub(super) fn matching_attack_events(
             if !player_matches_filter(filter, state, attacking_player, source_context) {
                 return Vec::new();
             }
-            let mut seen_defending_players = Vec::new();
-            return attacker_ids
-                .iter()
-                .filter_map(|id| {
-                    let target = attacks
-                        .iter()
-                        .find_map(|(attacker_id, target)| (*attacker_id == *id).then_some(*target))
-                        .unwrap_or(crate::game::combat::AttackTarget::Player(*defending_player));
-                    if !attack_target_matches(
-                        trigger,
-                        state,
-                        target,
-                        *defending_player,
-                        source_context,
-                    ) {
-                        return None;
-                    }
-                    let event_defending_player =
-                        crate::game::combat::defending_player_for_target_or(
-                            state,
-                            target,
-                            *defending_player,
-                        );
-                    if seen_defending_players.contains(&event_defending_player) {
-                        return None;
-                    }
-                    seen_defending_players.push(event_defending_player);
-                    Some(GameEvent::AttackersDeclared {
-                        attacker_ids: vec![*id],
-                        defending_player: event_defending_player,
-                        attacks: vec![(*id, target)],
-                        // The trigger source is narrowed to this attacker, but
-                        // event-scoped conditions such as Pack Tactics still
-                        // refer to the full declaration batch.
-                        declaration_records: declaration_records.clone(),
-                    })
+            let mut groups: Vec<(PlayerId, Vec<(ObjectId, crate::game::combat::AttackTarget)>)> =
+                Vec::new();
+            for id in attacker_ids {
+                let target = attacks
+                    .iter()
+                    .find_map(|(attacker_id, target)| (*attacker_id == *id).then_some(*target))
+                    .unwrap_or(crate::game::combat::AttackTarget::Player(*defending_player));
+                if !attack_target_matches(trigger, state, target, *defending_player, source_context)
+                {
+                    continue;
+                }
+                let event_defending_player = crate::game::combat::defending_player_for_target_or(
+                    state,
+                    target,
+                    *defending_player,
+                );
+                match groups
+                    .iter_mut()
+                    .find(|(player, _)| *player == event_defending_player)
+                {
+                    Some((_, members)) => members.push((*id, target)),
+                    None => groups.push((event_defending_player, vec![(*id, target)])),
+                }
+            }
+            return groups
+                .into_iter()
+                .map(|(event_defending_player, members)| GameEvent::AttackersDeclared {
+                    attacker_ids: members.iter().map(|(id, _)| *id).collect(),
+                    defending_player: event_defending_player,
+                    attacks: members,
+                    // Event-scoped conditions such as Pack Tactics still
+                    // refer to the full declaration batch.
+                    declaration_records: declaration_records.clone(),
                 })
                 .collect();
         }
@@ -8877,6 +8881,124 @@ mod tests {
             event,
             GameEvent::AttackersDeclared { attacker_ids, .. } if attacker_ids.len() == 1
         )));
+    }
+
+    /// CR 508.3d + CR 508.5a + CR 603.4: a player-subject attack trigger
+    /// ("Whenever an opponent attacks with creatures", Mangara, the Diplomat)
+    /// fires once per attacked player, and each firing carries every attacker
+    /// grouped under that player: one at the player and one at their
+    /// planeswalker share a firing, one at another player has its own. The
+    /// intervening-if "two or more of those creatures are attacking you and/or
+    /// planeswalkers you control" holds for the first firing only.
+    #[test]
+    fn player_scope_attack_trigger_groups_attackers_by_defending_player() {
+        let mut state =
+            GameState::new(crate::types::format::FormatConfig::free_for_all(), 3, 42);
+        let mangara = create_object(
+            &mut state,
+            CardId(1),
+            PlayerId(0),
+            "Mangara".to_string(),
+            Zone::Battlefield,
+        );
+        let planeswalker = create_object(
+            &mut state,
+            CardId(2),
+            PlayerId(0),
+            "Planeswalker".to_string(),
+            Zone::Battlefield,
+        );
+        let attackers: Vec<ObjectId> = (0..3)
+            .map(|i| {
+                let id = create_object(
+                    &mut state,
+                    CardId(10 + i),
+                    PlayerId(1),
+                    format!("Attacker {i}"),
+                    Zone::Battlefield,
+                );
+                state
+                    .objects
+                    .get_mut(&id)
+                    .unwrap()
+                    .card_types
+                    .core_types
+                    .push(CoreType::Creature);
+                id
+            })
+            .collect();
+
+        let mut trigger = make_trigger(TriggerMode::Attacks);
+        trigger.valid_source = Some(TargetFilter::Typed(
+            TypedFilter::default().controller(ControllerRef::Opponent),
+        ));
+        let event = GameEvent::AttackersDeclared {
+            attacker_ids: attackers.clone(),
+            defending_player: PlayerId(0),
+            attacks: vec![
+                (
+                    attackers[0],
+                    crate::game::combat::AttackTarget::Player(PlayerId(0)),
+                ),
+                (
+                    attackers[1],
+                    crate::game::combat::AttackTarget::Player(PlayerId(2)),
+                ),
+                (
+                    attackers[2],
+                    crate::game::combat::AttackTarget::Planeswalker(planeswalker),
+                ),
+            ],
+            declaration_records: Vec::new(),
+        };
+
+        let matched = matching_attack_events(
+            &event,
+            &trigger,
+            &test_trigger_source_context(&state, mangara),
+            &state,
+        );
+        let groups: Vec<(PlayerId, Vec<ObjectId>)> = matched
+            .iter()
+            .map(|event| match event {
+                GameEvent::AttackersDeclared {
+                    attacker_ids,
+                    defending_player,
+                    ..
+                } => (*defending_player, attacker_ids.clone()),
+                _ => unreachable!(),
+            })
+            .collect();
+        assert_eq!(
+            groups,
+            vec![
+                (PlayerId(0), vec![attackers[0], attackers[2]]),
+                (PlayerId(2), vec![attackers[1]]),
+            ]
+        );
+
+        let condition = TriggerCondition::AttackersDeclaredCount {
+            subject: crate::types::ability::AttackersDeclaredCountSubject::AttackTarget {
+                controller: ControllerRef::You,
+                attacked: crate::types::triggers::AttackTargetFilter::PlayerOrPlaneswalker,
+                filter: None,
+            },
+            comparator: crate::types::ability::Comparator::GE,
+            count: 2,
+        };
+        let holds: Vec<bool> = matched
+            .iter()
+            .map(|event| {
+                crate::game::triggers::check_trigger_condition(
+                    &state,
+                    &condition,
+                    PlayerId(0),
+                    Some(mangara),
+                    Some(event),
+                )
+            })
+            .collect();
+        assert_eq!(holds, vec![true, false]);
     }
 
     #[test]
