@@ -4470,12 +4470,20 @@ pub(crate) fn apply_pending_spell_resolution(
 /// replacements (CR 614.1a) are honored and derived fields
 /// (`obj.loyalty` / `obj.defense`) stay in sync via the single-authority
 /// resolver.
+///
+/// CR 614.1c + CR 122.6 + CR 614.5: every contribution of one counter kind,
+/// such as "enters with X +1/+1 counters" and riot's additional counter, is
+/// one placement as the object enters, so the contributions are coalesced
+/// first and a counter replacement (Hardened Scales) or a "counters are put"
+/// trigger (Shalai and Hallar) sees one event, not one per contribution.
 pub(super) fn apply_etb_counters(
     state: &mut GameState,
     object_id: ObjectId,
     counters: &[(CounterType, u32)],
     events: &mut Vec<GameEvent>,
 ) -> bool {
+    let counters =
+        &super::effects::counters::coalesce_entry_counters(counters.iter().cloned())[..];
     let actor = state
         .objects
         .get(&object_id)
