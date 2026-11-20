@@ -44472,6 +44472,83 @@ pub(crate) fn finalize_effect_chain(def: &mut AbilityDefinition) {
     fold_speed_floor_sentences(def);
     rewrite_choose_tracked_set_exclusion(def);
     fold_additional_combat_attacker_restriction(def);
+    fold_sequential_stack_copies(def);
+}
+
+/// The member class of a mass stack copy (`imperative::parse_copy_all_stack_class`):
+/// a `CopySpell { ParentTarget }` looped over `ObjectCount` of spells or abilities.
+fn mass_stack_copy_class(def: &AbilityDefinition) -> Option<(&TargetFilter, &CopyRetargetPermission)> {
+    let Effect::CopySpell {
+        target: TargetFilter::ParentTarget,
+        retarget,
+        ..
+    } = def.effect.as_ref()
+    else {
+        return None;
+    };
+    match def.repeat_for.as_ref()? {
+        QuantityExpr::Ref {
+            qty: QuantityRef::ObjectCount { filter },
+        } if filter_names_stack_class(filter) => Some((filter, retarget)),
+        _ => None,
+    }
+}
+
+fn filter_names_stack_class(filter: &TargetFilter) -> bool {
+    match filter {
+        TargetFilter::StackSpell | TargetFilter::StackAbility { .. } => true,
+        TargetFilter::And { filters } => filters.iter().any(filter_names_stack_class),
+        TargetFilter::Or { filters } => {
+            !filters.is_empty() && filters.iter().all(filter_names_stack_class)
+        }
+        _ => false,
+    }
+}
+
+/// CR 707.10 + CR 608.2c: "copy all spells you control, then copy all other
+/// activated and triggered abilities you control" (Ulalek, Fused Atrocity) is one
+/// copying instruction over two stack classes. Its two mass-copy clauses fold
+/// into one member loop over `Or [spells, abilities]`, which the resolver walks
+/// one disjunct after the other, so the spells' copies go on the stack first, as
+/// printed. Kept as two loops, the first's per-member chain would repeat the
+/// second once for each spell.
+fn fold_sequential_stack_copies(def: &mut AbilityDefinition) {
+    let mut current = Some(def);
+    while let Some(node) = current {
+        loop {
+            let Some((filter, retarget)) = mass_stack_copy_class(node) else {
+                break;
+            };
+            let Some(sub) = node.sub_ability.as_deref() else {
+                break;
+            };
+            let Some((sub_filter, sub_retarget)) = mass_stack_copy_class(sub) else {
+                break;
+            };
+            if retarget != sub_retarget
+                || sub.sub_link != SubAbilityLink::ContinuationStep
+                || sub.else_ability.is_some()
+                || sub.cost.is_some()
+                || sub.optional
+                || (sub.condition.is_some() && sub.condition != node.condition)
+            {
+                break;
+            }
+            let mut filters = match filter {
+                TargetFilter::Or { filters } => filters.clone(),
+                other => vec![other.clone()],
+            };
+            filters.push(sub_filter.clone());
+            let next = node.sub_ability.take().and_then(|sub| sub.sub_ability);
+            node.repeat_for = Some(QuantityExpr::Ref {
+                qty: QuantityRef::ObjectCount {
+                    filter: TargetFilter::Or { filters },
+                },
+            });
+            node.sub_ability = next;
+        }
+        current = node.sub_ability.as_deref_mut();
+    }
 }
 
 fn apply_owner_library_reveal_anchor_from_text(def: &mut AbilityDefinition, text: &str) {

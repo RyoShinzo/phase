@@ -7550,6 +7550,31 @@ pub(super) fn parse_utility_imperative_ast(
                         });
                     }
                 }
+                // CR 707.10 + CR 115.1: "copy all spells you control" / "copy all
+                // other activated and triggered abilities you control" (Ulalek,
+                // Fused Atrocity) target nothing: they copy every stack object
+                // of the class at resolution. Lowered as a member-driven loop —
+                // `repeat_for: ObjectCount { <stack class> }` over a
+                // `CopySpell { ParentTarget }` — that the resolver binds to each
+                // matching stack entry in turn (`stack_copy_members`).
+                if let Some((filter, rem_lower)) = parse_copy_all_stack_class(rest_lower) {
+                    let rem = &rest[rest.len() - rem_lower.len()..];
+                    let retarget = if super::sequence::recognize_copy_retarget_clause(rem.trim()) {
+                        CopyRetargetPermission::MayChooseNewTargets
+                    } else {
+                        #[cfg(debug_assertions)]
+                        assert_no_compound_remainder(rem, text);
+                        CopyRetargetPermission::KeepOriginalTargets
+                    };
+                    ctx.pending_repeat_for = Some(QuantityExpr::Ref {
+                        qty: QuantityRef::ObjectCount { filter },
+                    });
+                    return Some(UtilityImperativeAst::Copy {
+                        target: TargetFilter::ParentTarget,
+                        retarget,
+                        additional_modifications,
+                    });
+                }
                 let (target, _rem) = if let Some((target, rem_lower)) =
                     parse_copy_stack_ability_target(rest_lower)
                 {
@@ -8026,6 +8051,59 @@ pub(super) fn parse_utility_imperative_ast(
 /// silently widening to an unscoped `StackAbility`. Source restrictions
 /// ("… from an artifact source") remain in the returned remainder,
 /// byte-identical to pre-delegation behavior.
+/// CR 707.10 + CR 115.1: the stack class of a mass copy — "all spells you
+/// control" or "all [other] activated and triggered abilities you control".
+/// "Other" excludes the copying ability itself, which has left the stack by the
+/// time it resolves, so it narrows nothing. Mana abilities never use the stack
+/// (CR 605.3b), so the ability class needs no mana exclusion.
+fn parse_copy_all_stack_class(input: &str) -> Option<(TargetFilter, &str)> {
+    let (input, _) = tag::<_, _, OracleError<'_>>("all ").parse(input).ok()?;
+    let (input, _) = opt(tag::<_, _, OracleError<'_>>("other "))
+        .parse(input)
+        .ok()?;
+    let (input, filter) = alt((
+        value(
+            TargetFilter::And {
+                filters: vec![
+                    TargetFilter::StackSpell,
+                    TargetFilter::Typed(TypedFilter::default().controller(ControllerRef::You)),
+                ],
+            },
+            tag::<_, _, OracleError<'_>>("spells you control"),
+        ),
+        value(
+            TargetFilter::StackAbility {
+                controller: Some(ControllerRef::You),
+                tag: None,
+                kind: None,
+            },
+            alt((
+                tag("activated and triggered abilities you control"),
+                tag("triggered and activated abilities you control"),
+            )),
+        ),
+        value(
+            TargetFilter::StackAbility {
+                controller: Some(ControllerRef::You),
+                tag: None,
+                kind: Some(crate::types::ability::StackAbilityKind::Triggered),
+            },
+            tag("triggered abilities you control"),
+        ),
+        value(
+            TargetFilter::StackAbility {
+                controller: Some(ControllerRef::You),
+                tag: None,
+                kind: Some(crate::types::ability::StackAbilityKind::Activated),
+            },
+            tag("activated abilities you control"),
+        ),
+    ))
+    .parse(input)
+    .ok()?;
+    Some((filter, input))
+}
+
 fn parse_copy_stack_ability_target(input: &str) -> Option<(TargetFilter, &str)> {
     let (input, _) = opt(tag::<_, _, OracleError<'_>>("target "))
         .parse(input)

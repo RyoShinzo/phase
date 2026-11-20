@@ -15392,7 +15392,9 @@ fn effect_copy_retarget_plural_reaches_sibling_defs_banish_into_fable() {
 }
 
 /// CR 707.10c: Ulalek, Fused Atrocity — copies all spells, THEN all other
-/// activated and triggered abilities: two sibling copy defs under one trigger.
+/// activated and triggered abilities: the two copy clauses (folded into one
+/// mass-copy loop, `effect_copy_all_stack_class_ulalek`) both take the plural
+/// retarget clause.
 #[test]
 fn effect_copy_retarget_plural_reaches_sibling_defs_ulalek() {
     let (retargets, orphaned) = copy_retarget_scan_card(
@@ -15406,8 +15408,8 @@ fn effect_copy_retarget_plural_reaches_sibling_defs_ulalek() {
     );
     assert_eq!(orphaned, 0, "orphaned_copy_retarget must not survive");
     assert!(
-        retargets.len() >= 2,
-        "both the spell-copy and the ability-copy must be present, got {retargets:?}"
+        !retargets.is_empty(),
+        "the mass copy must be present, got {retargets:?}"
     );
     assert!(
         retargets
@@ -15415,6 +15417,61 @@ fn effect_copy_retarget_plural_reaches_sibling_defs_ulalek() {
             .all(|r| *r == CopyRetargetPermission::MayChooseNewTargets),
         "the plural clause must retarget EVERY sibling copy, got {retargets:?}"
     );
+}
+
+/// CR 707.10 + CR 115.1: Ulalek, Fused Atrocity — "copy all spells you
+/// control, then copy all other activated and triggered abilities you control"
+/// targets nothing: one member-driven `CopySpell { ParentTarget }` whose
+/// `repeat_for` counts the spells, then the abilities, on the stack.
+#[test]
+fn effect_copy_all_stack_class_ulalek() {
+    let parsed = parse_oracle_text(
+        "Devoid (This card has no color.)\n\
+         Whenever you cast an Eldrazi spell, you may pay {C}{C}. If you do, copy all spells \
+         you control, then copy all other activated and triggered abilities you control. \
+         You may choose new targets for the copies. (Mana abilities can't be copied.)",
+        "Ulalek, Fused Atrocity",
+        &[],
+        &["Creature".to_string()],
+        &["Eldrazi".to_string()],
+    );
+    let execute = parsed.triggers[0].execute.as_deref().expect("execute");
+    let copy = execute.sub_ability.as_deref().expect("the copy after the payment");
+    assert!(
+        matches!(
+            &*copy.effect,
+            Effect::CopySpell {
+                target: TargetFilter::ParentTarget,
+                retarget: CopyRetargetPermission::MayChooseNewTargets,
+                ..
+            }
+        ),
+        "untargeted copy with new targets allowed, got {:?}",
+        copy.effect
+    );
+    let spells = TargetFilter::And {
+        filters: vec![
+            TargetFilter::StackSpell,
+            TargetFilter::Typed(TypedFilter::default().controller(ControllerRef::You)),
+        ],
+    };
+    let abilities = TargetFilter::StackAbility {
+        controller: Some(ControllerRef::You),
+        tag: None,
+        kind: None,
+    };
+    assert_eq!(
+        copy.repeat_for,
+        Some(QuantityExpr::Ref {
+            qty: QuantityRef::ObjectCount {
+                filter: TargetFilter::Or {
+                    filters: vec![spells, abilities],
+                },
+            },
+        }),
+        "spells, then abilities, in one loop"
+    );
+    assert!(copy.sub_ability.is_none(), "nothing after the copies");
 }
 
 /// CR 707.10c: Sea Gate Stormcaller — the delayed-trigger copy and the

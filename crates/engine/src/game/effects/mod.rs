@@ -3003,10 +3003,29 @@ fn open_spell_copy_order_choice(
         Some(fixed) if iteration >= fixed => {}
         _ => return false,
     }
+    // CR 707.10: a mass copy of spells, then abilities (Ulalek, Fused
+    // Atrocity), puts all the spells' copies on the stack before the
+    // abilities'; the order is chosen within each of the two runs.
+    let is_spell = |id: &crate::types::identifiers::ObjectId| {
+        state
+            .stack
+            .iter()
+            .find(|entry| entry.id == *id)
+            .is_some_and(|entry| matches!(entry.kind, crate::types::game_state::StackEntryKind::Spell { .. }))
+    };
+    let Some(current) = tracked_members.get(iteration) else {
+        return false;
+    };
+    let current_is_spell = is_spell(current);
     let mut choices: Vec<crate::types::identifiers::ObjectId> = Vec::new();
-    for &spell in tracked_members.get(iteration..).unwrap_or_default() {
-        if !choices.contains(&spell) {
-            choices.push(spell);
+    for &member in tracked_members
+        .get(iteration..)
+        .unwrap_or_default()
+        .iter()
+        .take_while(|member| is_spell(member) == current_is_spell)
+    {
+        if !choices.contains(&member) {
+            choices.push(member);
         }
     }
     if choices.len() < 2 {
@@ -16345,6 +16364,54 @@ fn tracked_set_member_repetitions(qty: &QuantityExpr) -> Option<usize> {
     }
 }
 
+/// CR 405.1 + CR 707.10: whether a mass copy's member filter names a class of
+/// stack objects — spells (`StackSpell`) or activated and triggered abilities
+/// (`StackAbility`) — in every branch of a disjunction or in a conjunction.
+fn is_stack_class_filter(filter: &TargetFilter) -> bool {
+    match filter {
+        TargetFilter::StackSpell | TargetFilter::StackAbility { .. } => true,
+        TargetFilter::And { filters } => filters.iter().any(is_stack_class_filter),
+        TargetFilter::Or { filters } => {
+            !filters.is_empty() && filters.iter().all(is_stack_class_filter)
+        }
+        _ => false,
+    }
+}
+
+/// CR 707.10 + CR 405.1: the stack entries a mass copy copies, from the
+/// bottom of the stack up, one disjunct after the other: "copy all spells you
+/// control, then copy all other activated and triggered abilities you control"
+/// puts the spells' copies on the stack before the abilities' copies. The
+/// copying ability has left the stack while it resolves, so it is never among
+/// them ("other").
+fn stack_copy_members(
+    state: &GameState,
+    ability: &ResolvedAbility,
+    filter: &TargetFilter,
+) -> Vec<crate::types::identifiers::ObjectId> {
+    let branches: Vec<&TargetFilter> = match filter {
+        TargetFilter::Or { filters } => filters.iter().collect(),
+        other => vec![other],
+    };
+    let mut members = Vec::new();
+    for branch in branches {
+        for entry in &state.stack {
+            if !members.contains(&entry.id)
+                && crate::game::targeting::stack_entry_matches_filter(
+                    state,
+                    entry,
+                    branch,
+                    ability.controller,
+                    ability.source_id,
+                )
+            {
+                members.push(entry.id);
+            }
+        }
+    }
+    members
+}
+
 fn effect_iterates_over_parent_target(effect: &Effect) -> bool {
     if matches!(
         effect,
@@ -23763,6 +23830,9 @@ fn resolve_chain_body(
             // Set by the "copy each of those spells" arm, which folds the copy
             // replacements into each member's own count.
             let mut per_member_copy_counts = false;
+            // Set by the "copy each of those spells" arm, whose copies' order
+            // the controller chooses (CR 405.3).
+            let mut copy_order_choice = false;
             let iter_tracked_members: Vec<crate::types::identifiers::ObjectId> = match &ability
                 .repeat_for
             {
@@ -23788,6 +23858,7 @@ fn resolve_chain_body(
                 {
                     member_driven = true;
                     per_member_copy_counts = true;
+                    copy_order_choice = true;
                     let repetitions = tracked_set_member_repetitions(qty).unwrap_or(0);
                     let spells: Vec<crate::types::identifiers::ObjectId> = state
                         .chain_tracked_set_id
@@ -23808,6 +23879,43 @@ fn resolve_chain_body(
                                 repetitions
                             };
                             std::iter::repeat_n(spell, copies)
+                        })
+                        .collect()
+                }
+                // CR 707.10 + CR 115.1: a mass copy of the stack ("copy all
+                // spells you control, then copy all other activated and
+                // triggered abilities you control" — Ulalek, Fused Atrocity)
+                // targets nothing; it copies each stack entry of its class.
+                // The members are snapshotted once here (CR 608.2c), so a copy
+                // made by this loop is not itself copied. Each spell member's
+                // copy event takes its own copy-count replacements (CR 614.1a),
+                // as for "copy each of those spells".
+                Some(QuantityExpr::Ref {
+                    qty: QuantityRef::ObjectCount { filter },
+                }) if matches!(
+                    effective.effect,
+                    Effect::CopySpell {
+                        target: TargetFilter::ParentTarget,
+                        ..
+                    }
+                ) && is_stack_class_filter(filter) =>
+                {
+                    member_driven = true;
+                    per_member_copy_counts = true;
+                    // CR 405.3: the copies are put on the stack together, in
+                    // the order their controller chooses.
+                    copy_order_choice = true;
+                    stack_copy_members(state, effective, filter)
+                        .into_iter()
+                        .flat_map(|member| {
+                            let copies = if ability.copy_count_status.is_pending() {
+                                let mut bound = effective.clone();
+                                rebind_member_driven_parent_target(&mut bound, member);
+                                copy_spell::copy_count_with_replacements(state, &bound, 1)
+                            } else {
+                                1
+                            };
+                            std::iter::repeat_n(member, copies)
                         })
                         .collect()
                 }
@@ -23966,7 +24074,7 @@ fn resolve_chain_body(
                     || ((member_driven || kind_driven) && effective.unless_pay.is_some()));
             // CR 405.3 + CR 707.10: a batch of copies of several spells is
             // ordered by its controller, one copy at a time.
-            let copy_order_fixed = per_member_copy_counts.then_some(0);
+            let copy_order_fixed = copy_order_choice.then_some(0);
             while iteration < iterations {
                 if open_spell_copy_order_choice(
                     state,
