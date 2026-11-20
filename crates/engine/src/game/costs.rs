@@ -47,7 +47,7 @@ use crate::game::game_object::ObjectIncarnationRefExt;
 use crate::types::ability::{
     is_direct_resolution_optional_payment_branch, supported_at_resolution, AbilityCost, EffectKind,
     PlayerScope, QuantityExpr, QuantityRef, TargetFilter, TurnUpCostSource, TypedFilter,
-    REMOVE_COUNTER_COST_ALL,
+    REMOVE_COUNTER_COST_ALL, is_variable_remove_counter_cost_count,
 };
 use crate::types::events::GameEvent;
 use crate::types::game_state::{
@@ -2535,6 +2535,27 @@ fn pay_ability_cost_inner(
                 .into_iter()
                 .collect()
             };
+            // CR 118.3 + CR 601.2h: a fixed count is removed in full or not at
+            // all. `is_payable` gates the stack path before payment, but a mana
+            // ability's cost reaches this payer directly (CR 605.3a), and
+            // `pay_counter_cost_removals` removes at most what is present, so
+            // without this "{T}, Remove a charge counter" (Tendo Ice Bridge)
+            // would be paid by the tap alone once the counter is gone.
+            if !is_variable_remove_counter_cost_count(*count) {
+                let present = |removal: &PendingCounterRemoval| {
+                    state
+                        .objects
+                        .get(&removal.object_id)
+                        .and_then(|obj| obj.counters.get(&removal.counter_type))
+                        .copied()
+                        .unwrap_or(0)
+                };
+                if removals.is_empty()
+                    || removals.iter().any(|removal| present(removal) < removal.count)
+                {
+                    return Ok(payment_failed("not enough counters to remove"));
+                }
+            }
             // CR 602.2b + CR 601.2h + CR 118.3: the activation's effect reads the
             // count actually removed; a resolution-time PayCost has no activation
             // to bind (its ledger is `None`).
