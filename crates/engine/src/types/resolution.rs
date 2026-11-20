@@ -7000,6 +7000,7 @@ mod tests {
             .push_inner(ResolutionFrame::CounterAdditions(
                 PendingCounterAdditionQueue {
                     remaining: Vec::new(),
+                    held_events: Vec::new(),
                     completion: None,
                 },
             ));
@@ -9051,6 +9052,7 @@ mod tests {
             counter_additions,
             PendingCounterAdditionQueue {
                 remaining: Vec::new(),
+                held_events: Vec::new(),
                 completion: None,
             },
         ));
@@ -9141,6 +9143,7 @@ mod tests {
         };
         let counter_additions = PendingCounterAdditionQueue {
             remaining: Vec::new(),
+            held_events: Vec::new(),
             completion: None,
         };
 

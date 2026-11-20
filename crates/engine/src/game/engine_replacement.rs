@@ -213,6 +213,14 @@ pub(super) fn handle_replacement_choice(
     // parked for the next answer; only a settled round trip may close the batch.
     // Nothing is left behind on this path — the anchor is a local that dies here.
     if !matches!(waiting_for, WaitingFor::Priority { .. }) {
+        // CR 603.2 + CR 603.2c: an answer that placed one recipient's counters
+        // and paused on the next recipient's replacement-order choice ends on a
+        // prompt, so no trigger scan sees its `CounterAdded`. Hold them in the
+        // paused counter batch for the answer that settles it.
+        effects::counters::hold_counter_events_in_paused_batch(
+            state,
+            &events[action_event_start.min(events.len())..],
+        );
         return Ok(waiting_for);
     }
     state.waiting_for = waiting_for.clone();
