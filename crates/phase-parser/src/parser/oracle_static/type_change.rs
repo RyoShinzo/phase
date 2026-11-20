@@ -3236,6 +3236,52 @@ pub(crate) fn parse_all_creature_types_grant(
     )
 }
 
+/// CR 205.3i + CR 604.3: Parse a self-referential "~ is every nonbasic land
+/// type" static (Planar Nexus) into a CDA adding each nonbasic land type.
+///
+/// The nonbasic land types are the land types of CR 205.3i that are not basic
+/// land types (CR 305.6), taken from `LAND_SUBTYPES` so the grant follows that
+/// list. They carry no intrinsic mana ability, so a plain `AddSubtype` per type
+/// is the whole effect (unlike `AddAllBasicLandTypes`, CR 305.7). Like the
+/// self-reference arm of `parse_all_creature_types_grant`, it defines the
+/// object's own subtypes and is printed on it, so it is a CDA (CR 604.3) and
+/// applies in layer 4 in all zones.
+pub(crate) fn parse_self_every_nonbasic_land_type(
+    tp: &TextPair<'_>,
+    text: &str,
+) -> Option<StaticDefinition> {
+    type VE<'a> = OracleError<'a>;
+    let lower = tp.lower.trim().trim_end_matches('.').trim();
+    let (_, _) = all_consuming((
+        alt((
+            tag::<_, _, VE>("~ is"),
+            tag::<_, _, VE>("this land is"),
+            tag::<_, _, VE>("this permanent is"),
+        )),
+        tag::<_, _, VE>(" every nonbasic land type"),
+    ))
+    .parse(lower)
+    .ok()?;
+    let modifications = crate::types::card_type::LAND_SUBTYPES
+        .iter()
+        .filter(|subtype| {
+            !BasicLandType::all()
+                .iter()
+                .any(|basic| basic.as_subtype_str() == **subtype)
+        })
+        .map(|subtype| ContinuousModification::AddSubtype {
+            subtype: (*subtype).to_string(),
+        })
+        .collect();
+    Some(
+        StaticDefinition::continuous()
+            .affected(TargetFilter::SelfRef)
+            .modifications(modifications)
+            .cda()
+            .description(text.to_string()),
+    )
+}
+
 /// CR 205.3 + CR 613.1d: Map the subject of an "{is|are} every creature
 /// type" static into a TargetFilter restricting which battlefield objects
 /// receive the grant. Sibling of `parse_land_type_change_subject` for the

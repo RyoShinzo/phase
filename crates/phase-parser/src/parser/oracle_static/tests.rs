@@ -22335,6 +22335,47 @@ fn omo_land_every_land_type_is_add_all_land_types() {
 }
 
 #[test]
+fn planar_nexus_is_every_nonbasic_land_type() {
+    // CR 205.3i + CR 604.3: Planar Nexus — "This land is every nonbasic land
+    // type." A self CDA adding the twelve nonbasic land types and no basic one.
+    for line in [
+        "~ is every nonbasic land type.",
+        "This land is every nonbasic land type.",
+    ] {
+        let def = parse_static_line(line).unwrap();
+        assert_eq!(def.mode, StaticMode::Continuous);
+        assert_eq!(def.affected, Some(TargetFilter::SelfRef));
+        assert!(def.characteristic_defining, "{line}: expected a CDA");
+        let subtypes: Vec<&str> = def
+            .modifications
+            .iter()
+            .map(|m| match m {
+                ContinuousModification::AddSubtype { subtype } => subtype.as_str(),
+                other => panic!("{line}: unexpected modification {other:?}"),
+            })
+            .collect();
+        assert_eq!(
+            subtypes,
+            vec![
+                "Cave",
+                "Desert",
+                "Gate",
+                "Lair",
+                "Locus",
+                "Mine",
+                "Planet",
+                "Power-Plant",
+                "Sphere",
+                "Tower",
+                "Town",
+                "Urza's",
+            ],
+            "{line}"
+        );
+    }
+}
+
+#[test]
 fn omo_nonland_creature_counter_subject_is_all_creature_types() {
     // CR 205.3 + CR 122.1: Omo, Queen of Vesuva — "Each nonland creature
     // with an everything counter on it is every creature type." The subject
