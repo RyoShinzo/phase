@@ -5473,6 +5473,15 @@ fn infer_pronoun_unless_payer(
     effect_before_unless: &str,
     condition_lower: &str,
 ) -> Option<TargetFilter> {
+    // CR 701.6a + CR 118.12a: "counter target spell [an opponent controls]
+    // unless they pay" — `they` is the countered spell's controller, read from
+    // the counter's own target. On a cast trigger (Hope-Ender Coatl: "When you
+    // cast this spell, counter target spell an opponent controls unless they
+    // pay {1}") the triggering player is the source's caster, who must not be
+    // the one asked.
+    if scan_contains(effect_before_unless, "counter target ") {
+        return Some(TargetFilter::ParentTargetController);
+    }
     // CR 503.1a + CR 603.2: "At the beginning of each player's upkeep, that
     // player ... unless they pay" refers to the active player for that phase.
     if condition_introduces_scoped_phase_player(condition_lower)

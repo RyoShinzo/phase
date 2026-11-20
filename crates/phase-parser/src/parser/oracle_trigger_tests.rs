@@ -19037,6 +19037,21 @@ fn trigger_unless_they_pay_binds_that_player_to_triggering_player() {
     );
 }
 
+/// CR 701.6a + CR 118.12a: on a counter, "unless they pay" asks the countered
+/// spell's controller, not the trigger's event player, who on a cast trigger is
+/// the source's own caster.
+#[test]
+fn trigger_counter_unless_they_pay_binds_countered_spell_controller() {
+    let def = parse_trigger_line(
+        "When you cast this spell, counter target spell an opponent controls unless they pay {1}.",
+        "Hope-Ender Coatl",
+    );
+
+    let unless_pay = def.unless_pay.as_ref().expect("should have unless_pay");
+    assert_eq!(unless_pay.payer, TargetFilter::ParentTargetController);
+    assert!(matches!(unless_pay.cost, AbilityCost::Mana { .. }));
+}
+
 #[test]
 fn trigger_unless_they_pay_disjunctive_mana_builds_one_of() {
     let def = parse_trigger_line(
