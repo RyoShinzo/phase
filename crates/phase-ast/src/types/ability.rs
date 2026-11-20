@@ -9397,7 +9397,8 @@ pub fn quantity_ref_grammar_any(
             }
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => false,
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => false,
         },
         QuantityRef::HandSize { .. }
         | QuantityRef::LifeTotal { .. }
@@ -10260,7 +10261,8 @@ fn rewrite_quantity_ref_filter_props<C>(
             ),
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => {}
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => {}
         },
         QuantityRef::HandSize { .. }
         | QuantityRef::LifeTotal { .. }
@@ -12328,7 +12330,8 @@ fn cast_mana_spent_metric_has_unsupported_selected_ref(metric: &CastManaSpentMet
         }
         CastManaSpentMetric::Total
         | CastManaSpentMetric::DistinctColors
-        | CastManaSpentMetric::OfColor { .. } => false,
+        | CastManaSpentMetric::OfColor { .. }
+        | CastManaSpentMetric::Colorless => false,
     }
 }
 
@@ -12942,6 +12945,11 @@ pub enum CastManaSpentMetric {
     /// cast this spell"). A leaf parameterization of the same payment record
     /// `Total` and `DistinctColors` aggregate differently.
     OfColor { color: ManaColor },
+    /// CR 106.1b + CR 601.2h: Amount of colorless mana spent to pay the cost
+    /// ("if {C} was spent to cast it", Drowner of Truth). Colorless is a type of
+    /// mana but no color, so it is not an `OfColor` leaf: the payment record's
+    /// total less its five-color tally.
+    Colorless,
     /// Amount of mana whose source matched the filter at payment time.
     FromSource { source_filter: TargetFilter },
 }
@@ -14451,7 +14459,8 @@ impl QuantityRef {
                 }
                 CastManaSpentMetric::Total
                 | CastManaSpentMetric::DistinctColors
-                | CastManaSpentMetric::OfColor { .. } => false,
+                | CastManaSpentMetric::OfColor { .. }
+                | CastManaSpentMetric::Colorless => false,
             },
 
             // Non-object, non-filter refs never read the cost-paid object. Listed
@@ -27490,7 +27499,8 @@ pub fn quantity_ref_target_slot_spec(qty: &QuantityRef) -> Option<QuantitySlotDe
             }
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => None,
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => None,
         },
         QuantityRef::PlayerCount {
             filter: crate::types::ability::PlayerFilter::ControlsCount { filter, .. },

@@ -5063,7 +5063,8 @@ fn quantity_ref_reads_life(qty: &QuantityRef) -> bool {
             }
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => false,
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => false,
         },
 
         // CR 603.2c: the trigger-event player set filters candidates through a

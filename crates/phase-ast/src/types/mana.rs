@@ -2208,6 +2208,13 @@ impl ColoredManaCount {
         self.white == 0 && self.blue == 0 && self.black == 0 && self.red == 0 && self.green == 0
     }
 
+    /// Total colored mana in the tally, all five colors summed. Colorless mana
+    /// spent is the cast's total spent amount less this sum, since every unit
+    /// spent is one of the five colors or colorless (`ManaType`).
+    pub fn total(&self) -> u32 {
+        self.white + self.blue + self.black + self.red + self.green
+    }
+
     /// CR 202.2: Number of distinct colors with a non-zero tally.
     /// Used by self-scoped spent-mana quantities for "X is the number of colors
     /// of mana spent to cast it" patterns (Wildgrowth Archaic family).

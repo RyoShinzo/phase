@@ -8361,6 +8361,16 @@ fn extract_if_condition_with_card_name(
         };
     }
 
+    // CR 106.1b + CR 601.2h + CR 603.4: "if {C} was spent to cast it" — the
+    // colorless sibling of the symbolic form above, which reads colors only.
+    if let Some((stripped, cond)) = try_extract_colorless_mana_spent_condition(&lower, text) {
+        return IfExtraction {
+            text: stripped,
+            condition: cond,
+            leading_guard_refused: false,
+        };
+    }
+
     // CR 702.188a + CR 603.4: "if <pronoun> was cast using web-slinging" —
     // intervening-if gating an ETB trigger on the alternative cast cost
     // (Spiders-Man, Heroic Horde). Mirrors the replacement-side
@@ -10128,6 +10138,7 @@ fn try_extract_no_mana_spent_condition(
         // rather than wildcarded so a metric that is NOT a kind has to choose.
         metric @ (CastManaSpentMetric::DistinctColors
         | CastManaSpentMetric::OfColor { .. }
+        | CastManaSpentMetric::Colorless
         | CastManaSpentMetric::FromSource { .. }) => TriggerCondition::QuantityComparison {
             lhs: QuantityExpr::Ref {
                 qty: QuantityRef::ManaSpentToCast { scope, metric },
@@ -10139,6 +10150,51 @@ fn try_extract_no_mana_spent_condition(
     Some((
         strip_condition_clause(text, clause_start, clause_len),
         Some(condition),
+    ))
+}
+
+/// CR 106.1b + CR 601.2h + CR 603.4: Extract "if {C} was spent to cast it" /
+/// "if {C}{C} was spent to cast ~" — an intervening-if on how much colorless
+/// mana paid the cast (Drowner of Truth). Colorless is one of the six types of
+/// mana but no color, so it cannot ride the colored `ManaColorSpent` tally the
+/// symbolic extractor builds; it lowers to the canonical
+/// `QuantityComparison { ManaSpentToCast { Colorless }, GE, N }`, N the number
+/// of `{C}` symbols. The anaphor resolves as in
+/// `parse_cast_payment_subject_scope`.
+fn try_extract_colorless_mana_spent_condition(
+    lower: &str,
+    text: &str,
+) -> Option<(String, Option<TriggerCondition>)> {
+    let (before, (symbols, scope), rest) = scan_preceded(lower, |i| {
+        preceded(
+            tag("if "),
+            pair(
+                terminated(many1(tag("{c}")), tag(" was spent to cast ")),
+                parse_cast_payment_subject_scope,
+            ),
+        )
+        .parse(i)
+    })?;
+    let rest_trimmed = rest.trim_start();
+    if !(rest_trimmed.is_empty() || rest_trimmed.starts_with(',') || rest_trimmed.starts_with('.'))
+    {
+        return None;
+    }
+    let clause_start = before.len();
+    let clause_len = lower.len() - before.len() - rest.len();
+    let minimum = i32::try_from(symbols.len()).ok()?;
+    Some((
+        strip_condition_clause(text, clause_start, clause_len),
+        Some(TriggerCondition::QuantityComparison {
+            lhs: QuantityExpr::Ref {
+                qty: QuantityRef::ManaSpentToCast {
+                    scope,
+                    metric: CastManaSpentMetric::Colorless,
+                },
+            },
+            comparator: Comparator::GE,
+            rhs: QuantityExpr::Fixed { value: minimum },
+        }),
     ))
 }
 

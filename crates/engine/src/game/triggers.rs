@@ -14341,7 +14341,8 @@ fn quantity_ref_binding_diverges(qty: &QuantityRef) -> bool {
                     }
                     CastManaSpentMetric::Total
                     | CastManaSpentMetric::DistinctColors
-                    | CastManaSpentMetric::OfColor { .. } => false,
+                    | CastManaSpentMetric::OfColor { .. }
+                    | CastManaSpentMetric::Colorless => false,
                 }
         }
         // ---- RESOLUTION-SCOPED, payload-free or target-bound: always diverges ----
@@ -39731,6 +39732,84 @@ pub mod tests {
             !check_trigger_condition(&state, &condition, PlayerId(0), Some(source), Some(&event)),
             "Topiary Lecturer: 1 mana spent must not exceed power (1) or toughness (2)"
         );
+    }
+
+    /// CR 106.1b + CR 601.2h + CR 603.4: "if {C} was spent to cast it" (Drowner
+    /// of Truth) reads the colorless part of the triggering spell's payment: the
+    /// amount spent less its five-color tally. Colored mana alone never satisfies
+    /// it, however much was spent.
+    #[test]
+    fn colorless_mana_spent_condition_reads_the_payment_less_its_colors() {
+        let mut state = setup();
+        let spell = create_object(
+            &mut state,
+            CardId(2),
+            PlayerId(0),
+            "Drowner of Truth".to_string(),
+            Zone::Stack,
+        );
+        let condition = TriggerCondition::QuantityComparison {
+            lhs: QuantityExpr::Ref {
+                qty: QuantityRef::ManaSpentToCast {
+                    scope: crate::types::ability::CastManaObjectScope::TriggeringSpell,
+                    metric: crate::types::ability::CastManaSpentMetric::Colorless,
+                },
+            },
+            comparator: Comparator::GE,
+            rhs: QuantityExpr::Fixed { value: 1 },
+        };
+        let event = GameEvent::SpellCast {
+            card_id: CardId(2),
+            controller: PlayerId(0),
+            object_id: spell,
+            cast_mana_value: None,
+        };
+        let pay = |state: &mut GameState, colored: &[ManaColor], total: u32| {
+            let obj = state.objects.get_mut(&spell).unwrap();
+            obj.colors_spent_to_cast = crate::types::mana::ColoredManaCount::default();
+            for color in colored {
+                obj.colors_spent_to_cast.add(*color, 1);
+            }
+            obj.mana_spent_to_cast_amount = total;
+        };
+
+        // Seven mana, all green and blue: no colorless.
+        pay(
+            &mut state,
+            &[ManaColor::Green; 4]
+                .iter()
+                .chain(&[ManaColor::Blue; 3])
+                .copied()
+                .collect::<Vec<_>>(),
+            7,
+        );
+        assert!(!check_trigger_condition(
+            &state,
+            &condition,
+            PlayerId(0),
+            Some(spell),
+            Some(&event)
+        ));
+
+        // Five colorless and two green.
+        pay(&mut state, &[ManaColor::Green, ManaColor::Green], 7);
+        assert!(check_trigger_condition(
+            &state,
+            &condition,
+            PlayerId(0),
+            Some(spell),
+            Some(&event)
+        ));
+
+        // Nothing spent.
+        pay(&mut state, &[], 0);
+        assert!(!check_trigger_condition(
+            &state,
+            &condition,
+            PlayerId(0),
+            Some(spell),
+            Some(&event)
+        ));
     }
 
     /// CR 601.2h + CR 603.4 + CR 202.3: Tokka & Rahzar's intervening-if

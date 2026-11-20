@@ -2020,7 +2020,8 @@ fn quantity_ref_uses_filter_prop(qty: &QuantityRef, pred: &impl Fn(&FilterProp) 
             }
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => false,
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => false,
         },
         // CR 109.2: the three distinct-characteristic counts embed their filters
         // through the shared population enum; recurse over it so a union member

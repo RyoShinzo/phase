@@ -30202,6 +30202,70 @@ fn extract_symbolic_unless_mana_spent_two_black() {
     );
 }
 
+/// CR 106.1b + CR 601.2h: "{C}" names colorless mana, a type but no color, so
+/// the clause reads the payment record's colorless amount, at least one per
+/// `{C}` symbol, against the object the anaphor names.
+#[test]
+fn extract_colorless_mana_spent_condition() {
+    let colorless = |scope, value| TriggerCondition::QuantityComparison {
+        lhs: QuantityExpr::Ref {
+            qty: QuantityRef::ManaSpentToCast {
+                scope,
+                metric: crate::types::ability::CastManaSpentMetric::Colorless,
+            },
+        },
+        comparator: Comparator::GE,
+        rhs: QuantityExpr::Fixed { value },
+    };
+    let (cleaned, cond) = extract_if_condition(
+        "if {C} was spent to cast it, create two 0/1 colorless Eldrazi Spawn creature tokens",
+    );
+    assert_eq!(
+        cleaned,
+        "create two 0/1 colorless Eldrazi Spawn creature tokens"
+    );
+    assert_eq!(
+        cond,
+        Some(colorless(CastManaObjectScope::TriggeringSpell, 1))
+    );
+
+    let (cleaned, cond) = extract_if_condition("draw a card if {C}{C} was spent to cast ~");
+    assert_eq!(cleaned, "draw a card");
+    assert_eq!(cond, Some(colorless(CastManaObjectScope::SelfObject, 2)));
+}
+
+/// CR 603.4: Drowner of Truth's cast trigger hoists "if {C} was spent to cast
+/// it" as its intervening-if and keeps the token creation as its effect.
+#[test]
+fn trigger_colorless_mana_spent_intervening_if() {
+    let def = parse_trigger_line(
+        "When you cast this spell, if {C} was spent to cast it, create two 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"",
+        "Drowner of Truth",
+    );
+    assert_eq!(def.mode, TriggerMode::SpellCast);
+    assert!(
+        matches!(
+            def.condition,
+            Some(TriggerCondition::QuantityComparison {
+                lhs: QuantityExpr::Ref {
+                    qty: QuantityRef::ManaSpentToCast {
+                        scope: CastManaObjectScope::TriggeringSpell,
+                        metric: crate::types::ability::CastManaSpentMetric::Colorless,
+                    },
+                },
+                comparator: Comparator::GE,
+                rhs: QuantityExpr::Fixed { value: 1 },
+            })
+        ),
+        "got {:?}",
+        def.condition
+    );
+    match &*def.execute.as_ref().unwrap().effect {
+        Effect::Token { .. } => {}
+        other => panic!("expected Token effect, got {other:?}"),
+    }
+}
+
 #[test]
 fn extract_no_mana_spent_condition() {
     let (cleaned, cond) =

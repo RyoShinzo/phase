@@ -3455,7 +3455,8 @@ fn quantity_ref_contains_input(
             }
             CastManaSpentMetric::Total
             | CastManaSpentMetric::DistinctColors
-            | CastManaSpentMetric::OfColor { .. } => false,
+            | CastManaSpentMetric::OfColor { .. }
+            | CastManaSpentMetric::Colorless => false,
         },
         QuantityRef::HandSize { .. }
         | QuantityRef::LifeTotal { .. }

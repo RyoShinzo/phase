@@ -2221,6 +2221,7 @@ fn fmt_quantity_ref(qty: &QuantityRef) -> String {
             ),
             crate::types::ability::CastManaSpentMetric::Total
             | crate::types::ability::CastManaSpentMetric::DistinctColors
+            | crate::types::ability::CastManaSpentMetric::Colorless
             | crate::types::ability::CastManaSpentMetric::FromSource { .. } => {
                 format!("mana spent to cast ({scope:?}, {metric:?})")
             }
