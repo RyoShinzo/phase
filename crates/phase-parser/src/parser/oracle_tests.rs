@@ -20570,6 +20570,19 @@ fn mana_spend_restriction_flashback_spells() {
 }
 
 #[test]
+fn mana_spend_restriction_a_spell_with_devoid() {
+    // CR 106.6 + CR 702.114a: Corrupted Crossroads.
+    use crate::parser::oracle_effect::mana::parse_mana_spend_restriction;
+    let result =
+        parse_mana_spend_restriction("spend this mana only to cast a spell with devoid");
+    assert_eq!(
+        result.and_then(|(mut restrictions, _)| (restrictions.len() == 1)
+            .then(|| restrictions.pop().expect("one restriction"))),
+        Some(ManaSpendRestriction::SpellWithKeywordKind(KeywordKind::Devoid))
+    );
+}
+
+#[test]
 fn mana_spend_restriction_flashback_spells_from_graveyard() {
     use crate::parser::oracle_effect::mana::parse_mana_spend_restriction;
     let result = parse_mana_spend_restriction(

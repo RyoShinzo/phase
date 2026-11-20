@@ -2210,6 +2210,8 @@ fn parse_spell_with_keyword(rest: &str) -> Option<(KeywordKind, Option<Zone>)> {
         alt((
             value(KeywordKind::Flashback, tag("flashback")),
             value(KeywordKind::Freerunning, tag("freerunning")),
+            // CR 702.114a: devoid (Corrupted Crossroads).
+            value(KeywordKind::Devoid, tag("devoid")),
         ))
         .parse(i)
     })?;
