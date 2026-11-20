@@ -23080,6 +23080,40 @@ fn gain_all_creature_types_produces_add_keyword_changeling() {
 }
 
 #[test]
+fn medial_grant_conjuncts_of_a_comma_list_are_all_granted() {
+    // CR 613.1f: every grant conjunct of a comma list is kept, not only the one
+    // after the last "and gains" (Wings of Velis Vel).
+    let mods = parse_continuous_modifications(
+        "have base power and toughness 4/4, gains all creature types, and gains flying",
+    );
+    for expected in [
+        ContinuousModification::SetPower { value: 4 },
+        ContinuousModification::SetToughness { value: 4 },
+        ContinuousModification::AddKeyword {
+            keyword: Keyword::Changeling,
+        },
+        ContinuousModification::AddKeyword {
+            keyword: Keyword::Flying,
+        },
+    ] {
+        assert!(mods.contains(&expected), "missing {expected:?} in {mods:?}");
+    }
+    // A keyword the last conjunct already granted is not granted twice.
+    let mods = parse_continuous_modifications("gets +1/+1, has flying, and has trample");
+    let count = |kw: Keyword| {
+        mods.iter()
+            .filter(|m| {
+                **m == ContinuousModification::AddKeyword {
+                    keyword: kw.clone(),
+                }
+            })
+            .count()
+    };
+    assert_eq!(count(Keyword::Flying), 1, "{mods:?}");
+    assert_eq!(count(Keyword::Trample), 1, "{mods:?}");
+}
+
+#[test]
 fn enchanted_permanent_is_colorless_forest_land_produces_set_basic_land_type() {
     // CR 305.7: Song of the Dryads pattern - should use SetBasicLandType to trigger ability removal
     let def = parse_static_line("Enchanted permanent is a colorless Forest land.").unwrap();

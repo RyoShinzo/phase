@@ -4,6 +4,7 @@
 use super::prelude::*;
 #[allow(unused_imports)]
 use super::support::*;
+use nom::bytes::complete::take_till;
 use nom::character::complete::alphanumeric1;
 use nom::combinator::not;
 
@@ -1721,6 +1722,21 @@ pub(crate) fn parse_continuous_modifications(text: &str) -> Vec<ContinuousModifi
         }
     }
 
+    // CR 613.1f: medial keyword-grant conjuncts of a comma list — "has base power
+    // and toughness 4/4, gains all creature types, and gains flying" (Wings of
+    // Velis Vel). `extract_keyword_clause` keeps only what follows the first
+    // "and gains", so each earlier ", gains <keyword>," conjunct is recovered
+    // here. Only a conjunct that is a whole keyword is taken, and one already
+    // granted is not granted twice.
+    for keyword_text in scan_medial_grant_conjuncts(&unquoted_lower) {
+        if let Some(keyword) = map_keyword(keyword_text.trim()) {
+            let modification = ContinuousModification::AddKeyword { keyword };
+            if !modifications.contains(&modification) {
+                modifications.push(modification);
+            }
+        }
+    }
+
     // CR 613.1f: Pre-quote keyword recovery for compound lines like Swashbuckler's
     // Whip: 'has reach, "{2}, {T}: ...," and "{8}, {T}: ...".' Stripping the quoted
     // segments can mangle the boundary between the leading bare keyword and the
@@ -1760,6 +1776,36 @@ pub(crate) fn parse_continuous_modifications(text: &str) -> Vec<ContinuousModifi
     ));
 
     modifications
+}
+
+/// CR 613.1f: the medial grant conjuncts of a comma list — each
+/// ", gains|gain|has|have <text>," whose conjunct is followed by another comma,
+/// i.e. not the list's last member ("…, gains all creature types, and gains
+/// flying" yields "all creature types"). The last conjunct is left to
+/// `extract_keyword_clause`. `lower` is the lowercased, unquoted predicate.
+fn scan_medial_grant_conjuncts(lower: &str) -> Vec<&str> {
+    let mut found = Vec::new();
+    let mut remaining = lower;
+    while let Some((before, conjunct, rest)) = nom_primitives::scan_preceded(remaining, |i| {
+        let (i, _) = alt((
+            tag::<_, _, OracleError<'_>>("gains "),
+            tag("gain "),
+            tag("has "),
+            tag("have "),
+        ))
+        .parse(i)?;
+        let (i, conjunct) = take_till(|c| c == ',').parse(i)?;
+        // The comma is peeked, not consumed, so it stays as the next conjunct's
+        // leading boundary.
+        let (i, _) = nom::combinator::peek(tag(",")).parse(i)?;
+        Ok((i, conjunct))
+    }) {
+        if before.trim_end().ends_with(',') && !conjunct.trim().is_empty() {
+            found.push(conjunct);
+        }
+        remaining = rest;
+    }
+    found
 }
 
 /// The clause-probe recipe the by-reference grant match evaluates: lowercase →
