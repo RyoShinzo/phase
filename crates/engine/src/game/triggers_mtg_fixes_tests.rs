@@ -4,13 +4,19 @@
 
 use super::*;
 use crate::game::zones::create_object;
-use crate::types::ability::{Comparator, QuantityExpr, QuantityRef, TriggerCondition};
+use crate::types::ability::{
+    Comparator, PlayerRelation, QuantityExpr, QuantityRef, TriggerCondition,
+};
 use crate::types::events::GameEvent;
 use crate::types::game_state::GameState;
 use crate::types::identifiers::{CardId, ObjectId};
 use crate::types::mana::ManaColor;
 use crate::types::player::PlayerId;
+use crate::types::statics::PlayerCauseAction;
 use crate::types::zones::Zone;
+
+/// The doubler whose cause is checked; a player-action cause does not read it.
+const DOUBLER: ObjectId = ObjectId(100);
 
 fn setup() -> GameState {
     GameState::new_two_player(42)
@@ -21,6 +27,10 @@ fn card_drawn_cause_matches_only_draws() {
     // CR 603.2d + CR 121.1: Krang doubles a trigger a draw caused, not one
     // caused by attacking or by no event.
     let state = setup();
+    let krang = TriggerCause::PlayerAction {
+        player: PlayerRelation::All,
+        action: PlayerCauseAction::DrewCard,
+    };
     let draw = GameEvent::CardDrawn {
         player_id: PlayerId(1),
         object_id: ObjectId(1),
@@ -35,21 +45,24 @@ fn card_drawn_cause_matches_only_draws() {
     };
     assert!(trigger_cause_matches(
         &state,
-        &TriggerCause::CardDrawn,
+        &krang,
         Some(&draw),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
     assert!(!trigger_cause_matches(
         &state,
-        &TriggerCause::CardDrawn,
+        &krang,
         Some(&attack),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
     assert!(!trigger_cause_matches(
         &state,
-        &TriggerCause::CardDrawn,
+        &krang,
         None,
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
 }
 
@@ -64,24 +77,30 @@ fn controller_gained_life_cause_matches_only_own_gains() {
         amount,
         new_total: Default::default(),
     };
-    let cause = TriggerCause::ControllerGainedLife;
+    let cause = TriggerCause::PlayerAction {
+        player: PlayerRelation::Controller,
+        action: PlayerCauseAction::GainedLife,
+    };
     assert!(trigger_cause_matches(
         &state,
         &cause,
         Some(&gain(0, 3)),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
     assert!(!trigger_cause_matches(
         &state,
         &cause,
         Some(&gain(1, 3)),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
     assert!(!trigger_cause_matches(
         &state,
         &cause,
         Some(&gain(0, -2)),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
     let draw = GameEvent::CardDrawn {
         player_id: PlayerId(0),
@@ -93,9 +112,16 @@ fn controller_gained_life_cause_matches_only_own_gains() {
         &state,
         &cause,
         Some(&draw),
-        PlayerId(0)
+        PlayerId(0),
+        DOUBLER
     ));
-    assert!(!trigger_cause_matches(&state, &cause, None, PlayerId(0)));
+    assert!(!trigger_cause_matches(
+        &state,
+        &cause,
+        None,
+        PlayerId(0),
+        DOUBLER
+    ));
 }
 
 /// CR 106.1b + CR 601.2h + CR 603.4: "if {C} was spent to cast it" (Drowner

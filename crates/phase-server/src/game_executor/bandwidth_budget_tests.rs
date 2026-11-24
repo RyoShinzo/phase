@@ -632,6 +632,7 @@ impl ScriptedGame {
             | WaitingFor::EnlistChoice { .. }
             | WaitingFor::GameOver { .. }
             | WaitingFor::ReplacementChoice { .. }
+            | WaitingFor::ReplacementDecisionOrder { .. }
             | WaitingFor::EntryControllerChoice { .. }
             | WaitingFor::OrderTriggers { .. }
             | WaitingFor::CopyTargetChoice { .. }
@@ -661,7 +662,7 @@ impl ScriptedGame {
             | WaitingFor::ChooseFromZoneChoice { .. }
             | WaitingFor::BeholdChoice { .. }
             | WaitingFor::EmpowerJaceChoice { .. }
-            | WaitingFor::SpellCopyOrderChoice { .. }
+            | WaitingFor::MemberOrderChoice { .. }
             | WaitingFor::ChooseOneOfBranch { .. }
             | WaitingFor::ConniveDiscard { .. }
             | WaitingFor::DiscardChoice { .. }
@@ -671,6 +672,7 @@ impl ScriptedGame {
             | WaitingFor::ManifestDreadChoice { .. }
             | WaitingFor::BetweenGamesSideboard { .. }
             | WaitingFor::BetweenGamesChoosePlayDraw { .. }
+            | WaitingFor::ChooseStartingPlayer { .. }
             | WaitingFor::NamedChoice { .. }
             | WaitingFor::OpponentGuess { .. }
             | WaitingFor::SpellbookDraft { .. }
@@ -754,7 +756,10 @@ impl ScriptedGame {
             | WaitingFor::PayAmountChoice { .. }
             | WaitingFor::RetargetChoice { .. }
             | WaitingFor::CombatTaxPayment { .. }
-            | WaitingFor::PhyrexianPayment { .. } => panic!(
+            | WaitingFor::PhyrexianPayment { .. }
+            // Turtle Team-Up hero-choice prompt: unreachable in this scripted
+            // non-Horde game; fails loudly with the other unscripted prompts.
+            | WaitingFor::HeroEventChoice { .. } => panic!(
                 "unscripted prompt WaitingFor::{} on turn {}; extend the script deliberately",
                 self.runner.waiting_for_kind(),
                 state.turn_number

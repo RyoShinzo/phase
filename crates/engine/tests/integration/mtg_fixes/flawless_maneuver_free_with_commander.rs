@@ -61,7 +61,7 @@ fn flawless_maneuver_is_free_with_a_commander() {
         WaitingFor::OptionalCostChoice { .. }
     ));
     runner
-        .act(GameAction::DecideOptionalCost { pay: true })
+        .act(GameAction::DecideOptionalCost { index: 0 })
         .expect("casting it without paying its mana cost is accepted");
     runner.advance_until_stack_empty();
     assert_eq!(runner.state().objects[&maneuver].zone, Zone::Graveyard);

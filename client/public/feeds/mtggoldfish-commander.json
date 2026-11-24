@@ -5,16 +5,15 @@
   "icon": "G",
   "format": "commander",
   "version": 1,
-  "updated": "2026-11-01T00:00:00Z",
+  "updated": "2026-11-23T00:00:00Z",
   "source": "https://www.mtggoldfish.com/metagame/commander",
   "decks": [
     {
-      "name": "Jace, Multiverse Architect",
+      "name": "The Borg Queen",
       "author": "MTGGoldfish",
       "colors": [
-        "U",
-        "R",
         "W",
+        "U",
         "B"
       ],
       "tags": [
@@ -23,275 +22,658 @@
       "main": [
         {
           "count": 1,
-          "name": "Akroma, Angel of Fury"
+          "name": "The Borg Queen <01a15a6c-ce41-70c5-8452-cd7bd7e0e839> [TRC]"
         },
         {
           "count": 1,
-          "name": "Arcane Signet"
+          "name": "Locutus of Borg <01a15a6c-cca6-735b-a8ca-8916951358bd> [TRC]"
         },
         {
           "count": 1,
-          "name": "Archfiend of Despair"
+          "name": "Borg Incursion <01a1793f-457b-74da-8a04-d03ae15125d1> [TRC]"
         },
         {
           "count": 1,
-          "name": "Archon of Cruelty"
+          "name": "Emergency Regeneration <01a1793f-46f0-7f88-b464-a3564217bc6b> [TRC]"
         },
         {
           "count": 1,
-          "name": "Avacyn, Angel of Horror"
+          "name": "Join the Collective <01a15a6c-cb0a-720f-a195-91bd48216c29> [TRC]"
         },
         {
           "count": 1,
-          "name": "Azorius Signet"
+          "name": "Korok, Liberated Rage <01a1793f-4a4b-7fd3-be9b-7788cd4e06eb> [TRC]"
         },
         {
           "count": 1,
-          "name": "Battlefield Forge"
+          "name": "Maturation Chamber <01a1793f-4b7b-7f7c-a84f-d30236085c25> [TRC]"
         },
         {
           "count": 1,
-          "name": "Brainstorm"
+          "name": "Stratagem Emulator <01a1793f-4de2-72f5-af06-c78d6782cded> [TRC]"
         },
         {
           "count": 1,
-          "name": "Brainsurge"
+          "name": "Supplementation Node <01a1793f-4f60-74c0-a87c-31b4eb6c5fbe> [TRC]"
         },
         {
           "count": 1,
-          "name": "Caves of Koilos"
+          "name": "Type-03 Borg Vessel <01a1793f-50ae-77b5-8dc7-16180092c364> [TRC]"
         },
         {
           "count": 1,
-          "name": "Chromatic Lantern"
+          "name": "Ambulatory Reactor <01a1793f-5888-788a-b25f-3d2a1ebf7c1e> [TRC]"
         },
         {
           "count": 1,
-          "name": "Clifftop Retreat"
+          "name": "Borg Scout Sphere <01a1793f-59b3-7af6-90dd-b8906d14e1a1> [TRC]"
         },
         {
           "count": 1,
-          "name": "Command Tower"
+          "name": "Co-Option Adjutant <01a1793f-5b74-765e-b8b3-f4a6956e926f> [TRC]"
         },
         {
           "count": 1,
-          "name": "Contaminated Landscape"
+          "name": "Gift of Perfection <01a1793f-5dae-7d7e-8768-0c51e7db53a2> [TRC]"
         },
         {
           "count": 1,
-          "name": "Currency Converter"
+          "name": "Optimization Annex <01a1793f-6004-7793-afc4-73594f95060b> [TRC]"
         },
         {
           "count": 1,
-          "name": "Cursed Mirror"
+          "name": "Seven of Nine, Tertiary Adjunct <01a1793f-61a5-7c46-a93f-b8ebd9e4fd02> [TRC]"
         },
         {
           "count": 1,
-          "name": "Dack Fayden, Helping Hand"
+          "name": "Transwarp Hub <01a1793f-62d1-7f3d-908e-e036c3cc6c0c> [TRC]"
         },
         {
           "count": 1,
-          "name": "Darksteel Angel"
+          "name": "Vox, Child of the Collective <01a1793f-63f1-79a9-bb1a-d1def1c846aa> [TRC]"
         },
         {
           "count": 1,
-          "name": "Despark"
+          "name": "Assimilate the Wounded <01a1793f-6b6e-7e92-a64b-023d5868cf85> [TRC]"
         },
         {
           "count": 1,
-          "name": "Dimir Signet"
+          "name": "Assimilation Assessor <01a1793f-6d1a-7ab9-a159-8b9dcb798fd5> [TRC]"
         },
         {
           "count": 1,
-          "name": "Dreadhorde Invasion"
+          "name": "Battle of Wolf 359 <01a1793f-6e67-7038-8b14-e70cb8c63833> [TRC]"
         },
         {
           "count": 1,
-          "name": "Drowned Catacomb"
+          "name": "Extraction Integrant <01a1793f-6fd8-71d6-a650-fdd48c6d70c0> [TRC]"
         },
         {
           "count": 1,
-          "name": "Elspeth, Sun's Champion"
+          "name": "Reclamation Specialist <01a1793f-723f-7e92-a671-721f4a2ee9fc> [TRC]"
         },
         {
           "count": 1,
-          "name": "Exotic Orchard"
+          "name": "The Best of Both Worlds <01a1793f-7d41-7454-aff9-1677b75d9786> [TRC]"
         },
         {
           "count": 1,
-          "name": "Fabled Passage"
+          "name": "Collective Override <01a1793f-7e4a-7e88-9913-ae2a4c192f95> [TRC]"
         },
         {
           "count": 1,
-          "name": "Fact or Fiction"
+          "name": "Deliver from Chaos <01a1793f-7f6d-7d52-b6af-4f7a98a2c6ec> [TRC]"
         },
         {
           "count": 1,
-          "name": "Fatehold Charm"
+          "name": "Hugh, First of Many <01a1793f-80e9-7c50-a125-ec04a7ec3227> [TRC]"
         },
         {
           "count": 1,
-          "name": "Fellwar Stone"
+          "name": "Jurati, Cordial Queen <01a1793f-82c1-7452-8024-3d62595d2cb3> [TRC]"
         },
         {
           "count": 1,
-          "name": "Fetid Heath"
+          "name": "One, Borg Evolved <01a1793f-84f0-7c41-92ab-401716d0b28b> [TRC]"
         },
         {
           "count": 1,
-          "name": "Flawless Maneuver"
+          "name": "Class-4 Tactical Cube <01a1793f-8953-7858-b4d3-6dab98263410> [TRC]"
         },
         {
           "count": 1,
-          "name": "Ginger, Queen of Sweets"
+          "name": "Queen's Diamond <01a1793f-8bd3-7497-8d13-da73ce37af9f> [TRC]"
         },
         {
           "count": 1,
-          "name": "Glacial Fortress"
+          "name": "Reconnaissance Partition <01a1793f-8d53-7e59-99c7-91759ed24c4c> [TRC]"
         },
         {
           "count": 1,
-          "name": "Grand Crescendo"
-        },
-        {
-          "count": 3,
-          "name": "Island"
+          "name": "Shore Leave Planet <01a1793f-abe2-7283-a5c1-de39fbed9c90> [TRC]"
         },
         {
           "count": 1,
-          "name": "Isolated Chapel"
+          "name": "Tempered Steel <01a1793f-56b7-75ea-b433-2bdfb231ab73> [TRC]"
         },
         {
           "count": 1,
-          "name": "Izzet Signet"
+          "name": "Disallow <01a1793f-66e5-790e-a6d2-c130ea76bb70> [TRC]"
         },
         {
           "count": 1,
-          "name": "Jace, Multiverse Architect"
+          "name": "Toxic Deluge <01a1793f-75ae-79d1-a0fb-d933ed98c397> [TRC]"
         },
         {
           "count": 1,
-          "name": "Jhoira, Weatherlight Corsair"
+          "name": "Anguished Unmaking <01a1793f-874f-7ba4-a268-ab53fdeab65b> [TRC]"
         },
         {
           "count": 1,
-          "name": "Kher Keep"
+          "name": "Astral Cornucopia <01a1793f-942b-7478-8d5b-6ca9a7764ce8> [TRC]"
         },
         {
           "count": 1,
-          "name": "Lingering Souls"
+          "name": "Darksteel Plate <01a1793f-96ed-752d-87a4-e82630896188> [TRC]"
         },
         {
           "count": 1,
-          "name": "Martial Coup"
+          "name": "Door of Destinies <01a1793f-9871-72e5-8201-2967d37d5f06> [TRC]"
         },
         {
           "count": 1,
-          "name": "Mass Polymorph"
+          "name": "Forsaken Monument <01a1793f-9b5e-73cc-b3e0-ddc0142970f7> [TRC]"
         },
         {
           "count": 1,
-          "name": "Memnarch, the Warden"
-        },
-        {
-          "count": 2,
-          "name": "Mountain"
+          "name": "Central Plexus Core <01a17948-4bf4-70d5-aaa1-f0e9c6fcfc33> [TRC]"
         },
         {
           "count": 1,
-          "name": "Mystic Gate"
+          "name": "Skullclamp <01a1793f-9df4-7337-9bb1-63bee46a76b6> [TRC]"
         },
         {
           "count": 1,
-          "name": "Nissa, Leyline Tamer"
+          "name": "Unwinding Clock <01a1793f-a8e6-72ac-8934-1ad507b8eb63> [TRC]"
         },
         {
           "count": 1,
-          "name": "Niv-Mizzet, Ghost Counsel"
+          "name": "Academy Ruins <01a1793f-adbf-7faf-8a01-0fd2b8b13522> [TRC]"
         },
         {
           "count": 1,
-          "name": "Ob Nixilis, the Ascended"
+          "name": "Choked Estuary <01a1793f-b06c-7e25-94d2-fe02bc0156ae> [TRC]"
         },
         {
           "count": 1,
-          "name": "Occult Epiphany"
+          "name": "Drowned Catacomb <01a1793f-b46d-7e42-81ec-8a9917e8cbfc> [TRC]"
         },
         {
           "count": 1,
-          "name": "Omnath, Locus of the Void"
+          "name": "Eclipsed Steppe <01a1793f-b64b-73e7-92c3-cabcb8e00a37> [TRC]"
         },
         {
           "count": 1,
-          "name": "Overlord of the Mistmoors"
+          "name": "Exotic Orchard <01a1793f-b9aa-7b3f-89de-aaedd3256463> [TRC]"
         },
         {
           "count": 1,
-          "name": "Path of Ancestry"
+          "name": "Fetid Pools <01a1793f-bb02-7a60-a150-c83810edd299> [TRC]"
         },
         {
           "count": 1,
-          "name": "Path to Exile"
+          "name": "Glacial Fortress <01a1793f-bcac-784e-8a9a-97bc7e6ea74a> [TRC]"
         },
         {
           "count": 1,
-          "name": "Perilous Landscape"
+          "name": "Irrigated Farmland <01a1793f-be62-7c3f-9ba0-6e28f1ff570b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Isolated Chapel <01a1793f-c01b-783f-9417-97f13c56e684> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Morphic Pool <01a1793f-c17c-7a73-80a3-95631e8f22cb> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Port Town <01a1793f-c43f-7c47-91f9-22077808c143> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Prairie Stream <01a1793f-c5c0-7703-b833-4bb5a601cd20> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Shineshadow Snarl <01a1793f-c90d-7d5e-909e-ea040da6c5f6> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Skycloud Expanse <01a1793f-ca6e-7269-bedf-6501ce509285> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Spire of Industry <01a1793f-cba8-7bef-83c1-0f434f5fdab1> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sunken Hollow <01a1793f-cd29-7b03-b866-eaf7424ab1f9> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Umbral Expanse <01a1793f-d058-7c10-a04d-63fdb4853182> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Underground River <01a1793f-d1e5-7ec8-b398-3a714b5ce467> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Subadjunct"
+        },
+        {
+          "count": 1,
+          "name": "Conquest Mission"
+        },
+        {
+          "count": 1,
+          "name": "Hive Mind Coprocessor"
+        },
+        {
+          "count": 1,
+          "name": "Locutus, the One Who Speaks"
+        },
+        {
+          "count": 1,
+          "name": "Dispatch <01a1793f-542c-7e59-9733-68a1d44ea890> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Return to Dust <01a1793f-5547-7483-85d0-c870b9c55e74> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Thirst for Knowledge <01a1793f-686a-7ab1-acd5-23b6b160d702> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Thoughtcast <01a1793f-69d7-7303-84eb-9e29df4d2ad5> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Bitter Triumph <01a1793f-7454-7dd3-b6da-226e26d32f86> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Signet <01a1793f-9302-7ec3-8ec9-8da922574d41> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Commander's Sphere <01a1793f-9587-765d-aafa-73915e26a905> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Everflowing Chalice <01a1793f-99e5-77d8-be9e-c6aa1530e141> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring <01a1793f-9f85-76bd-af75-a3fd54044568> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Stonespeaker Crystal <01a1793f-a0f6-7761-951f-8c74282c3be6> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Swiftfoot Boots <01a1793f-a2a8-7ca1-81d5-4a4199918e7a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Dominance <01a1793f-a4ba-7f96-b67d-7afa7638c8d4> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Hierarchy <01a1793f-a679-7e71-a2fd-95a8eac5d4b9> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Progress <01a1793f-a7af-7870-8bda-56899708c07d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Wayfarer's Bauble <01a1793f-aa5f-73ff-8145-25e78ac5c5b4> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Sanctum <01a1793f-af0f-7a6e-8449-cd4107a839ee> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Tower <01a1793f-b1ec-79bb-86eb-dd2bfafdf078> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Contaminated Landscape <01a1793f-b343-7dde-a7b9-a95df0ac8a70> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Evolving Wilds <01a1793f-b7c0-70bf-85a6-781c2660d67d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Path of Ancestry <01a1793f-c2d1-7933-b2e6-48106809010f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Rogue's Passage <01a1793f-c703-7f97-9784-291a2579ff3e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Terramorphic Expanse <01a1793f-cea7-70ef-9fc5-fe0bb8270c67> [TRC]"
         },
         {
           "count": 4,
           "name": "Plains"
         },
         {
+          "count": 4,
+          "name": "Island"
+        },
+        {
+          "count": 4,
+          "name": "Swamp"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Ghoulcaller Gisa",
+      "author": "MTGGoldfish",
+      "colors": [],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
           "count": 1,
-          "name": "Plan for All Outcomes"
+          "name": "Ghoulcaller Gisa <01a0b670-e17b-76df-b77f-c77ce2ebb3ea> [FDC]"
         },
         {
           "count": 1,
-          "name": "Prairie Stream"
+          "name": "Engine Rat"
         },
         {
           "count": 1,
-          "name": "Proteus Staff"
+          "name": "Withered Wretch"
         },
         {
           "count": 1,
-          "name": "Radiant Summit"
+          "name": "Unbreathing Horde"
         },
         {
           "count": 1,
-          "name": "Rakdos Signet"
+          "name": "Bitter Triumph"
         },
         {
           "count": 1,
-          "name": "Reflecting Pool"
+          "name": "Relentless Dead"
         },
         {
           "count": 1,
-          "name": "Restless Anchorage"
+          "name": "Shambling Ghast"
         },
         {
           "count": 1,
-          "name": "Restless Spire"
+          "name": "Champion of the Perished"
         },
         {
           "count": 1,
-          "name": "Secure the Wastes"
+          "name": "Dread Wanderer"
         },
         {
           "count": 1,
-          "name": "Serra's Emissary"
+          "name": "Graveyard Marshal"
         },
         {
           "count": 1,
-          "name": "Shark Typhoon"
+          "name": "Tainted Adversary"
         },
         {
           "count": 1,
-          "name": "Shivan Reef"
+          "name": "Lost Monarch of Ifnir"
         },
         {
           "count": 1,
-          "name": "Skrelv's Hive"
+          "name": "Murderous Rider"
+        },
+        {
+          "count": 1,
+          "name": "Plague Belcher"
+        },
+        {
+          "count": 1,
+          "name": "Tomb Tyrant"
+        },
+        {
+          "count": 1,
+          "name": "Zombie Master"
+        },
+        {
+          "count": 1,
+          "name": "Jadar, Ghoulcaller of Nephalia"
+        },
+        {
+          "count": 1,
+          "name": "Chronicle of Victory"
+        },
+        {
+          "count": 1,
+          "name": "Banner of Kinship"
+        },
+        {
+          "count": 1,
+          "name": "Vanquisher's Banner"
+        },
+        {
+          "count": 1,
+          "name": "Jet Medallion"
+        },
+        {
+          "count": 1,
+          "name": "Kindred Dominance"
+        },
+        {
+          "count": 1,
+          "name": "Metallic Mimic"
+        },
+        {
+          "count": 1,
+          "name": "Adaptive Automaton"
+        },
+        {
+          "count": 1,
+          "name": "The Soul Stone"
+        },
+        {
+          "count": 1,
+          "name": "Vampiric Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Imperial Seal"
+        },
+        {
+          "count": 1,
+          "name": "Archenemy's Charm"
+        },
+        {
+          "count": 1,
+          "name": "Dismember"
+        },
+        {
+          "count": 1,
+          "name": "Zombie Apocalypse"
+        },
+        {
+          "count": 1,
+          "name": "Damnation"
+        },
+        {
+          "count": 1,
+          "name": "Feed the Swarm"
+        },
+        {
+          "count": 1,
+          "name": "Mutavault"
+        },
+        {
+          "count": 1,
+          "name": "Soulstone Sanctuary"
+        },
+        {
+          "count": 1,
+          "name": "Unholy Grotto"
+        },
+        {
+          "count": 1,
+          "name": "Nykthos, Shrine to Nyx"
+        },
+        {
+          "count": 1,
+          "name": "Cavern of Souls"
+        },
+        {
+          "count": 1,
+          "name": "Takenuma, Abandoned Mire"
+        },
+        {
+          "count": 1,
+          "name": "Gix's Command"
+        },
+        {
+          "count": 1,
+          "name": "Liliana, Dreadhorde General"
+        },
+        {
+          "count": 1,
+          "name": "Snuff Out"
+        },
+        {
+          "count": 1,
+          "name": "Vraska's Contempt"
+        },
+        {
+          "count": 1,
+          "name": "Fell the Profane"
+        },
+        {
+          "count": 1,
+          "name": "Urborg, Tomb of Yawgmoth"
+        },
+        {
+          "count": 1,
+          "name": "Realm of Koh"
+        },
+        {
+          "count": 1,
+          "name": "Ayara, First of Locthwain"
+        },
+        {
+          "count": 1,
+          "name": "Cemetery Reaper"
+        },
+        {
+          "count": 1,
+          "name": "Cryptbreaker"
+        },
+        {
+          "count": 1,
+          "name": "Death Baron"
+        },
+        {
+          "count": 1,
+          "name": "Diregraf Colossus"
+        },
+        {
+          "count": 1,
+          "name": "Endless Ranks of the Dead"
+        },
+        {
+          "count": 1,
+          "name": "Gravecrawler"
+        },
+        {
+          "count": 1,
+          "name": "Headless Rider"
+        },
+        {
+          "count": 1,
+          "name": "Kalitas, Traitor of Ghet"
+        },
+        {
+          "count": 1,
+          "name": "Liliana's Mastery"
+        },
+        {
+          "count": 1,
+          "name": "Liliana's Reaver"
+        },
+        {
+          "count": 1,
+          "name": "Lord of the Undead"
+        },
+        {
+          "count": 1,
+          "name": "Midnight Reaper"
+        },
+        {
+          "count": 1,
+          "name": "Phyrexian Arena"
+        },
+        {
+          "count": 1,
+          "name": "Razorlash Transmogrant"
+        },
+        {
+          "count": 1,
+          "name": "Zul Ashur, Lich Lord"
+        },
+        {
+          "count": 1,
+          "name": "Castle Locthwain"
+        },
+        {
+          "count": 1,
+          "name": "Accursed Marauder"
+        },
+        {
+          "count": 1,
+          "name": "Gray Merchant of Asphodel"
+        },
+        {
+          "count": 1,
+          "name": "Lord of the Accursed"
+        },
+        {
+          "count": 1,
+          "name": "Graveborn Muse"
+        },
+        {
+          "count": 1,
+          "name": "Undead Augur"
+        },
+        {
+          "count": 1,
+          "name": "Undead Warchief"
+        },
+        {
+          "count": 1,
+          "name": "Bontu's Monument"
+        },
+        {
+          "count": 1,
+          "name": "Patchwork Banner"
         },
         {
           "count": 1,
@@ -299,11 +681,187 @@
         },
         {
           "count": 1,
+          "name": "Accursed Duneyard"
+        },
+        {
+          "count": 1,
+          "name": "Phyrexian Tower"
+        },
+        {
+          "count": 1,
+          "name": "Shizo, Death's Storehouse"
+        },
+        {
+          "count": 1,
+          "name": "Polluted Delta"
+        },
+        {
+          "count": 1,
+          "name": "Verdant Catacombs"
+        },
+        {
+          "count": 1,
+          "name": "Marsh Flats"
+        },
+        {
+          "count": 1,
+          "name": "Bloodstained Mire"
+        },
+        {
+          "count": 1,
+          "name": "Prismatic Vista"
+        },
+        {
+          "count": 1,
+          "name": "The Unicomplex"
+        },
+        {
+          "count": 1,
+          "name": "Minas Morgul, Dark Fortress"
+        },
+        {
+          "count": 1,
+          "name": "Hive of the Eye Tyrant"
+        },
+        {
+          "count": 18,
+          "name": "Swamp <276> [FDN]"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Jace, Multiverse Architect",
+      "author": "MTGGoldfish",
+      "colors": [
+        "B",
+        "R",
+        "W",
+        "U"
+      ],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "Jace, Multiverse Architect"
+        },
+        {
+          "count": 1,
+          "name": "Nissa, Leyline Tamer"
+        },
+        {
+          "count": 1,
+          "name": "Avacyn, Angel of Horror"
+        },
+        {
+          "count": 1,
+          "name": "Turbulent Crater"
+        },
+        {
+          "count": 1,
+          "name": "Turbulent Shore"
+        },
+        {
+          "count": 1,
+          "name": "Turbulent Wetlands"
+        },
+        {
+          "count": 1,
+          "name": "Reflecting Pool"
+        },
+        {
+          "count": 1,
+          "name": "Flawless Maneuver"
+        },
+        {
+          "count": 1,
+          "name": "Grand Crescendo"
+        },
+        {
+          "count": 1,
+          "name": "Martial Coup"
+        },
+        {
+          "count": 1,
+          "name": "Overlord of the Mistmoors"
+        },
+        {
+          "count": 1,
+          "name": "Secure the Wastes"
+        },
+        {
+          "count": 1,
+          "name": "Skrelv's Hive"
+        },
+        {
+          "count": 1,
           "name": "Staff of the Storyteller"
         },
         {
           "count": 1,
-          "name": "Stroke of Midnight"
+          "name": "White Sun's Twilight"
+        },
+        {
+          "count": 1,
+          "name": "Occult Epiphany"
+        },
+        {
+          "count": 1,
+          "name": "Archon of Cruelty"
+        },
+        {
+          "count": 1,
+          "name": "Dreadhorde Invasion"
+        },
+        {
+          "count": 1,
+          "name": "Cursed Mirror"
+        },
+        {
+          "count": 1,
+          "name": "Chromatic Lantern"
+        },
+        {
+          "count": 1,
+          "name": "Proteus Staff"
+        },
+        {
+          "count": 1,
+          "name": "Clifftop Retreat"
+        },
+        {
+          "count": 1,
+          "name": "Drowned Catacomb"
+        },
+        {
+          "count": 1,
+          "name": "Exotic Orchard"
+        },
+        {
+          "count": 1,
+          "name": "Glacial Fortress"
+        },
+        {
+          "count": 1,
+          "name": "Isolated Chapel"
+        },
+        {
+          "count": 1,
+          "name": "Kher Keep"
+        },
+        {
+          "count": 1,
+          "name": "Prairie Stream"
+        },
+        {
+          "count": 1,
+          "name": "Radiant Summit"
+        },
+        {
+          "count": 1,
+          "name": "Shivan Reef"
         },
         {
           "count": 1,
@@ -311,19 +869,23 @@
         },
         {
           "count": 1,
-          "name": "Sulfurous Springs"
+          "name": "Arcane Signet"
         },
         {
           "count": 1,
-          "name": "Sunfall"
+          "name": "Sol Ring"
         },
         {
           "count": 1,
-          "name": "Sunken Ruins"
+          "name": "Command Tower"
         },
         {
-          "count": 2,
-          "name": "Swamp"
+          "count": 1,
+          "name": "Lingering Souls"
+        },
+        {
+          "count": 1,
+          "name": "Path to Exile"
         },
         {
           "count": 1,
@@ -331,7 +893,31 @@
         },
         {
           "count": 1,
-          "name": "Synthetic Destiny"
+          "name": "Brainstorm"
+        },
+        {
+          "count": 1,
+          "name": "Despark"
+        },
+        {
+          "count": 1,
+          "name": "Azorius Signet"
+        },
+        {
+          "count": 1,
+          "name": "Dimir Signet"
+        },
+        {
+          "count": 1,
+          "name": "Fellwar Stone"
+        },
+        {
+          "count": 1,
+          "name": "Izzet Signet"
+        },
+        {
+          "count": 1,
+          "name": "Rakdos Signet"
         },
         {
           "count": 1,
@@ -351,58 +937,2005 @@
         },
         {
           "count": 1,
-          "name": "Tamiyo, Upriser Crowned"
+          "name": "Path of Ancestry"
         },
         {
           "count": 1,
-          "name": "Teferi's Reproach"
+          "name": "Spark Double"
         },
         {
           "count": 1,
-          "name": "The Ur-Sphinx"
+          "name": "Kefka, Dancing Mad"
         },
         {
           "count": 1,
-          "name": "Turbulent Crater"
+          "name": "Nezahal, Primal Tide"
         },
         {
           "count": 1,
-          "name": "Turbulent Shore"
+          "name": "Summon: Bahamut"
         },
         {
           "count": 1,
-          "name": "Turbulent Wetlands"
+          "name": "Ardyn, the Usurper"
         },
         {
           "count": 1,
-          "name": "Underground River"
+          "name": "Hullbreaker Horror"
         },
         {
           "count": 1,
-          "name": "Venser, Fervent Forger"
+          "name": "Absolute Virtue"
         },
         {
           "count": 1,
-          "name": "Whirlwind of Thought"
+          "name": "Ovika, Enigma Goliath"
         },
         {
           "count": 1,
-          "name": "White Sun's Twilight"
+          "name": "Valgavoth, Terror Eater"
         },
         {
           "count": 1,
-          "name": "Windcrag Siege"
+          "name": "Felidar Guardian"
+        },
+        {
+          "count": 1,
+          "name": "Displacer Kitten"
+        },
+        {
+          "count": 1,
+          "name": "Agent of Treachery"
+        },
+        {
+          "count": 1,
+          "name": "An Offer You Can't Refuse"
+        },
+        {
+          "count": 1,
+          "name": "Jin-Gitaxias, Progress Tyrant"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Denial"
+        },
+        {
+          "count": 1,
+          "name": "Counterspell"
+        },
+        {
+          "count": 1,
+          "name": "Ichormoon Gauntlet"
+        },
+        {
+          "count": 1,
+          "name": "Oath of Teferi"
+        },
+        {
+          "count": 1,
+          "name": "Ugin, the Spirit Dragon"
+        },
+        {
+          "count": 1,
+          "name": "Identity Echo"
+        },
+        {
+          "count": 1,
+          "name": "Elspeth, Storm Slayer"
+        },
+        {
+          "count": 1,
+          "name": "Farewell"
+        },
+        {
+          "count": 1,
+          "name": "Nicol Bolas, Planeswalker"
+        },
+        {
+          "count": 1,
+          "name": "Ajani Unrelenting"
+        },
+        {
+          "count": 1,
+          "name": "Chaos Mutation"
+        },
+        {
+          "count": 1,
+          "name": "Urabrask's Forge"
+        },
+        {
+          "count": 1,
+          "name": "Nicol Bolas, Dragon-God"
+        },
+        {
+          "count": 1,
+          "name": "Legion's Landing"
+        },
+        {
+          "count": 1,
+          "name": "Blood Crypt"
+        },
+        {
+          "count": 1,
+          "name": "Godless Shrine"
+        },
+        {
+          "count": 1,
+          "name": "Hallowed Fountain"
+        },
+        {
+          "count": 1,
+          "name": "Sacred Foundry"
+        },
+        {
+          "count": 1,
+          "name": "Steam Vents"
+        },
+        {
+          "count": 1,
+          "name": "Watery Grave"
+        },
+        {
+          "count": 1,
+          "name": "Luxury Suite"
+        },
+        {
+          "count": 1,
+          "name": "Morphic Pool"
+        },
+        {
+          "count": 1,
+          "name": "Sea of Clouds"
+        },
+        {
+          "count": 1,
+          "name": "Spectator Seating"
+        },
+        {
+          "count": 1,
+          "name": "Training Center"
+        },
+        {
+          "count": 1,
+          "name": "Vault of Champions"
+        },
+        {
+          "count": 1,
+          "name": "Bloodstained Mire"
+        },
+        {
+          "count": 1,
+          "name": "Flooded Strand"
+        },
+        {
+          "count": 1,
+          "name": "Marsh Flats"
+        },
+        {
+          "count": 1,
+          "name": "Polluted Delta"
+        },
+        {
+          "count": 1,
+          "name": "Scalding Tarn"
+        },
+        {
+          "count": 5,
+          "name": "Plains"
+        },
+        {
+          "count": 1,
+          "name": "Island"
         }
       ],
       "sideboard": []
     },
     {
-      "name": "Atraxa, Praetors' Voice",
+      "name": "Jean-Luc Picard, Luminary",
+      "author": "MTGGoldfish",
+      "colors": [
+        "U",
+        "W",
+        "R"
+      ],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "Jean-Luc Picard, Luminary <01a15aa7-982c-7e2d-992d-332e61ce980b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Captain Janeway, Endgame <01a17e65-3745-709e-bad9-42acd3a33482> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ambassador K'Ehleyr <01a17e64-ed4e-7af5-b283-0b30d6e77c3d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Beverly Crusher, Ship's Doctor <01a17e64-eeb2-7303-a544-9302ab73ac4b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Dr. Pulaski, Cynical Clinician <01a17e64-f046-788e-a0c8-cc0352a86c0e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ensign Harry Kim, Operations <01a17e64-f1e6-7122-9e7d-bf02c1c40d6b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ezri Dax, Newly Joined <01a17e64-f369-77de-8fc4-60f760c88774> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Guinan, Ancient Advisor <01a15a6c-d51c-7f26-86aa-81e94b97096a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Julian Bashir, Frontier Doctor <01a17e64-f55c-7c3f-b532-c20cd46357ef> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Spot, Felis catus <01a15aa7-897b-78a1-890a-92e27f602fdc> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Enterprise-E, Sovereign <01a17e64-f7a0-7f6b-9053-a109c98eee95> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Chief Miles O'Brien <01a17e65-0966-7e26-a8b4-b9560695c3fd> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Data, Exploring Humanity <01a17e65-0c39-7968-9bb9-1bbf0aed1476> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Geordi La Forge, Innovator <01a17852-b546-78fe-b12d-d41544bb9d3b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Kes, Evolving Telepath <01a17e65-0efc-7fad-b838-15f38ddb4ea2> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "On the Shoulders of Giants <01a17e65-1066-70bb-b9bc-8316655faf6f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Seven of Nine, Tertiary Adjunct <01a1793f-61a5-7c46-a93f-b8ebd9e4fd02> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temporal Tribulation <01a17e65-11fc-74c0-8558-551038bcbb42> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Tuvok, Chief Tactical Officer <01a17e65-13a8-7eae-9bc5-5744f08ca72b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ro Laren, Double Agent <01a17e65-2cba-74dc-be5a-260b1915519c> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Rom and Leeta, Unlikely Pair <01a17e65-2df4-78f8-a9be-36a9b5ed5902> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "B'Elanna Torres, Scrapper <01a17e65-35ee-7916-af9f-573af9069120> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Cmdr. Troi, Outgoing Empath <01a17e65-3895-76e0-9252-c9ea4490b999> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Commander William Riker <01a17e65-3a14-70f8-b3ad-47bb57ee483c> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Reg Barclay, Fidgety Fantasist <01a17e65-3c54-7aa6-907a-a25568ff944f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Tom Paris, Risk-Taker <01a17e65-3e1c-7ccc-b56c-0560be823fa2> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Unification <01a17e65-3f9d-7030-9bd3-34a142edc63d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Vic Fontaine, One Night Only <01a17e65-424e-7db8-8621-2ea6bb1e201d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Worf, Son of Mogh <01a17e65-43f3-7140-99fe-e3582afe9ef2> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Defiant, Tough Little Ship <01a17e65-5578-7733-8146-65f7d2821e81> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Enterprise-C, Time-Tossed <01a17e65-5703-77d3-9503-a539bcf6d791> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Prometheus, Prototype <01a17e65-5889-70f1-a02e-fba1cca878b5> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Stargazer, Here and There <01a17e65-59f3-753d-aaab-357e6d9f3441> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Grand Crescendo <01a17e65-01e3-7a44-8ddd-e23f2698763d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sonya Gomez, Learning Together <01a17e65-034b-7b2f-ae98-7d563bb746b7> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Promise of Loyalty <01a17e65-04bc-7c7f-99ee-2725d5d87cbb> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Cryptic Command <01a17e65-1ed2-7188-bf1f-ad2033e15dc4> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Chain Reaction <01a17e65-3167-734e-80cd-c28043e02d3f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fevered Visions <01a17e65-4ec4-77fd-a584-32ef9ea80e2e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fractured Identity <01a17e65-5058-7e9f-90f9-44756a189446> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Supreme Verdict <01a17e65-51d0-7628-a0f4-d5b503f230e9> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Orb of the Emissary <01a17e65-64fb-72dd-adec-23bff0611a8a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Howling Mine <01a17e65-6929-709b-9db4-9ff59643b8a9> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Battlefield Forge <01a17e65-8525-7e45-b834-658aa6a18bc5> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Clifftop Retreat <01a17e65-86c8-7cdd-aa24-0e415d9018c0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Coastal Peak <01a17e65-8838-74dc-9669-ea8e8786db0d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Beacon <01a17e65-8991-79e0-8daf-49dbc7e01bf4> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Desolate Lighthouse <01a17e65-8c3e-7d79-9d3c-cf8ff623f7e0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Exotic Orchard <01a1793f-b9aa-7b3f-89de-aaedd3256463> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fabled Passage <01a17e65-8e4c-7ec4-b310-9dbc07ad1097> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Frostboil Snarl <01a17e65-8fda-738b-a815-00b74680e448> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Furycalm Snarl <01a17e65-914a-76d7-8bd6-75ccdadfe388> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Glacial Fortress <01a1793f-bcac-784e-8a9a-97bc7e6ea74a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Glittering Massif <01a17e65-93b2-7be2-bf84-f5bcc8508455> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Irrigated Farmland <01a1793f-be62-7c3f-9ba0-6e28f1ff570b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Port Town <01a1793f-c43f-7c47-91f9-22077808c143> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Prairie Stream <01a1793f-c5c0-7703-b833-4bb5a601cd20> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Radiant Summit <01a17e65-9957-75b3-8c3b-dbe345ad2531> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Scorched Geyser <01a17e65-9c9d-7f7f-a262-e1dee2f063c8> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sulfur Falls <01a17e65-9ee4-72ed-bf29-fb2ad93dcdc0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Training Center <01a17e65-a0b9-78b2-a2f7-f83f0cd5b5dc> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Malfunctioning Holodeck"
+        },
+        {
+          "count": 1,
+          "name": "Chronomantic Escape <01a17e65-0040-7ef2-a914-e7de34c404be> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Swords to Plowshares <01a17e65-075d-7220-8054-bb033becc545> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Frantic Search <01a17e65-20e6-746b-9204-94daf391ca3e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Negate <01a17e65-222b-7c4e-b18a-c7ae1eef2100> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Pongify <01a17e65-23cd-7b01-9be4-8fb7cdd1bdac> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Abrade <01a17e65-303e-7a5c-a40f-ccf48c2644bc> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Thrill of Possibility <01a17e65-32c6-7661-993a-73bf4b222393> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Faithful Mending <01a17e65-4d17-71b3-8012-08efb7657a55> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Signet <01a1793f-9302-7ec3-8ec9-8da922574d41> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Commander's Sphere <01a1793f-9587-765d-aafa-73915e26a905> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Hedron Archive <01a17e65-67c4-7779-a018-35812fee437b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Mind Stone <01a17e65-6aec-71a9-8dec-38fdfbcb6e4d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring <01a1793f-9f85-76bd-af75-a3fd54044568> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Stonespeaker Crystal <01a1793f-a0f6-7761-951f-8c74282c3be6> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Conviction <01a17e65-6d08-7199-bc5b-80ba7e2eef71> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Creativity <01a17e65-6e85-781e-b208-8433984bd320> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Progress <01a1793f-a7af-7870-8bda-56899708c07d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Thought Vessel <01a17e65-709a-7515-803a-f61af453c187> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Tower <01a1793f-b1ec-79bb-86eb-dd2bfafdf078> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Evolving Wilds <01a1793f-b7c0-70bf-85a6-781c2660d67d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Mystic Monastery <01a17e65-95aa-7665-8e51-2d72c116da3a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Path of Ancestry <01a1793f-c2d1-7933-b2e6-48106809010f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Perilous Landscape <01a17e65-9749-75bf-9771-854672da2c6e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Reliquary Tower <01a17e65-9abb-75ff-868b-dd3b4c76a60f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Terramorphic Expanse <01a1793f-cea7-70ef-9fc5-fe0bb8270c67> [TRC]"
+        },
+        {
+          "count": 5,
+          "name": "Island"
+        },
+        {
+          "count": 4,
+          "name": "Plains"
+        },
+        {
+          "count": 4,
+          "name": "Mountain"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Edgar Markov",
+      "author": "MTGGoldfish",
+      "colors": [
+        "B",
+        "R",
+        "W"
+      ],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "Anguished Unmaking"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Signet"
+        },
+        {
+          "count": 1,
+          "name": "Ashnod's Altar"
+        },
+        {
+          "count": 1,
+          "name": "Bastion of Remembrance"
+        },
+        {
+          "count": 1,
+          "name": "Battlefield Forge"
+        },
+        {
+          "count": 1,
+          "name": "Black Market Connections"
+        },
+        {
+          "count": 1,
+          "name": "Blade of the Bloodchief"
+        },
+        {
+          "count": 1,
+          "name": "Blood Artist"
+        },
+        {
+          "count": 1,
+          "name": "Blood Crypt"
+        },
+        {
+          "count": 1,
+          "name": "Bloodletter of Aclazotz"
+        },
+        {
+          "count": 1,
+          "name": "Bloodline Keeper"
+        },
+        {
+          "count": 1,
+          "name": "Bloodstained Mire"
+        },
+        {
+          "count": 1,
+          "name": "Bloodthirsty Conqueror"
+        },
+        {
+          "count": 1,
+          "name": "Bolas's Citadel"
+        },
+        {
+          "count": 1,
+          "name": "Boros Charm"
+        },
+        {
+          "count": 1,
+          "name": "Captivating Vampire"
+        },
+        {
+          "count": 1,
+          "name": "Caves of Koilos"
+        },
+        {
+          "count": 1,
+          "name": "Clavileno, First of the Blessed"
+        },
+        {
+          "count": 1,
+          "name": "Command Tower"
+        },
+        {
+          "count": 1,
+          "name": "Cruel Celebrant"
+        },
+        {
+          "count": 1,
+          "name": "Dark Prophecy"
+        },
+        {
+          "count": 1,
+          "name": "Dark Ritual"
+        },
+        {
+          "count": 1,
+          "name": "Demonic Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Diabolic Intent"
+        },
+        {
+          "count": 1,
+          "name": "Dragonskull Summit"
+        },
+        {
+          "count": 1,
+          "name": "Drana, Liberator of Malakir"
+        },
+        {
+          "count": 1,
+          "name": "Edgar Markov"
+        },
+        {
+          "count": 1,
+          "name": "Elenda, the Dusk Rose"
+        },
+        {
+          "count": 1,
+          "name": "Enduring Tenacity"
+        },
+        {
+          "count": 1,
+          "name": "Enlightened Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Exquisite Blood"
+        },
+        {
+          "count": 1,
+          "name": "Falkenrath Noble"
+        },
+        {
+          "count": 1,
+          "name": "Falkenrath Pit Fighter"
+        },
+        {
+          "count": 1,
+          "name": "Fellwar Stone"
+        },
+        {
+          "count": 1,
+          "name": "Flawless Maneuver"
+        },
+        {
+          "count": 1,
+          "name": "Forerunner of the Legion"
+        },
+        {
+          "count": 1,
+          "name": "Godless Shrine"
+        },
+        {
+          "count": 1,
+          "name": "Impact Tremors"
+        },
+        {
+          "count": 1,
+          "name": "Indulgent Aristocrat"
+        },
+        {
+          "count": 1,
+          "name": "Infernal Grasp"
+        },
+        {
+          "count": 1,
+          "name": "Knight of the Ebon Legion"
+        },
+        {
+          "count": 1,
+          "name": "Legion Lieutenant"
+        },
+        {
+          "count": 1,
+          "name": "Luxury Suite"
+        },
+        {
+          "count": 1,
+          "name": "Malakir Bloodwitch"
+        },
+        {
+          "count": 1,
+          "name": "Marauding Blight-Priest"
+        },
+        {
+          "count": 1,
+          "name": "Markov Baron"
+        },
+        {
+          "count": 1,
+          "name": "Master of Dark Rites"
+        },
+        {
+          "count": 1,
+          "name": "Mavren Fein, Dusk Apostle"
+        },
+        {
+          "count": 3,
+          "name": "Mountain"
+        },
+        {
+          "count": 1,
+          "name": "New Blood"
+        },
+        {
+          "count": 1,
+          "name": "Olivia's Wrath"
+        },
+        {
+          "count": 1,
+          "name": "Patchwork Banner"
+        },
+        {
+          "count": 1,
+          "name": "Path of Ancestry"
+        },
+        {
+          "count": 1,
+          "name": "Path to Exile"
+        },
+        {
+          "count": 1,
+          "name": "Patron of the Vein"
+        },
+        {
+          "count": 1,
+          "name": "Phyrexian Arena"
+        },
+        {
+          "count": 3,
+          "name": "Plains"
+        },
+        {
+          "count": 1,
+          "name": "Rakdos Signet"
+        },
+        {
+          "count": 1,
+          "name": "Sacred Foundry"
+        },
+        {
+          "count": 1,
+          "name": "Sanctum Seeker"
+        },
+        {
+          "count": 1,
+          "name": "Sanguine Bond"
+        },
+        {
+          "count": 1,
+          "name": "Savai Triome"
+        },
+        {
+          "count": 1,
+          "name": "Shattered Sanctum"
+        },
+        {
+          "count": 1,
+          "name": "Skullclamp"
+        },
+        {
+          "count": 1,
+          "name": "Smoldering Marsh"
+        },
+        {
+          "count": 1,
+          "name": "Smothering Tithe"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring"
+        },
+        {
+          "count": 1,
+          "name": "Sorin, Imperious Bloodlord"
+        },
+        {
+          "count": 1,
+          "name": "Stromkirk Captain"
+        },
+        {
+          "count": 1,
+          "name": "Sulfurous Springs"
+        },
+        {
+          "count": 7,
+          "name": "Swamp"
+        },
+        {
+          "count": 1,
+          "name": "Swords to Plowshares"
+        },
+        {
+          "count": 1,
+          "name": "Talisman of Hierarchy"
+        },
+        {
+          "count": 1,
+          "name": "Teferi's Protection"
+        },
+        {
+          "count": 1,
+          "name": "Three Tree City"
+        },
+        {
+          "count": 1,
+          "name": "Twilight Prophet"
+        },
+        {
+          "count": 1,
+          "name": "Unclaimed Territory"
+        },
+        {
+          "count": 1,
+          "name": "Vampire Nocturnus"
+        },
+        {
+          "count": 1,
+          "name": "Vampiric Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Vanquisher's Banner"
+        },
+        {
+          "count": 1,
+          "name": "Vault of the Archangel"
+        },
+        {
+          "count": 1,
+          "name": "Vengeful Bloodwitch"
+        },
+        {
+          "count": 1,
+          "name": "Village Rites"
+        },
+        {
+          "count": 1,
+          "name": "Viscera Seer"
+        },
+        {
+          "count": 1,
+          "name": "Vito, Thorn of the Dusk Rose"
+        },
+        {
+          "count": 1,
+          "name": "Voldaren Estate"
+        },
+        {
+          "count": 1,
+          "name": "Warleader's Call"
+        },
+        {
+          "count": 1,
+          "name": "Welcoming Vampire"
+        },
+        {
+          "count": 1,
+          "name": "Yahenni, Undying Partisan"
+        },
+        {
+          "count": 1,
+          "name": "Zulaport Cutthroat"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Giada, Font of Hope",
+      "author": "MTGGoldfish",
+      "colors": [
+        "W"
+      ],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "Bonders' Enclave"
+        },
+        {
+          "count": 1,
+          "name": "Secluded Steppe"
+        },
+        {
+          "count": 1,
+          "name": "Rogue's Passage"
+        },
+        {
+          "count": 30,
+          "name": "Plains"
+        },
+        {
+          "count": 1,
+          "name": "Seraph Sanctuary"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring"
+        },
+        {
+          "count": 1,
+          "name": "Swords to Plowshares"
+        },
+        {
+          "count": 1,
+          "name": "Kabira Takedown"
+        },
+        {
+          "count": 1,
+          "name": "Sejiri Shelter"
+        },
+        {
+          "count": 1,
+          "name": "Witch Enchanter"
+        },
+        {
+          "count": 1,
+          "name": "Rebuff the Wicked"
+        },
+        {
+          "count": 1,
+          "name": "Weathered Wayfarer"
+        },
+        {
+          "count": 1,
+          "name": "Endless Atlas"
+        },
+        {
+          "count": 1,
+          "name": "Bishop of Wings"
+        },
+        {
+          "count": 1,
+          "name": "Swiftfoot Boots"
+        },
+        {
+          "count": 1,
+          "name": "Giada, Font of Hope"
+        },
+        {
+          "count": 1,
+          "name": "Heliod's Intervention"
+        },
+        {
+          "count": 1,
+          "name": "Darksteel Mutation"
+        },
+        {
+          "count": 1,
+          "name": "Gift of Estates"
+        },
+        {
+          "count": 1,
+          "name": "Youthful Valkyrie"
+        },
+        {
+          "count": 1,
+          "name": "Darksteel Angel"
+        },
+        {
+          "count": 1,
+          "name": "Angel of Vitality"
+        },
+        {
+          "count": 1,
+          "name": "Sword of Fire and Ice"
+        },
+        {
+          "count": 1,
+          "name": "Cut a Deal"
+        },
+        {
+          "count": 1,
+          "name": "Unbreakable Formation"
+        },
+        {
+          "count": 1,
+          "name": "Four Knocks"
+        },
+        {
+          "count": 1,
+          "name": "Wojek Investigator"
+        },
+        {
+          "count": 1,
+          "name": "Oketra's Monument"
+        },
+        {
+          "count": 1,
+          "name": "Dismantling Wave"
+        },
+        {
+          "count": 1,
+          "name": "Worn Powerstone"
+        },
+        {
+          "count": 1,
+          "name": "Metropolis Reformer"
+        },
+        {
+          "count": 1,
+          "name": "Entreat the Angels"
+        },
+        {
+          "count": 1,
+          "name": "Inspiring Overseer"
+        },
+        {
+          "count": 1,
+          "name": "Righteous Valkyrie"
+        },
+        {
+          "count": 1,
+          "name": "Angel of Finality"
+        },
+        {
+          "count": 1,
+          "name": "Archangel of Tithes"
+        },
+        {
+          "count": 1,
+          "name": "Wrath of God"
+        },
+        {
+          "count": 1,
+          "name": "Firemane Commando"
+        },
+        {
+          "count": 1,
+          "name": "Thran Dynamo"
+        },
+        {
+          "count": 1,
+          "name": "Gisela, the Broken Blade"
+        },
+        {
+          "count": 1,
+          "name": "Nyx Lotus"
+        },
+        {
+          "count": 1,
+          "name": "Angelic Field Marshal"
+        },
+        {
+          "count": 1,
+          "name": "Clever Concealment"
+        },
+        {
+          "count": 1,
+          "name": "Ravnica at War"
+        },
+        {
+          "count": 1,
+          "name": "Serra the Benevolent"
+        },
+        {
+          "count": 1,
+          "name": "Shattered Angel"
+        },
+        {
+          "count": 1,
+          "name": "Enduring Angel"
+        },
+        {
+          "count": 1,
+          "name": "Angel of Sanctions"
+        },
+        {
+          "count": 1,
+          "name": "Angel of Destiny"
+        },
+        {
+          "count": 1,
+          "name": "Herald of War"
+        },
+        {
+          "count": 1,
+          "name": "Herald of the Host"
+        },
+        {
+          "count": 1,
+          "name": "Vanquisher's Banner"
+        },
+        {
+          "count": 1,
+          "name": "Lyra Dawnbringer"
+        },
+        {
+          "count": 1,
+          "name": "Cleansing Nova"
+        },
+        {
+          "count": 1,
+          "name": "Sigarda's Vanguard"
+        },
+        {
+          "count": 1,
+          "name": "Angel of Indemnity"
+        },
+        {
+          "count": 1,
+          "name": "Sunblast Angel"
+        },
+        {
+          "count": 1,
+          "name": "Austere Command"
+        },
+        {
+          "count": 1,
+          "name": "True Conviction"
+        },
+        {
+          "count": 1,
+          "name": "Breathkeeper Seraph"
+        },
+        {
+          "count": 1,
+          "name": "Caged Sun"
+        },
+        {
+          "count": 1,
+          "name": "Angelic Arbiter"
+        },
+        {
+          "count": 1,
+          "name": "Akroma, Vision of Ixidor"
+        },
+        {
+          "count": 1,
+          "name": "Angel of the Dire Hour"
+        },
+        {
+          "count": 1,
+          "name": "Angel of the Ruins"
+        },
+        {
+          "count": 1,
+          "name": "Platinum Angel"
+        },
+        {
+          "count": 1,
+          "name": "Mass Calcify"
+        },
+        {
+          "count": 1,
+          "name": "Emeria's Call"
+        },
+        {
+          "count": 1,
+          "name": "Emeria Shepherd"
+        },
+        {
+          "count": 1,
+          "name": "Sephara, Sky's Blade"
+        },
+        {
+          "count": 1,
+          "name": "Bruna, the Fading Light"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Commander Spock",
       "author": "MTGGoldfish",
       "colors": [
         "G",
-        "U",
         "W",
+        "U"
+      ],
+      "tags": [
+        "commander"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "Commander Spock <01a15aa7-9028-7465-9704-e67a9d9924d0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Captain Kirk, Boldly Going <01a188af-0fb1-7e26-a5fb-28a7e0c8de57> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Balance of Terror <01a188ae-ac73-76f5-8344-317313b28d76> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Merciful Mandate <01a183b5-6645-7f61-ba6d-6e82d035666b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "M'Ress, Crew Coordinator <01a188ae-b03d-75a7-8454-908ca995b3fc> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Shuttlecraft Galileo <01a188ae-b1f1-756b-9b5c-13473e3d9ae3> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Tribble Cluster <01a188ae-b436-7a88-88c5-b3afa8209f1d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Colossal Clone Master <01a188ae-c5f2-7398-90da-2ba8f6ffa8ec> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fleet Captain Christopher Pike <01a188ae-c859-72da-bb11-5ebfa62842f5> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Giant Space Amoeba <01a188ae-c9df-7fcf-9140-a36b0b327af9> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Lieutenant Nyota Uhura <01a188ae-cbdf-76d3-b373-0749d77883a6> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sam Kirk, Xenoanthropologist <01a188ae-cd88-722d-9360-3ae910dd1ed1> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temporal Tribulation <01a17e65-11fc-74c0-8558-551038bcbb42> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Amanda Grayson, Logic's Link <01a188ae-f3b7-7eea-a560-14cf7d8eb505> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Christine Chapel, Combat Medic <01a15a44-c7b1-7d24-9707-0cfcd2b70b93> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Janice Rand, Essential Aide <01a188ae-f55e-78ca-83d7-2eea6c8d1f25> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Lieutenant Hikaru Sulu <01a188ae-f6f3-73eb-ac35-6215741e9057> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Chief Kyle, Transporter Tech <01a188af-10ed-7c40-8167-87df02b265a8> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Chief Montgomery Scott <01a188af-1238-75f5-b125-ae77ca286bab> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Lt. Arex, Ever-Adapting <01a188af-1529-7a1b-af1e-193bb7048c98> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "McCoy, Not a Bricklayer <01a188af-164f-7e16-804e-6523143812c0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Pavel Chekov, First Posting <01a188af-1818-7f5f-8311-9c60e8f522de> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "T'Pring, Never Parted <01a188af-1a76-785d-96f0-2ed372a4b49f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Chair <01a15aa7-9bb7-7cca-9889-f215b08244b1> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "The Guardian of Forever <01a188af-28ad-7cf2-a7d4-6dc2cddac653> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Jefferies Tube <01a188af-29ef-71a9-bcba-1b2bbb409453> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Planet Killer <01a188af-2bd6-767e-9f28-830371cdf494> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "S.S. Botany Bay <01a188af-2db0-7205-b121-467bafce6b07> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Starfleet Communicator <01a15aa7-9de9-780d-9b6d-e5b83d6575ac> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Starship Enterprise <01a15aa7-9e9a-714e-9ec9-d50fbf20145b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Defiant, Mirror Migrant <01a188af-2f6e-7540-8d5e-db3a8172c4d0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "U.S.S. Farragut, Bold Explorer <01a188af-30f5-7614-982d-0a2be7f8f1ef> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Shore Leave Planet <01a1793f-abe2-7283-a5c1-de39fbed9c90> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Austere Command <01a188ae-bed9-741a-a160-d0fae04b34cf> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sun Titan <01a188ae-c1e2-785a-ada7-da36f8d00f76> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Wrath of God <01a188ae-c3cb-7de9-97be-5615657cf2bb> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Echo of Eons <01a188ae-d3e3-7a0e-8bc7-16273df6237a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ancient Greenwarden <01a188ae-f902-7550-82a6-c06320ff197a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Augur of Autumn <01a188ae-fa62-72a3-b844-0ab30a7556cd> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Exploration <01a188ae-fe30-7fe7-8477-632daf52c2aa> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Guardian Project <01a188af-00d3-74ec-9991-0fd702757a19> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Heroic Intervention <01a188af-0372-7174-92d1-d8f630c7b553> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Lotus Cobra <01a188af-04bf-7392-86fd-a7be95ad43e3> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Scute Swarm <01a188af-09e4-7c69-8771-0a15e3334d32> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Tireless Tracker <01a188af-0b1c-7051-8625-ee150b50990c> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Canopy Vista <01a188af-42af-7240-90d7-c7f42e5ebea0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Exotic Orchard <01a1793f-b9aa-7b3f-89de-aaedd3256463> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fabled Passage <01a17e65-8e4c-7ec4-b310-9dbc07ad1097> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Fortified Village <01a188af-467a-7fd0-9a6c-eac45ca47c4a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Glacial Fortress <01a1793f-bcac-784e-8a9a-97bc7e6ea74a> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Hinterland Harbor <01a188af-48b5-71a7-aef1-724028be8691> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Irrigated Farmland <01a1793f-be62-7c3f-9ba0-6e28f1ff570b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Mosswort Bridge <01a188af-4a97-7d66-b032-d49d3f6d8f8e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Galactic Menagerie <01a188b3-0add-763a-a744-728c7f127790> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Port Town <01a1793f-c43f-7c47-91f9-22077808c143> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Prairie Stream <01a1793f-c5c0-7703-b833-4bb5a601cd20> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Rain-Slicked Copse <01a188af-4e6a-708f-9f0f-9951423a1319> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Scattered Groves <01a188af-507f-7590-8eb6-9ad7524fd4e0> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sea of Clouds <01a188af-520d-7e75-8fb8-3da86187b3fe> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sodden Verdure <01a188af-55c6-7d1f-b945-74bfe415a63c> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sunpetal Grove <01a188af-57e0-78a8-9fba-f24c065398a5> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temple of Enlightenment <01a188af-592a-7b90-9371-2fa957ad60a1> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temple of Mystery <01a188af-5a8b-72c8-a3d5-b19c54e94d0b> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temple of Plenty <01a188af-5bf3-782f-aad1-0b4e816cc96e> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Vineglimmer Snarl <01a188af-60ef-7f6e-94fa-f14eb66c8767> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Cold-Blooded Crew <019fd29e-5420-7a7c-b2f2-7b161d43f32d> [TRK]"
+        },
+        {
+          "count": 1,
+          "name": "Syndicate Liquidators <019fd29e-609b-778e-b173-33d44d6ba70f> [TRK]"
+        },
+        {
+          "count": 1,
+          "name": "Earth, Sector 001 <01a15a75-07df-75a4-bba0-d5158f9580ae> [TRK]"
+        },
+        {
+          "count": 1,
+          "name": "Risa <01a15a75-03f6-7b2b-a1ee-0d35e866240a> [TRK]"
+        },
+        {
+          "count": 1,
+          "name": "Vulcan <01a15a75-05fd-7b3a-8c9f-8fc748cc51f3> [TRK]"
+        },
+        {
+          "count": 1,
+          "name": "Path to Exile <01a183b5-7b87-7478-a515-4bf305a26f21> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Brainstorm <01a188ae-d240-7c9c-8e1c-d05ead106b68> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Ponder <01a188ae-d5e0-7103-9741-5363dd368962> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Reality Shift <01a188ae-d7df-7810-a735-80a0fcc82106> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Beast Within <01a188ae-fbbb-7dbe-a993-8c71d8fa3de1> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Cultivate <01a188ae-fcf3-7664-afda-a5ca216b3736> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Farseek <01a188ae-ff79-7388-9fa1-1b8bf8dc0d75> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Harmonize <01a188af-0237-7339-90b1-25defa4dac36> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Nature's Lore <01a188af-05fa-73b6-87e0-e21995719453> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Rampant Growth <01a188af-0774-78ab-9b5a-a52218c701c7> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Satyr Wayfinder <01a188af-08bb-7439-b0ab-e18c72f04422> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Growth Spiral <01a188af-2557-7ce1-b686-c98d9bc99dbc> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Signet <01a1793f-9302-7ec3-8ec9-8da922574d41> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring <01a1793f-9f85-76bd-af75-a3fd54044568> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Command Tower <01a1793f-b1ec-79bb-86eb-dd2bfafdf078> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Evolving Wilds <01a1793f-b7c0-70bf-85a6-781c2660d67d> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Path of Ancestry <01a1793f-c2d1-7933-b2e6-48106809010f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Reliquary Tower <01a17e65-9abb-75ff-868b-dd3b4c76a60f> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Seaside Citadel <01a188af-5336-79ff-b258-5fec2b629b03> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Temple of the False God <01a188af-5d47-7990-9185-2ccb043a7076> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Terramorphic Expanse <01a1793f-cea7-70ef-9fc5-fe0bb8270c67> [TRC]"
+        },
+        {
+          "count": 1,
+          "name": "Tranquil Landscape <01a188af-5f1a-75e3-a2ae-ef1268bd10a9> [TRC]"
+        },
+        {
+          "count": 4,
+          "name": "Forest"
+        },
+        {
+          "count": 2,
+          "name": "Plains"
+        },
+        {
+          "count": 2,
+          "name": "Island"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "High Perfect Morcant",
+      "author": "MTGGoldfish",
+      "colors": [
+        "B",
+        "G"
+      ],
+      "tags": [
+        "metagame"
+      ],
+      "main": [
+        {
+          "count": 1,
+          "name": "High Perfect Morcant"
+        },
+        {
+          "count": 1,
+          "name": "Llanowar Elves"
+        },
+        {
+          "count": 1,
+          "name": "Elvish Mystic"
+        },
+        {
+          "count": 1,
+          "name": "Fyndhorn Elves"
+        },
+        {
+          "count": 1,
+          "name": "Elves of Deep Shadow"
+        },
+        {
+          "count": 1,
+          "name": "Arbor Elf"
+        },
+        {
+          "count": 1,
+          "name": "Deathrite Shaman"
+        },
+        {
+          "count": 1,
+          "name": "Formidable Speaker"
+        },
+        {
+          "count": 1,
+          "name": "Viridian Corrupter"
+        },
+        {
+          "count": 1,
+          "name": "Champions of the Perfect"
+        },
+        {
+          "count": 1,
+          "name": "Selfless Safewright"
+        },
+        {
+          "count": 1,
+          "name": "Toski, Bearer of Secrets"
+        },
+        {
+          "count": 1,
+          "name": "Glissa Sunslayer"
+        },
+        {
+          "count": 1,
+          "name": "Imperious Perfect"
+        },
+        {
+          "count": 1,
+          "name": "Elvish Archdruid"
+        },
+        {
+          "count": 1,
+          "name": "Priest of Titania"
+        },
+        {
+          "count": 1,
+          "name": "Wirewood Symbiote"
+        },
+        {
+          "count": 1,
+          "name": "Beast Whisperer"
+        },
+        {
+          "count": 1,
+          "name": "Massacre Girl, Known Killer"
+        },
+        {
+          "count": 1,
+          "name": "Necroskitter"
+        },
+        {
+          "count": 1,
+          "name": "Craterhoof Behemoth"
+        },
+        {
+          "count": 1,
+          "name": "Yawgmoth, Thran Physician"
+        },
+        {
+          "count": 1,
+          "name": "Shaman of the Pack"
+        },
+        {
+          "count": 1,
+          "name": "Elvish Warmaster"
+        },
+        {
+          "count": 1,
+          "name": "Ezuri, Renegade Leader"
+        },
+        {
+          "count": 1,
+          "name": "Wood Elves"
+        },
+        {
+          "count": 1,
+          "name": "Simulacrum Shaper"
+        },
+        {
+          "count": 1,
+          "name": "Lathril, Blade of the Elves"
+        },
+        {
+          "count": 1,
+          "name": "Realmwalker"
+        },
+        {
+          "count": 1,
+          "name": "Marwyn, the Nurturer"
+        },
+        {
+          "count": 1,
+          "name": "Evolution Sage"
+        },
+        {
+          "count": 1,
+          "name": "Leaf-Crowned Visionary"
+        },
+        {
+          "count": 1,
+          "name": "Circle of Dreams Druid"
+        },
+        {
+          "count": 1,
+          "name": "Species Specialist"
+        },
+        {
+          "count": 1,
+          "name": "Morcant's Loyalist"
+        },
+        {
+          "count": 1,
+          "name": "Lys Alana Huntmaster"
+        },
+        {
+          "count": 1,
+          "name": "Patriarch's Bidding"
+        },
+        {
+          "count": 1,
+          "name": "Haunting Voyage"
+        },
+        {
+          "count": 1,
+          "name": "Toxic Deluge"
+        },
+        {
+          "count": 1,
+          "name": "Elvish Promenade"
+        },
+        {
+          "count": 1,
+          "name": "Shamanic Revelation"
+        },
+        {
+          "count": 1,
+          "name": "Triumph of the Hordes"
+        },
+        {
+          "count": 1,
+          "name": "Demonic Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Kindred Dominance"
+        },
+        {
+          "count": 1,
+          "name": "Natural Order"
+        },
+        {
+          "count": 1,
+          "name": "Abrupt Decay"
+        },
+        {
+          "count": 1,
+          "name": "Assassin's Trophy"
+        },
+        {
+          "count": 1,
+          "name": "Infectious Bite"
+        },
+        {
+          "count": 1,
+          "name": "Vampiric Tutor"
+        },
+        {
+          "count": 1,
+          "name": "Heroic Intervention"
+        },
+        {
+          "count": 1,
+          "name": "Tear Asunder"
+        },
+        {
+          "count": 1,
+          "name": "Beast Within"
+        },
+        {
+          "count": 1,
+          "name": "Elven Ambush"
+        },
+        {
+          "count": 1,
+          "name": "Golgari Charm"
+        },
+        {
+          "count": 1,
+          "name": "Sol Ring"
+        },
+        {
+          "count": 1,
+          "name": "Arcane Signet"
+        },
+        {
+          "count": 1,
+          "name": "Cauldron of Essence"
+        },
+        {
+          "count": 1,
+          "name": "Skullclamp"
+        },
+        {
+          "count": 1,
+          "name": "Guardian Project"
+        },
+        {
+          "count": 1,
+          "name": "Flourishing Defenses"
+        },
+        {
+          "count": 1,
+          "name": "Elven Chorus"
+        },
+        {
+          "count": 1,
+          "name": "Vraska, Golgari Queen"
+        },
+        {
+          "count": 1,
+          "name": "Tyvar Kell"
+        },
+        {
+          "count": 1,
+          "name": "Tyvar, Jubilant Brawler"
+        },
+        {
+          "count": 1,
+          "name": "Freyalise, Llanowar's Fury"
+        },
+        {
+          "count": 1,
+          "name": "Wirewood Lodge"
+        },
+        {
+          "count": 1,
+          "name": "Boseiju, Who Endures"
+        },
+        {
+          "count": 1,
+          "name": "Command Tower"
+        },
+        {
+          "count": 1,
+          "name": "Deathcap Glade"
+        },
+        {
+          "count": 1,
+          "name": "Gilt-Leaf Palace"
+        },
+        {
+          "count": 1,
+          "name": "Llanowar Wastes"
+        },
+        {
+          "count": 1,
+          "name": "Overgrown Tomb"
+        },
+        {
+          "count": 1,
+          "name": "Undergrowth Stadium"
+        },
+        {
+          "count": 1,
+          "name": "Yavimaya, Cradle of Growth"
+        },
+        {
+          "count": 1,
+          "name": "Nykthos, Shrine to Nyx"
+        },
+        {
+          "count": 1,
+          "name": "Blooming Marsh"
+        },
+        {
+          "count": 1,
+          "name": "Twilight Mire"
+        },
+        {
+          "count": 1,
+          "name": "Nurturing Peatland"
+        },
+        {
+          "count": 1,
+          "name": "Takenuma, Abandoned Mire"
+        },
+        {
+          "count": 1,
+          "name": "Bojuka Bog"
+        },
+        {
+          "count": 1,
+          "name": "Verdant Catacombs"
+        },
+        {
+          "count": 1,
+          "name": "Woodland Cemetery"
+        },
+        {
+          "count": 1,
+          "name": "Three Tree City"
+        },
+        {
+          "count": 11,
+          "name": "Forest"
+        },
+        {
+          "count": 5,
+          "name": "Swamp"
+        },
+        {
+          "count": 1,
+          "name": "Revitalizing Repast"
+        }
+      ],
+      "sideboard": []
+    },
+    {
+      "name": "Teval, the Balanced Scale",
+      "author": "MTGGoldfish",
+      "colors": [
+        "U",
+        "G",
         "B"
       ],
       "tags": [
@@ -411,15 +2944,23 @@
       "main": [
         {
           "count": 1,
-          "name": "Arcane Signet"
+          "name": "Aftermath Analyst"
         },
         {
           "count": 1,
-          "name": "Astral Cornucopia"
+          "name": "An Offer You Can't Refuse"
         },
         {
           "count": 1,
-          "name": "Llanowar Wastes"
+          "name": "Arcane Denial"
+        },
+        {
+          "count": 1,
+          "name": "Assassin's Trophy"
+        },
+        {
+          "count": 1,
+          "name": "Badgermole Cub"
         },
         {
           "count": 1,
@@ -427,35 +2968,19 @@
         },
         {
           "count": 1,
-          "name": "Blighted Agent"
-        },
-        {
-          "count": 1,
-          "name": "Bloated Contaminator"
-        },
-        {
-          "count": 1,
           "name": "Boseiju, Who Endures"
         },
         {
           "count": 1,
-          "name": "Bountiful Promenade"
+          "name": "Breeding Pool"
         },
         {
           "count": 1,
-          "name": "Hinterland Harbor"
+          "name": "Cephalid Coliseum"
         },
         {
           "count": 1,
-          "name": "Chromatic Lantern"
-        },
-        {
-          "count": 1,
-          "name": "Talisman of Progress"
-        },
-        {
-          "count": 1,
-          "name": "Path of Ancestry"
+          "name": "Colossal Grave-Reaver"
         },
         {
           "count": 1,
@@ -463,123 +2988,43 @@
         },
         {
           "count": 1,
-          "name": "Contagion Engine"
+          "name": "Cryptolith Rite"
         },
         {
           "count": 1,
-          "name": "Cyclonic Rift"
+          "name": "Deathrite Shaman"
         },
         {
           "count": 1,
-          "name": "Delighted Halfling"
+          "name": "Dread Return"
         },
         {
           "count": 1,
-          "name": "Deserted Beach"
+          "name": "Dredger's Insight"
         },
         {
           "count": 1,
-          "name": "Dispel"
+          "name": "Drowned Catacomb"
         },
         {
           "count": 1,
-          "name": "Eiganjo, Seat of the Empire"
+          "name": "Druidic Ritual"
         },
         {
           "count": 1,
-          "name": "Enlightened Tutor"
+          "name": "Elves of Deep Shadow"
         },
         {
           "count": 1,
-          "name": "Skrelv, Defector Mite"
+          "name": "Elvish Mystic"
         },
         {
           "count": 1,
-          "name": "Evolution Sage"
+          "name": "Enduring Vitality"
         },
         {
           "count": 1,
-          "name": "Farewell"
-        },
-        {
-          "count": 1,
-          "name": "Farseek"
-        },
-        {
-          "count": 1,
-          "name": "Swan Song"
-        },
-        {
-          "count": 1,
-          "name": "Flooded Grove"
-        },
-        {
-          "count": 1,
-          "name": "Flux Channeler"
-        },
-        {
-          "count": 1,
-          "name": "Forest"
-        },
-        {
-          "count": 1,
-          "name": "Glistener Elf"
-        },
-        {
-          "count": 1,
-          "name": "Isolated Chapel"
-        },
-        {
-          "count": 1,
-          "name": "Prairie Stream"
-        },
-        {
-          "count": 1,
-          "name": "Heroic Intervention"
-        },
-        {
-          "count": 1,
-          "name": "Ichor Rats"
-        },
-        {
-          "count": 1,
-          "name": "Sandsteppe Citadel"
-        },
-        {
-          "count": 1,
-          "name": "Inexorable Tide"
-        },
-        {
-          "count": 1,
-          "name": "Infectious Bite"
-        },
-        {
-          "count": 1,
-          "name": "Infectious Inquiry"
-        },
-        {
-          "count": 1,
-          "name": "Invigorate"
-        },
-        {
-          "count": 3,
-          "name": "Island"
-        },
-        {
-          "count": 1,
-          "name": "Ixhel, Scion of Atraxa"
-        },
-        {
-          "count": 1,
-          "name": "Lightning Greaves"
-        },
-        {
-          "count": 1,
-          "name": "Magistrate's Scepter"
-        },
-        {
-          "count": 1,
-          "name": "Mana Confluence"
+          "name": "Evendo, Waking Haven"
         },
         {
           "count": 1,
@@ -587,7 +3032,103 @@
         },
         {
           "count": 1,
-          "name": "Might of Oaks"
+          "name": "Fabled Passage"
+        },
+        {
+          "count": 1,
+          "name": "Field of the Dead"
+        },
+        {
+          "count": 3,
+          "name": "Forest"
+        },
+        {
+          "count": 1,
+          "name": "Fyndhorn Elves"
+        },
+        {
+          "count": 1,
+          "name": "Grapple with the Past"
+        },
+        {
+          "count": 1,
+          "name": "Hedge Shredder"
+        },
+        {
+          "count": 1,
+          "name": "Hedron Crab"
+        },
+        {
+          "count": 1,
+          "name": "Hinterland Harbor"
+        },
+        {
+          "count": 1,
+          "name": "Horizon of Progress"
+        },
+        {
+          "count": 1,
+          "name": "Icetill Explorer"
+        },
+        {
+          "count": 1,
+          "name": "Immoral Bargain"
+        },
+        {
+          "count": 1,
+          "name": "Insidious Roots"
+        },
+        {
+          "count": 2,
+          "name": "Island"
+        },
+        {
+          "count": 1,
+          "name": "Kheru Goldkeeper"
+        },
+        {
+          "count": 1,
+          "name": "Kindred Discovery"
+        },
+        {
+          "count": 1,
+          "name": "Kinnan, Bonder Prodigy"
+        },
+        {
+          "count": 1,
+          "name": "Life from the Loam"
+        },
+        {
+          "count": 1,
+          "name": "Lightning Greaves"
+        },
+        {
+          "count": 1,
+          "name": "Liliana the Repentant"
+        },
+        {
+          "count": 1,
+          "name": "Llanowar Elves"
+        },
+        {
+          "count": 1,
+          "name": "Llanowar Wastes"
+        },
+        {
+          "count": 1,
+          "name": "Lotus Cobra"
+        },
+        {
+          "count": 1,
+          "name": "Midnight Tilling"
+        },
+        {
+          "count": 1,
+          "name": "Misty Rainforest"
+        },
+        {
+          "count": 1,
+          "name": "Mole Man, Moloid Master"
         },
         {
           "count": 1,
@@ -595,63 +3136,35 @@
         },
         {
           "count": 1,
-          "name": "Fellwar Stone"
+          "name": "Muldrotha, the Gravetide"
         },
         {
           "count": 1,
-          "name": "Mystical Tutor"
+          "name": "Nature's Rhythm"
         },
         {
           "count": 1,
-          "name": "Nature's Lore"
+          "name": "Nurturing Peatland"
         },
         {
           "count": 1,
-          "name": "Noble Hierarch"
+          "name": "Overgrown Tomb"
         },
         {
           "count": 1,
-          "name": "Norn's Decree"
+          "name": "Overlord of the Balemurk"
         },
         {
           "count": 1,
-          "name": "Overgrown Farmland"
+          "name": "Polluted Delta"
         },
         {
           "count": 1,
-          "name": "Woodland Cemetery"
+          "name": "Prismatic Vista"
         },
         {
           "count": 1,
-          "name": "Path to Exile"
-        },
-        {
-          "count": 1,
-          "name": "Phyrexian Swarmlord"
-        },
-        {
-          "count": 1,
-          "name": "Plague Stinger"
-        },
-        {
-          "count": 1,
-          "name": "Plains"
-        },
-        {
-          "count": 1,
-          "name": "Planewide Celebration"
-        },
-        {
-          "count": 1,
-          "name": "Prologue to Phyresis"
-        },
-        {
-          "count": 1,
-          "name": "Arcane Sanctum"
-        },
-        {
-          "count": 1,
-          "name": "Reflecting Pool"
+          "name": "Ravenous Rotbelly"
         },
         {
           "count": 1,
@@ -659,19 +3172,35 @@
         },
         {
           "count": 1,
-          "name": "Rhystic Study"
+          "name": "Ripples of Undeath"
         },
         {
           "count": 1,
-          "name": "Brushland"
+          "name": "Savra, Queen of the Golgari"
         },
         {
           "count": 1,
-          "name": "Caves of Koilos"
+          "name": "Say Its Name"
         },
         {
           "count": 1,
-          "name": "Glacial Fortress"
+          "name": "Sephiroth, Fabled SOLDIER"
+        },
+        {
+          "count": 1,
+          "name": "Shang-Chi, Master of Kung Fu"
+        },
+        {
+          "count": 1,
+          "name": "Shifting Woodland"
+        },
+        {
+          "count": 1,
+          "name": "Six"
+        },
+        {
+          "count": 1,
+          "name": "Snarling Gorehound"
         },
         {
           "count": 1,
@@ -679,39 +3208,27 @@
         },
         {
           "count": 1,
-          "name": "Seaside Citadel"
+          "name": "Spelunking"
         },
         {
           "count": 1,
-          "name": "Spark Double"
+          "name": "Springheart Nantuko"
         },
         {
           "count": 1,
-          "name": "Spirit Mantle"
+          "name": "Steward of the Harvest"
         },
         {
           "count": 1,
-          "name": "Stonewood Invocation"
+          "name": "Susur Secundi, Void Altar"
         },
         {
-          "count": 1,
+          "count": 2,
           "name": "Swamp"
         },
         {
           "count": 1,
-          "name": "Sword of Truth and Justice"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Sylvan Library"
-        },
-        {
-          "count": 1,
-          "name": "Tainted Strike"
+          "name": "Swan Song"
         },
         {
           "count": 1,
@@ -719,31 +3236,31 @@
         },
         {
           "count": 1,
-          "name": "Tekuthal, Inquiry Dominus"
+          "name": "The Meathook Massacre"
         },
         {
           "count": 1,
-          "name": "Sunpetal Grove"
+          "name": "Tireless Provisioner"
         },
         {
           "count": 1,
-          "name": "Three Visits"
+          "name": "Tom, Bert, and William"
         },
         {
           "count": 1,
-          "name": "Thrummingbird"
+          "name": "Tortured Existence"
         },
         {
           "count": 1,
-          "name": "Yavimaya Coast"
+          "name": "Toxrill, the Corrosive"
         },
         {
           "count": 1,
-          "name": "Adarkar Wastes"
+          "name": "Tyvar, Jubilant Brawler"
         },
         {
           "count": 1,
-          "name": "Twilight Mire"
+          "name": "Undead Augur"
         },
         {
           "count": 1,
@@ -755,1159 +3272,68 @@
         },
         {
           "count": 1,
-          "name": "Unnatural Restoration"
-        },
-        {
-          "count": 1,
-          "name": "Diabolic Tutor"
-        },
-        {
-          "count": 1,
-          "name": "Vault of Champions"
-        },
-        {
-          "count": 1,
-          "name": "Venerated Rotpriest"
-        },
-        {
-          "count": 1,
-          "name": "Viral Drake"
-        },
-        {
-          "count": 1,
-          "name": "Voidwing Hybrid"
-        },
-        {
-          "count": 1,
-          "name": "Vorinclex, Monstrous Raider"
-        },
-        {
-          "count": 1,
-          "name": "Vraska, Betrayal's Sting"
-        },
-        {
-          "count": 1,
-          "name": "Vraska's Fall"
-        },
-        {
-          "count": 1,
-          "name": "Drowned Catacomb"
-        },
-        {
-          "count": 1,
-          "name": "Opulent Palace"
-        },
-        {
-          "count": 1,
-          "name": "Atraxa, Praetors' Voice"
-        }
-      ],
-      "sideboard": []
-    },
-    {
-      "name": "Vraska, Soul of Stone",
-      "author": "MTGGoldfish",
-      "colors": [
-        "U",
-        "R",
-        "W"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Abrade"
-        },
-        {
-          "count": 1,
-          "name": "Academy Manufactor"
-        },
-        {
-          "count": 1,
-          "name": "Adarkar Wastes"
-        },
-        {
-          "count": 1,
-          "name": "Alibou, Ancient Witness"
-        },
-        {
-          "count": 1,
-          "name": "Ancient Den"
-        },
-        {
-          "count": 1,
-          "name": "Arcane Denial"
-        },
-        {
-          "count": 1,
-          "name": "Archway of Innovation"
-        },
-        {
-          "count": 1,
-          "name": "Battlefield Forge"
-        },
-        {
-          "count": 1,
-          "name": "Blasphemous Act"
-        },
-        {
-          "count": 1,
-          "name": "Brainstorm"
-        },
-        {
-          "count": 1,
-          "name": "Bronze Guardian"
-        },
-        {
-          "count": 1,
-          "name": "Buried Ruin"
-        },
-        {
-          "count": 1,
-          "name": "Cancel"
-        },
-        {
-          "count": 1,
-          "name": "Chaos Warp"
-        },
-        {
-          "count": 1,
-          "name": "Clifftop Retreat"
-        },
-        {
-          "count": 1,
-          "name": "Command Tower"
-        },
-        {
-          "count": 1,
-          "name": "Counterspell"
-        },
-        {
-          "count": 1,
-          "name": "Craterclaw Colossus"
-        },
-        {
-          "count": 1,
-          "name": "Cursed Mirror"
-        },
-        {
-          "count": 1,
-          "name": "Cyberdrive Awakener"
-        },
-        {
-          "count": 1,
-          "name": "Darksteel Citadel"
-        },
-        {
-          "count": 1,
-          "name": "Dispatch"
-        },
-        {
-          "count": 1,
-          "name": "Draconic Visitor"
-        },
-        {
-          "count": 1,
-          "name": "Duty Beyond Death"
-        },
-        {
-          "count": 1,
-          "name": "Enthusiastic Mechanaut"
-        },
-        {
-          "count": 1,
-          "name": "Etherium Sculptor"
-        },
-        {
-          "count": 1,
-          "name": "Ethersworn Sphinx"
-        },
-        {
-          "count": 1,
-          "name": "Exotic Orchard"
-        },
-        {
-          "count": 1,
-          "name": "Expressive Iteration"
-        },
-        {
-          "count": 1,
-          "name": "Foundry Inspector"
-        },
-        {
-          "count": 1,
-          "name": "Frostcliff Siege"
-        },
-        {
-          "count": 1,
-          "name": "Geist of Saint Thalia"
-        },
-        {
-          "count": 1,
-          "name": "Generous Gift"
-        },
-        {
-          "count": 1,
-          "name": "Glacial Fortress"
-        },
-        {
-          "count": 1,
-          "name": "Great Furnace"
-        },
-        {
-          "count": 1,
-          "name": "Hammer of Purphoros"
-        },
-        {
-          "count": 1,
-          "name": "Harmonic Prodigy"
-        },
-        {
-          "count": 1,
-          "name": "Idol of Oblivion"
-        },
-        {
-          "count": 1,
-          "name": "Impact Tremors"
-        },
-        {
-          "count": 1,
-          "name": "Inspiring Statuary"
-        },
-        {
-          "count": 1,
-          "name": "Inspirit, Flagship Vessel"
-        },
-        {
-          "count": 8,
-          "name": "Island"
-        },
-        {
-          "count": 1,
-          "name": "Jeskai Ascendancy"
-        },
-        {
-          "count": 1,
-          "name": "Kappa Cannoneer"
-        },
-        {
-          "count": 1,
-          "name": "Mana Sculpt"
-        },
-        {
-          "count": 1,
-          "name": "Mendicant Core, Guidelight"
-        },
-        {
-          "count": 1,
-          "name": "Metallic Rebuke"
-        },
-        {
-          "count": 1,
-          "name": "Mister Fantastic, Reed Richards"
-        },
-        {
-          "count": 1,
-          "name": "Molten Gatekeeper"
-        },
-        {
-          "count": 7,
-          "name": "Mountain"
-        },
-        {
-          "count": 1,
-          "name": "Mystic Monastery"
-        },
-        {
-          "count": 1,
-          "name": "Negate"
-        },
-        {
-          "count": 1,
-          "name": "Organic Extinction"
-        },
-        {
-          "count": 8,
-          "name": "Plains"
-        },
-        {
-          "count": 1,
-          "name": "Reckless Fireweaver"
-        },
-        {
-          "count": 1,
-          "name": "Rootborn Defenses"
-        },
-        {
-          "count": 1,
-          "name": "Saheeli, Sublime Artificer"
-        },
-        {
-          "count": 1,
-          "name": "Scour for Scrap"
-        },
-        {
-          "count": 1,
-          "name": "Seat of the Synod"
-        },
-        {
-          "count": 1,
-          "name": "Sevinne's Reclamation"
-        },
-        {
-          "count": 1,
-          "name": "Shivan Reef"
-        },
-        {
-          "count": 1,
-          "name": "Skullclamp"
-        },
-        {
-          "count": 1,
-          "name": "Sol Ring"
-        },
-        {
-          "count": 1,
-          "name": "Storm-Kiln Artist"
-        },
-        {
-          "count": 1,
-          "name": "Stridehangar Automaton"
-        },
-        {
-          "count": 1,
-          "name": "Stroke of Midnight"
-        },
-        {
-          "count": 1,
-          "name": "Sulfur Falls"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Talisman of Conviction"
-        },
-        {
-          "count": 1,
-          "name": "Talisman of Creativity"
-        },
-        {
-          "count": 1,
-          "name": "Talisman of Progress"
-        },
-        {
-          "count": 1,
-          "name": "Thopter Spy Network"
-        },
-        {
-          "count": 1,
-          "name": "Thoughtcast"
-        },
-        {
-          "count": 1,
-          "name": "Uthros Research Craft"
-        },
-        {
-          "count": 1,
-          "name": "Voyage Home"
-        },
-        {
-          "count": 1,
-          "name": "Warleader's Call"
-        },
-        {
-          "count": 1,
-          "name": "Weftstalker Ardent"
-        },
-        {
-          "count": 1,
-          "name": "Whirlwind of Thought"
-        },
-        {
-          "count": 1,
-          "name": "Wizard's Staff"
-        },
-        {
-          "count": 1,
-          "name": "Vraska, Soul of Stone"
-        }
-      ],
-      "sideboard": []
-    },
-    {
-      "name": "Tam, the Possibility",
-      "author": "MTGGoldfish",
-      "colors": [
-        "U",
-        "G",
-        "W",
-        "R",
-        "B"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Jace, Multiverse Architect"
-        },
-        {
-          "count": 1,
-          "name": "Elspeth, Sun's Champion"
-        },
-        {
-          "count": 1,
-          "name": "Teferi, Hero of Dominaria"
-        },
-        {
-          "count": 1,
-          "name": "Oko, Thief of Crowns"
-        },
-        {
-          "count": 1,
-          "name": "Garruk Wildspeaker"
-        },
-        {
-          "count": 1,
-          "name": "Nissa, Who Shakes the World"
-        },
-        {
-          "count": 1,
-          "name": "Vraska, Betrayal's Sting"
-        },
-        {
-          "count": 1,
-          "name": "Chandra, Torch of Defiance"
-        },
-        {
-          "count": 1,
-          "name": "Ajani, Sleeper Agent"
-        },
-        {
-          "count": 1,
-          "name": "Kaya the Inexorable"
-        },
-        {
-          "count": 1,
-          "name": "Narset, Parter of Veils"
-        },
-        {
-          "count": 1,
-          "name": "Tamiyo, Field Researcher"
-        },
-        {
-          "count": 1,
-          "name": "Liliana, Dreadhorde General"
-        },
-        {
-          "count": 1,
-          "name": "Nicol Bolas, Dragon-God"
-        },
-        {
-          "count": 1,
-          "name": "Karn, Scion of Urza"
-        },
-        {
-          "count": 1,
-          "name": "Vivien, Monsters' Advocate"
-        },
-        {
-          "count": 1,
-          "name": "Wrenn and Six"
-        },
-        {
-          "count": 1,
-          "name": "Gideon, Ally of Zendikar"
-        },
-        {
-          "count": 1,
-          "name": "Ob Nixilis Reignited"
-        },
-        {
-          "count": 1,
-          "name": "Grist, the Hunger Tide"
-        },
-        {
-          "count": 1,
-          "name": "Freyalise, Llanowar's Fury"
-        },
-        {
-          "count": 1,
-          "name": "Domri, Anarch of Bolas"
-        },
-        {
-          "count": 1,
-          "name": "The Wandering Emperor"
-        },
-        {
-          "count": 1,
-          "name": "Atraxa, Praetors' Voice"
-        },
-        {
-          "count": 1,
-          "name": "Vorinclex, Monstrous Raider"
-        },
-        {
-          "count": 1,
-          "name": "Doubling Season"
-        },
-        {
-          "count": 1,
-          "name": "Tekuthal, Inquiry Dominus"
-        },
-        {
-          "count": 1,
-          "name": "Evolution Sage"
-        },
-        {
-          "count": 1,
-          "name": "Flux Channeler"
-        },
-        {
-          "count": 1,
-          "name": "Deepglow Skate"
-        },
-        {
-          "count": 1,
-          "name": "Carth the Lion"
-        },
-        {
-          "count": 1,
-          "name": "Spark Double"
-        },
-        {
-          "count": 1,
-          "name": "Oath of Teferi"
-        },
-        {
-          "count": 1,
-          "name": "Way of the Mind Sculptor"
-        },
-        {
-          "count": 1,
-          "name": "Teferi's Protection"
-        },
-        {
-          "count": 1,
-          "name": "Heroic Intervention"
-        },
-        {
-          "count": 1,
-          "name": "Flawless Maneuver"
-        },
-        {
-          "count": 1,
-          "name": "Fierce Guardianship"
-        },
-        {
-          "count": 1,
-          "name": "Onakke Oathkeeper"
-        },
-        {
-          "count": 1,
-          "name": "Crawlspace"
-        },
-        {
-          "count": 1,
-          "name": "Norn's Annex"
-        },
-        {
-          "count": 1,
-          "name": "Ghostly Prison"
-        },
-        {
-          "count": 1,
-          "name": "Sol Ring"
-        },
-        {
-          "count": 1,
-          "name": "Arcane Signet"
-        },
-        {
-          "count": 1,
-          "name": "Fellwar Stone"
-        },
-        {
-          "count": 1,
-          "name": "Chromatic Lantern"
-        },
-        {
-          "count": 1,
-          "name": "Birds of Paradise"
-        },
-        {
-          "count": 1,
-          "name": "Noble Hierarch"
-        },
-        {
-          "count": 1,
-          "name": "Bloom Tender"
-        },
-        {
-          "count": 1,
-          "name": "Farseek"
-        },
-        {
-          "count": 1,
-          "name": "Nature's Lore"
-        },
-        {
-          "count": 1,
-          "name": "Three Visits"
-        },
-        {
-          "count": 1,
-          "name": "Fact or Fiction"
-        },
-        {
-          "count": 1,
-          "name": "Sylvan Library"
-        },
-        {
-          "count": 1,
-          "name": "Rhystic Study"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Path to Exile"
-        },
-        {
-          "count": 1,
-          "name": "Despark"
-        },
-        {
-          "count": 1,
-          "name": "Anguished Unmaking"
-        },
-        {
-          "count": 1,
-          "name": "Assassin's Trophy"
-        },
-        {
-          "count": 1,
-          "name": "Beast Within"
-        },
-        {
-          "count": 1,
-          "name": "Chaos Warp"
-        },
-        {
-          "count": 1,
-          "name": "Sunfall"
-        },
-        {
-          "count": 1,
-          "name": "Supreme Verdict"
-        },
-        {
-          "count": 1,
-          "name": "Command Tower"
-        },
-        {
-          "count": 1,
-          "name": "Exotic Orchard"
-        },
-        {
-          "count": 1,
-          "name": "Reflecting Pool"
-        },
-        {
-          "count": 1,
-          "name": "Path of Ancestry"
-        },
-        {
-          "count": 1,
-          "name": "Fabled Passage"
-        },
-        {
-          "count": 1,
-          "name": "Interplanar Beacon"
-        },
-        {
-          "count": 1,
-          "name": "Karn's Bastion"
-        },
-        {
-          "count": 1,
-          "name": "City of Brass"
-        },
-        {
-          "count": 1,
-          "name": "Mana Confluence"
-        },
-        {
-          "count": 1,
-          "name": "Indatha Triome"
-        },
-        {
-          "count": 1,
-          "name": "Ketria Triome"
-        },
-        {
-          "count": 1,
-          "name": "Zagoth Triome"
-        },
-        {
-          "count": 1,
-          "name": "Raugrin Triome"
-        },
-        {
-          "count": 1,
-          "name": "Savai Triome"
-        },
-        {
-          "count": 1,
-          "name": "Breeding Pool"
-        },
-        {
-          "count": 1,
-          "name": "Temple Garden"
-        },
-        {
-          "count": 1,
-          "name": "Stomping Ground"
-        },
-        {
-          "count": 1,
-          "name": "Overgrown Tomb"
-        },
-        {
-          "count": 1,
-          "name": "Glacial Fortress"
-        },
-        {
-          "count": 1,
-          "name": "Drowned Catacomb"
-        },
-        {
-          "count": 1,
-          "name": "Sulfur Falls"
-        },
-        {
-          "count": 1,
-          "name": "Isolated Chapel"
-        },
-        {
-          "count": 1,
-          "name": "Clifftop Retreat"
-        },
-        {
-          "count": 1,
-          "name": "Windswept Heath"
-        },
-        {
-          "count": 1,
-          "name": "Wooded Foothills"
-        },
-        {
-          "count": 1,
-          "name": "Misty Rainforest"
-        },
-        {
-          "count": 1,
           "name": "Verdant Catacombs"
         },
         {
-          "count": 3,
-          "name": "Forest"
-        },
-        {
-          "count": 2,
-          "name": "Island"
+          "count": 1,
+          "name": "Vraska, the Cutting Glare"
         },
         {
           "count": 1,
-          "name": "Plains"
+          "name": "Warren Soultrader"
         },
         {
           "count": 1,
-          "name": "Swamp"
+          "name": "Waterlogged Grove"
         },
         {
           "count": 1,
-          "name": "Mountain"
+          "name": "Watery Grave"
         },
         {
           "count": 1,
-          "name": "Tam, the Possibility"
+          "name": "Winternight Stories"
+        },
+        {
+          "count": 1,
+          "name": "Woe Strider"
+        },
+        {
+          "count": 1,
+          "name": "Woodland Cemetery"
+        },
+        {
+          "count": 1,
+          "name": "Yavimaya Coast"
+        },
+        {
+          "count": 1,
+          "name": "From the Catacombs"
+        },
+        {
+          "count": 1,
+          "name": "Timeless Witness"
+        },
+        {
+          "count": 1,
+          "name": "Dryad's Revival"
+        },
+        {
+          "count": 1,
+          "name": "Tracker's Instincts"
+        },
+        {
+          "count": 1,
+          "name": "Teval, the Balanced Scale"
         }
       ],
       "sideboard": []
     },
     {
-      "name": "T'Challa, the Black Panther",
+      "name": "Vivi Ornitier",
       "author": "MTGGoldfish",
       "colors": [
-        "W",
-        "G"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Zuri, Warrior of Wakanda"
-        },
-        {
-          "count": 1,
-          "name": "Birds of Paradise"
-        },
-        {
-          "count": 1,
-          "name": "Panharmonicon"
-        },
-        {
-          "count": 1,
-          "name": "The Spear of Bashenga"
-        },
-        {
-          "count": 1,
-          "name": "Shadowspear"
-        },
-        {
-          "count": 1,
-          "name": "Panther Habit"
-        },
-        {
-          "count": 1,
-          "name": "Vibranium Strike Gauntlets"
-        },
-        {
-          "count": 1,
-          "name": "Helm of the Host"
-        },
-        {
-          "count": 1,
-          "name": "Scourglass"
-        },
-        {
-          "count": 1,
-          "name": "Hammer of Nazahn"
-        },
-        {
-          "count": 1,
-          "name": "Mind's Eye"
-        },
-        {
-          "count": 1,
-          "name": "Sword of the Animist"
-        },
-        {
-          "count": 1,
-          "name": "Thran Dynamo"
-        },
-        {
-          "count": 1,
-          "name": "Arcane Signet"
-        },
-        {
-          "count": 1,
-          "name": "Sol Ring"
-        },
-        {
-          "count": 1,
-          "name": "Whispersilk Cloak"
-        },
-        {
-          "count": 1,
-          "name": "Dispatch"
-        },
-        {
-          "count": 1,
-          "name": "Ancestral Communion"
-        },
-        {
-          "count": 1,
-          "name": "Vanquish the Horde"
-        },
-        {
-          "count": 1,
-          "name": "Farseek"
-        },
-        {
-          "count": 1,
-          "name": "Overwhelming Stampede"
-        },
-        {
-          "count": 1,
-          "name": "The Great Mound"
-        },
-        {
-          "count": 1,
-          "name": "Bountiful Promenade"
-        },
-        {
-          "count": 1,
-          "name": "Canopy Vista"
-        },
-        {
-          "count": 1,
-          "name": "Fortified Village"
-        },
-        {
-          "count": 1,
-          "name": "Razorverge Thicket"
-        },
-        {
-          "count": 1,
-          "name": "Fomori Vault"
-        },
-        {
-          "count": 1,
-          "name": "Scavenger Grounds"
-        },
-        {
-          "count": 1,
-          "name": "Sungrass Prairie"
-        },
-        {
-          "count": 1,
-          "name": "Sunpetal Grove"
-        },
-        {
-          "count": 1,
-          "name": "Darksteel Citadel"
-        },
-        {
-          "count": 1,
-          "name": "Command Tower"
-        },
-        {
-          "count": 1,
-          "name": "Path of Ancestry"
-        },
-        {
-          "count": 9,
-          "name": "Plains"
-        },
-        {
-          "count": 9,
-          "name": "Forest"
-        },
-        {
-          "count": 1,
-          "name": "T'Challa, the Black Panther"
-        },
-        {
-          "count": 1,
-          "name": "Karn, Legacy Reforged"
-        },
-        {
-          "count": 1,
-          "name": "Genji Glove"
-        },
-        {
-          "count": 1,
-          "name": "Adaptive Omnitool"
-        },
-        {
-          "count": 1,
-          "name": "Path to Exile"
-        },
-        {
-          "count": 1,
-          "name": "Chimil, the Inner Sun"
-        },
-        {
-          "count": 1,
-          "name": "Bronze Guardian"
-        },
-        {
-          "count": 1,
-          "name": "Jhoira's Familiar"
-        },
-        {
-          "count": 1,
-          "name": "Mystic Forge"
-        },
-        {
-          "count": 1,
-          "name": "Thousand Moons Smithy"
-        },
-        {
-          "count": 1,
-          "name": "Kutzil, Malamet Exemplar"
-        },
-        {
-          "count": 1,
-          "name": "Black Panther, Wakandan King"
-        },
-        {
-          "count": 1,
-          "name": "Cosmic Cube"
-        },
-        {
-          "count": 1,
-          "name": "Primal Vigor"
-        },
-        {
-          "count": 1,
-          "name": "Steel Seraph"
-        },
-        {
-          "count": 1,
-          "name": "Storm, Windrider"
-        },
-        {
-          "count": 1,
-          "name": "Rogue's Passage"
-        },
-        {
-          "count": 1,
-          "name": "War Room"
-        },
-        {
-          "count": 1,
-          "name": "Ozolith, the Shattered Spire"
-        },
-        {
-          "count": 1,
-          "name": "Gathering Place"
-        },
-        {
-          "count": 1,
-          "name": "Heroic Intervention"
-        },
-        {
-          "count": 1,
-          "name": "Roaming Throne"
-        },
-        {
-          "count": 1,
-          "name": "Gonti's Aether Heart"
-        },
-        {
-          "count": 1,
-          "name": "Machinist's Arsenal"
-        },
-        {
-          "count": 1,
-          "name": "Foundry Inspector"
-        },
-        {
-          "count": 1,
-          "name": "The Vision"
-        },
-        {
-          "count": 1,
-          "name": "Ultron, Artificial Malevolence"
-        },
-        {
-          "count": 1,
-          "name": "Doubling Season"
-        },
-        {
-          "count": 1,
-          "name": "The Ten Rings"
-        },
-        {
-          "count": 1,
-          "name": "Terrasymbiosis"
-        },
-        {
-          "count": 1,
-          "name": "Karn, Living Legacy"
-        },
-        {
-          "count": 1,
-          "name": "Karn, Scion of Urza"
-        },
-        {
-          "count": 1,
-          "name": "Kuldotha Forgemaster"
-        },
-        {
-          "count": 1,
-          "name": "Illustrious Wanderglyph"
-        },
-        {
-          "count": 1,
-          "name": "Dancing from Dark to Dawn"
-        },
-        {
-          "count": 1,
-          "name": "Blinkmoth Urn"
-        },
-        {
-          "count": 1,
-          "name": "Metalwork Colossus"
-        },
-        {
-          "count": 1,
-          "name": "Forsaken Monument"
-        },
-        {
-          "count": 1,
-          "name": "Inventors' Fair"
-        },
-        {
-          "count": 1,
-          "name": "Ojer Taq, Deepest Foundation"
-        },
-        {
-          "count": 1,
-          "name": "Unwinding Clock"
-        },
-        {
-          "count": 1,
-          "name": "Reliquary Tower"
-        },
-        {
-          "count": 1,
-          "name": "Ishgard, the Holy See"
-        },
-        {
-          "count": 1,
-          "name": "Salvation Engine"
-        },
-        {
-          "count": 1,
-          "name": "Dawnsire, Sunstar Dreadnought"
-        },
-        {
-          "count": 1,
-          "name": "Skrelv, Defector Mite"
-        },
-        {
-          "count": 1,
-          "name": "The Earth Crystal"
-        },
-        {
-          "count": 1,
-          "name": "Well Rested"
-        },
-        {
-          "count": 1,
-          "name": "Level Up"
-        }
-      ],
-      "sideboard": [
-        {
-          "count": 1,
-          "name": "Aura Shards"
-        },
-        {
-          "count": 1,
-          "name": "Teferi's Protection"
-        }
-      ]
-    },
-    {
-      "name": "Denzilore Fatehold",
-      "author": "MTGGoldfish",
-      "colors": [
-        "W",
+        "R",
         "U"
       ],
       "tags": [
@@ -1915,152 +3341,20 @@
       ],
       "main": [
         {
-          "count": 1,
-          "name": "Eye of Jace"
+          "count": 2,
+          "name": "Mountain"
+        },
+        {
+          "count": 2,
+          "name": "Island"
         },
         {
           "count": 1,
-          "name": "Arcane Signet"
+          "name": "Vexing Bauble"
         },
         {
           "count": 1,
-          "name": "Azorius Signet"
-        },
-        {
-          "count": 1,
-          "name": "Thought Vessel"
-        },
-        {
-          "count": 1,
-          "name": "Lightning Greaves"
-        },
-        {
-          "count": 1,
-          "name": "Sol Ring"
-        },
-        {
-          "count": 1,
-          "name": "Talisman of Progress"
-        },
-        {
-          "count": 1,
-          "name": "Planetarium of Wan Shi Tong"
-        },
-        {
-          "count": 1,
-          "name": "Mazemind Tome"
-        },
-        {
-          "count": 1,
-          "name": "Smothering Tithe"
-        },
-        {
-          "count": 1,
-          "name": "Psychic Impetus"
-        },
-        {
-          "count": 1,
-          "name": "Political Triumph"
-        },
-        {
-          "count": 1,
-          "name": "Mystic Redaction"
-        },
-        {
-          "count": 1,
-          "name": "The Legend of Kuruk"
-        },
-        {
-          "count": 1,
-          "name": "Omen of the Sea"
-        },
-        {
-          "count": 1,
-          "name": "Surveillance Room"
-        },
-        {
-          "count": 1,
-          "name": "Restless Anchorage"
-        },
-        {
-          "count": 1,
-          "name": "Gleaming Bastion"
-        },
-        {
-          "count": 1,
-          "name": "Divine Resilience"
-        },
-        {
-          "count": 1,
-          "name": "Flooded Strand"
-        },
-        {
-          "count": 1,
-          "name": "Skycloud Expanse"
-        },
-        {
-          "count": 1,
-          "name": "Seachrome Coast"
-        },
-        {
-          "count": 1,
-          "name": "Arid Mesa"
-        },
-        {
-          "count": 1,
-          "name": "Hallowed Fountain"
-        },
-        {
-          "count": 1,
-          "name": "Command Tower"
-        },
-        {
-          "count": 1,
-          "name": "Hengegate Pathway"
-        },
-        {
-          "count": 1,
-          "name": "Evolving Wilds"
-        },
-        {
-          "count": 1,
-          "name": "Rivendell"
-        },
-        {
-          "count": 1,
-          "name": "Serum Visions"
-        },
-        {
-          "count": 1,
-          "name": "Preordain"
-        },
-        {
-          "count": 1,
-          "name": "Your Fate Ends Here"
-        },
-        {
-          "count": 1,
-          "name": "Enter the Avatar State"
-        },
-        {
-          "count": 1,
-          "name": "Expose to Daylight"
-        },
-        {
-          "count": 1,
-          "name": "Otherworldly Gaze"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Continue?"
-        },
-        {
-          "count": 1,
-          "name": "Sejiri Shelter"
+          "name": "Seat of the Synod"
         },
         {
           "count": 1,
@@ -2068,281 +3362,131 @@
         },
         {
           "count": 1,
-          "name": "Behold the Multiverse"
-        },
-        {
-          "count": 1,
           "name": "Brainstorm"
         },
         {
           "count": 1,
-          "name": "Loran's Escape"
+          "name": "Snap"
         },
         {
           "count": 1,
-          "name": "Stubborn Denial"
+          "name": "Mirrormade"
         },
         {
           "count": 1,
-          "name": "Consider"
+          "name": "Frantic Search"
         },
         {
           "count": 1,
-          "name": "Swan Song"
+          "name": "Mystic Remora"
         },
         {
           "count": 1,
-          "name": "Counterspell"
+          "name": "Curiosity"
         },
         {
           "count": 1,
-          "name": "Swallowed by Leviathan"
+          "name": "Urza's Bauble"
         },
         {
           "count": 1,
-          "name": "Sinister Sabotage"
+          "name": "Sigil of Sleep"
         },
         {
           "count": 1,
-          "name": "Negate"
+          "name": "Mox Opal"
         },
         {
           "count": 1,
-          "name": "Boulderborn Dragon"
+          "name": "Ophidian Eye"
         },
         {
           "count": 1,
-          "name": "Starfighter Pilot"
+          "name": "Vivi Ornitier"
         },
         {
           "count": 1,
-          "name": "Prognostic Sphinx"
+          "name": "Springleaf Drum"
         },
         {
           "count": 1,
-          "name": "Envoy of the Ancestors"
+          "name": "Virtue of Courage"
         },
         {
           "count": 1,
-          "name": "Ainok Bond-Kin"
+          "name": "Sensei's Divining Top"
         },
         {
           "count": 1,
-          "name": "Proft, Consulting Detective"
+          "name": "Expressive Iteration"
         },
         {
           "count": 1,
-          "name": "Brazen Borrower"
+          "name": "Steam Vents"
         },
         {
           "count": 1,
-          "name": "Serum Visionary"
+          "name": "Lotus Petal"
         },
         {
           "count": 1,
-          "name": "Tui and La, Moon and Ocean"
+          "name": "Stock Up"
         },
         {
           "count": 1,
-          "name": "Solitude"
+          "name": "Paradise Mantle"
         },
         {
           "count": 1,
-          "name": "Prudent Fateseer"
+          "name": "Training Center"
         },
         {
           "count": 1,
-          "name": "Saheeli, Consul of Oversight"
+          "name": "Mox Amber"
         },
         {
           "count": 1,
-          "name": "Lita, Little Orphan Amphibian"
+          "name": "Serum Visions"
         },
         {
           "count": 1,
-          "name": "Proctor of Potential"
+          "name": "Thought Vessel"
         },
         {
           "count": 1,
-          "name": "Exemplar of Light"
+          "name": "Great Furnace"
         },
         {
           "count": 1,
-          "name": "Myrel, Shield of Argive"
+          "name": "Flow State"
         },
         {
           "count": 1,
-          "name": "Yoshimaru, Beloved Companion"
+          "name": "Talisman of Creativity"
         },
         {
           "count": 1,
-          "name": "Il Mheg Pixie"
+          "name": "Exotic Orchard"
         },
         {
           "count": 1,
-          "name": "Thalia, the Survivor"
+          "name": "Wizard's Staff"
         },
         {
           "count": 1,
-          "name": "Enlightened Confidant"
+          "name": "Ponder"
         },
         {
           "count": 1,
-          "name": "Rune-Sealed Wall"
+          "name": "Jeweled Amulet"
         },
         {
           "count": 1,
-          "name": "King T'Challa"
+          "name": "Flooded Strand"
         },
         {
           "count": 1,
-          "name": "Lavinia, Azorius Renegade"
-        },
-        {
-          "count": 1,
-          "name": "Cephalid Inkmage"
-        },
-        {
-          "count": 1,
-          "name": "Semester Foreseer"
-        },
-        {
-          "count": 1,
-          "name": "Mangara, the Diplomat"
-        },
-        {
-          "count": 1,
-          "name": "Geist of Saint Thalia"
-        },
-        {
-          "count": 1,
-          "name": "Siani, Eye of the Storm"
-        },
-        {
-          "count": 1,
-          "name": "Riptide Gearhulk"
-        },
-        {
-          "count": 1,
-          "name": "Princess Yue"
-        },
-        {
-          "count": 12,
-          "name": "Island"
-        },
-        {
-          "count": 9,
-          "name": "Plains"
-        },
-        {
-          "count": 1,
-          "name": "Denzilore Fatehold"
-        }
-      ],
-      "sideboard": []
-    },
-    {
-      "name": "Aerid Konstrari",
-      "author": "MTGGoldfish",
-      "colors": [
-        "G",
-        "R"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Craterclaw Colossus"
-        },
-        {
-          "count": 1,
-          "name": "Heartwood Crafter"
-        },
-        {
-          "count": 1,
-          "name": "Woodwork Prodigy"
-        },
-        {
-          "count": 1,
-          "name": "Tenured Tethermage"
-        },
-        {
-          "count": 1,
-          "name": "Hungering Puppetbeast"
-        },
-        {
-          "count": 1,
-          "name": "Twitching Doll"
-        },
-        {
-          "count": 1,
-          "name": "Roxanne, Starfall Savant"
-        },
-        {
-          "count": 1,
-          "name": "Second Harvest"
-        },
-        {
-          "count": 1,
-          "name": "Agatha of the Vile Cauldron"
-        },
-        {
-          "count": 1,
-          "name": "Blasphemous Act"
-        },
-        {
-          "count": 1,
-          "name": "Bootleggers' Stash"
-        },
-        {
-          "count": 1,
-          "name": "Reckless Fireweaver"
-        },
-        {
-          "count": 1,
-          "name": "Beast Within"
-        },
-        {
-          "count": 1,
-          "name": "Heroic Intervention"
-        },
-        {
-          "count": 1,
-          "name": "Devastating Onslaught"
-        },
-        {
-          "count": 1,
-          "name": "Weftstalker Ardent"
-        },
-        {
-          "count": 1,
-          "name": "Jiang Yanggu, Never Alone"
-        },
-        {
-          "count": 1,
-          "name": "Pia, Determined Rebuilder"
-        },
-        {
-          "count": 1,
-          "name": "Stridehangar Automaton"
-        },
-        {
-          "count": 1,
-          "name": "Sarinth Greatwurm"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Anarchomancer"
-        },
-        {
-          "count": 1,
-          "name": "Hellkite Tyrant"
-        },
-        {
-          "count": 1,
-          "name": "Tireless Provisioner"
+          "name": "Arcane Signet"
         },
         {
           "count": 1,
@@ -2350,504 +3494,39 @@
         },
         {
           "count": 1,
-          "name": "Triplicate Titan"
+          "name": "Mishra's Bauble"
         },
         {
           "count": 1,
-          "name": "Solemn Simulacrum"
+          "name": "Gitaxian Probe"
         },
         {
           "count": 1,
-          "name": "Panharmonicon"
+          "name": "Mystic Sanctuary"
         },
         {
           "count": 1,
-          "name": "Adaptive Omnitool"
+          "name": "Into the Flood Maw"
         },
         {
           "count": 1,
-          "name": "The Vision"
+          "name": "Sulfur Falls"
         },
         {
           "count": 1,
-          "name": "Aerid Konstrari"
+          "name": "Preordain"
         },
         {
           "count": 1,
-          "name": "Peregrin Took"
+          "name": "Lindblum, Industrial Regency"
         },
         {
           "count": 1,
-          "name": "Goldspan Dragon"
+          "name": "Echo of Eons"
         },
         {
           "count": 1,
-          "name": "Old Gnawbone"
-        },
-        {
-          "count": 1,
-          "name": "Academy Manufactor"
-        },
-        {
-          "count": 1,
-          "name": "Haywire Mite"
-        },
-        {
-          "count": 1,
-          "name": "Goldvein Hydra"
-        },
-        {
-          "count": 1,
-          "name": "Pyrewood Gearhulk"
-        },
-        {
-          "count": 1,
-          "name": "Xenagos, God of Revels"
-        },
-        {
-          "count": 1,
-          "name": "Samut, Hazoret's Champion"
-        },
-        {
-          "count": 1,
-          "name": "Return of the Wildspeaker"
-        },
-        {
-          "count": 1,
-          "name": "Redirect Lightning"
-        },
-        {
-          "count": 1,
-          "name": "Momentous Fall"
-        },
-        {
-          "count": 1,
-          "name": "Chord of Calling"
-        },
-        {
-          "count": 1,
-          "name": "Brass's Bounty"
-        },
-        {
-          "count": 1,
-          "name": "Idol of Oblivion"
-        },
-        {
-          "count": 1,
-          "name": "The Ten Rings"
-        },
-        {
-          "count": 1,
-          "name": "Ruby Medallion"
-        },
-        {
-          "count": 1,
-          "name": "Emerald Medallion"
-        },
-        {
-          "count": 1,
-          "name": "Parallel Lives"
-        },
-        {
-          "count": 1,
-          "name": "Doubling Season"
-        },
-        {
-          "count": 1,
-          "name": "Echoing Assault"
-        },
-        {
-          "count": 1,
-          "name": "Draconic Visitor"
-        },
-        {
-          "count": 14,
-          "name": "Forest"
-        },
-        {
-          "count": 14,
-          "name": "Mountain"
-        },
-        {
-          "count": 1,
-          "name": "Rootbound Crag"
-        },
-        {
-          "count": 1,
-          "name": "Rockfall Vale"
-        },
-        {
-          "count": 1,
-          "name": "Stomping Ground"
-        },
-        {
-          "count": 1,
-          "name": "Cinder Glade"
-        },
-        {
-          "count": 1,
-          "name": "Thornspire Verge"
-        },
-        {
-          "count": 1,
-          "name": "Commercial District"
-        },
-        {
-          "count": 1,
-          "name": "Stump Stomp"
-        },
-        {
-          "count": 1,
-          "name": "Copperline Gorge"
-        },
-        {
-          "count": 1,
-          "name": "Command Tower"
-        },
-        {
-          "count": 1,
-          "name": "Spire Garden"
-        },
-        {
-          "count": 1,
-          "name": "Beast Whisperer"
-        },
-        {
-          "count": 1,
-          "name": "Greater Good"
-        },
-        {
-          "count": 1,
-          "name": "Darksteel Forge"
-        },
-        {
-          "count": 1,
-          "name": "Mycosynth Lattice"
-        },
-        {
-          "count": 1,
-          "name": "Fling"
-        },
-        {
-          "count": 1,
-          "name": "Mage Slayer"
-        },
-        {
-          "count": 1,
-          "name": "The Great Henge"
-        },
-        {
-          "count": 1,
-          "name": "Nettlecyst"
-        },
-        {
-          "count": 1,
-          "name": "Lightning Greaves"
-        },
-        {
-          "count": 1,
-          "name": "The Reaver Cleaver"
-        }
-      ],
-      "sideboard": []
-    },
-    {
-      "name": "Krenko, Mob Boss",
-      "author": "MTGGoldfish",
-      "colors": [
-        "R"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Abrade"
-        },
-        {
-          "count": 1,
-          "name": "Arena of Glory"
-        },
-        {
-          "count": 1,
-          "name": "Battle Hymn"
-        },
-        {
-          "count": 1,
-          "name": "Big Score"
-        },
-        {
-          "count": 1,
-          "name": "Blasphemous Act"
-        },
-        {
-          "count": 1,
-          "name": "Brash Taunter"
-        },
-        {
-          "count": 1,
-          "name": "Brass's Tunnel-Grinder"
-        },
-        {
-          "count": 1,
-          "name": "Brightstone Ritual"
-        },
-        {
-          "count": 1,
-          "name": "Broadside Bombardiers"
-        },
-        {
-          "count": 1,
-          "name": "Cavern of Souls"
-        },
-        {
-          "count": 1,
-          "name": "Chaos Warp"
-        },
-        {
-          "count": 1,
-          "name": "Command Beacon"
-        },
-        {
-          "count": 1,
-          "name": "Conspicuous Snoop"
-        },
-        {
-          "count": 1,
-          "name": "Dolmen Gate"
-        },
-        {
-          "count": 1,
-          "name": "Dragon Fodder"
-        },
-        {
-          "count": 1,
-          "name": "Empty the Warrens"
-        },
-        {
-          "count": 1,
-          "name": "Faithless Looting"
-        },
-        {
-          "count": 1,
-          "name": "Gamble"
-        },
-        {
-          "count": 1,
-          "name": "Gempalm Incinerator"
-        },
-        {
-          "count": 1,
-          "name": "General Kreat, the Boltbringer"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Bombardment"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Bushwhacker"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Chieftain"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Chirurgeon"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Instigator"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Lackey"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Matron"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Negotiation"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Recruiter"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Ringleader"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Trashmaster"
-        },
-        {
-          "count": 1,
-          "name": "Goblin Warchief"
-        },
-        {
-          "count": 1,
-          "name": "Great Train Heist"
-        },
-        {
-          "count": 1,
-          "name": "Grenzo, Havoc Raiser"
-        },
-        {
-          "count": 1,
-          "name": "Hall of the Bandit Lord"
-        },
-        {
-          "count": 1,
-          "name": "Hexing Squelcher"
-        },
-        {
-          "count": 1,
-          "name": "Hobgoblin Bandit Lord"
-        },
-        {
-          "count": 1,
-          "name": "Howlsquad Heavy"
-        },
-        {
-          "count": 1,
-          "name": "Impact Tremors"
-        },
-        {
-          "count": 1,
-          "name": "Impulsive Pilferer"
-        },
-        {
-          "count": 1,
-          "name": "Jeska's Will"
-        },
-        {
-          "count": 1,
-          "name": "Kiki-Jiki, Mirror Breaker"
-        },
-        {
-          "count": 1,
-          "name": "Krenko, Mob Boss"
-        },
-        {
-          "count": 1,
-          "name": "Krenko's Command"
-        },
-        {
-          "count": 1,
-          "name": "Lightning Bolt"
-        },
-        {
-          "count": 1,
-          "name": "Mana Echoes"
-        },
-        {
-          "count": 1,
-          "name": "Mana Geyser"
-        },
-        {
-          "count": 1,
-          "name": "Mind Stone"
-        },
-        {
-          "count": 1,
-          "name": "Mogg War Marshal"
-        },
-        {
-          "count": 24,
-          "name": "Mountain"
-        },
-        {
-          "count": 1,
-          "name": "Muxus, Goblin Grandee"
-        },
-        {
-          "count": 1,
-          "name": "Pashalik Mons"
-        },
-        {
-          "count": 1,
-          "name": "Patriar's Seal"
-        },
-        {
-          "count": 1,
-          "name": "Purphoros, God of the Forge"
-        },
-        {
-          "count": 1,
-          "name": "Return the Favor"
-        },
-        {
-          "count": 1,
-          "name": "Roaming Throne"
-        },
-        {
-          "count": 1,
-          "name": "Ruby Medallion"
-        },
-        {
-          "count": 1,
-          "name": "Rundvelt Hordemaster"
-        },
-        {
-          "count": 1,
-          "name": "Seething Song"
-        },
-        {
-          "count": 1,
-          "name": "Shatterskull Smashing"
-        },
-        {
-          "count": 1,
-          "name": "Shinka, the Bloodsoaked Keep"
-        },
-        {
-          "count": 1,
-          "name": "Siege-Gang Commander"
-        },
-        {
-          "count": 1,
-          "name": "Siege-Gang Lieutenant"
-        },
-        {
-          "count": 1,
-          "name": "Skirk Prospector"
-        },
-        {
-          "count": 1,
-          "name": "Skullclamp"
-        },
-        {
-          "count": 1,
-          "name": "Sol Ring"
-        },
-        {
-          "count": 1,
-          "name": "Spinerock Knoll"
-        },
-        {
-          "count": 1,
-          "name": "Staff of Domination"
-        },
-        {
-          "count": 1,
-          "name": "Sundering Eruption"
-        },
-        {
-          "count": 1,
-          "name": "Unexpected Windfall"
-        },
-        {
-          "count": 1,
-          "name": "Untimely Malfunction"
-        },
-        {
-          "count": 1,
-          "name": "Urza's Saga"
+          "name": "Turbulent Springs"
         },
         {
           "count": 1,
@@ -2855,84 +3534,59 @@
         },
         {
           "count": 1,
-          "name": "Valakut, the Molten Pinnacle"
+          "name": "Riverglide Pathway"
         },
         {
           "count": 1,
-          "name": "Vandalblast"
+          "name": "Sink into Stupor"
         },
         {
           "count": 1,
-          "name": "War Room"
+          "name": "Deflecting Swat"
         },
         {
           "count": 1,
-          "name": "Wild Magic Surge"
-        }
-      ],
-      "sideboard": []
-    },
-    {
-      "name": "The First Sliver",
-      "author": "MTGGoldfish",
-      "colors": [
-        "U",
-        "G",
-        "R",
-        "W",
-        "B"
-      ],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "The First Sliver"
+          "name": "Electro, Assaulting Battery"
         },
         {
           "count": 1,
-          "name": "Arcane Signet"
+          "name": "Twisted Image"
         },
         {
           "count": 1,
-          "name": "Chromatic Lantern"
+          "name": "Storm-Kiln Artist"
         },
         {
           "count": 1,
-          "name": "Fellwar Stone"
+          "name": "Urza's Saga"
         },
         {
           "count": 1,
-          "name": "Herald's Horn"
+          "name": "Cyclonic Rift"
         },
         {
           "count": 1,
-          "name": "Pillar of Origins"
+          "name": "Chandra's Ignition"
         },
         {
           "count": 1,
-          "name": "Sol Ring"
+          "name": "Harmonic Prodigy"
         },
         {
           "count": 1,
-          "name": "Thrumming Hivepool"
+          "name": "Shivan Reef"
         },
         {
           "count": 1,
-          "name": "Ancient Ziggurat"
+          "name": "Mindbreak Trap"
         },
         {
           "count": 1,
-          "name": "Breeding Pool"
+          "name": "Faithless Looting"
         },
         {
           "count": 1,
-          "name": "Canopy Vista"
-        },
-        {
-          "count": 1,
-          "name": "Cinder Glade"
+          "name": "Wild Slash"
         },
         {
           "count": 1,
@@ -2940,615 +3594,143 @@
         },
         {
           "count": 1,
-          "name": "Evolving Wilds"
+          "name": "Bloodstained Mire"
         },
         {
           "count": 1,
-          "name": "Exotic Orchard"
+          "name": "Dizzy Spell"
         },
         {
-          "count": 4,
-          "name": "Forest"
-        },
-        {
-          "count": 1,
-          "name": "Frontier Bivouac"
-        },
-        {
-          "count": 3,
-          "name": "Island"
-        },
-        {
-          "count": 1,
-          "name": "Jungle Shrine"
-        },
-        {
-          "count": 2,
-          "name": "Mountain"
-        },
-        {
-          "count": 1,
-          "name": "Mystic Monastery"
-        },
-        {
-          "count": 1,
-          "name": "Nomad Outpost"
-        },
-        {
-          "count": 1,
-          "name": "Opulent Palace"
-        },
-        {
-          "count": 1,
-          "name": "Path of Ancestry"
-        },
-        {
-          "count": 3,
-          "name": "Plains"
-        },
-        {
-          "count": 1,
-          "name": "Prairie Stream"
-        },
-        {
-          "count": 1,
-          "name": "Sandsteppe Citadel"
-        },
-        {
-          "count": 1,
-          "name": "Savage Lands"
-        },
-        {
-          "count": 1,
-          "name": "Seaside Citadel"
-        },
-        {
-          "count": 1,
-          "name": "Secluded Courtyard"
-        },
-        {
-          "count": 1,
-          "name": "Sliver Hive"
-        },
-        {
-          "count": 1,
-          "name": "Smoldering Marsh"
-        },
-        {
-          "count": 1,
-          "name": "Sunken Hollow"
-        },
-        {
-          "count": 3,
-          "name": "Swamp"
-        },
-        {
-          "count": 1,
-          "name": "Terramorphic Expanse"
-        },
-        {
-          "count": 1,
-          "name": "The World Tree"
-        },
-        {
-          "count": 1,
-          "name": "Unclaimed Territory"
-        },
-        {
-          "count": 1,
-          "name": "Blur Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Bonescythe Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Brood Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Cloudshredder Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Constricting Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Crypt Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Crystalline Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Diffusion Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Galerider Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Gemhide Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Harmonic Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Hatchery Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Heart Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Hibernation Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Homing Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Lavabelly Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Lazotep Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Manaweft Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Megantic Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Might Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Muscle Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Necrotic Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Predatory Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Quick Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Realmwalker"
-        },
-        {
-          "count": 1,
-          "name": "Sentinel Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Shifting Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Sinew Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Sliver Hivelord"
-        },
-        {
-          "count": 1,
-          "name": "Sliver Legion"
-        },
-        {
-          "count": 1,
-          "name": "Sliver Overlord"
-        },
-        {
-          "count": 1,
-          "name": "Spiteful Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Striking Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Synapse Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Syphon Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Two-Headed Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Venom Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Virulent Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Winged Sliver"
-        },
-        {
-          "count": 1,
-          "name": "Descendants' Path"
-        },
-        {
-          "count": 1,
-          "name": "Kindred Discovery"
-        },
-        {
-          "count": 1,
-          "name": "Reflections of Littjara"
-        },
-        {
-          "count": 1,
-          "name": "For the Ancestors"
-        },
-        {
-          "count": 1,
-          "name": "Heroic Intervention"
-        },
-        {
-          "count": 1,
-          "name": "Path to Exile"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Cultivate"
-        },
-        {
-          "count": 1,
-          "name": "Distant Melody"
-        },
-        {
-          "count": 1,
-          "name": "Farseek"
-        },
-        {
-          "count": 1,
-          "name": "Kodama's Reach"
-        },
-        {
-          "count": 1,
-          "name": "Nature's Lore"
-        },
-        {
-          "count": 1,
-          "name": "Rampant Growth"
-        },
-        {
-          "count": 1,
-          "name": "Three Visits"
-        }
-      ],
-      "sideboard": [
-        {
-          "count": 1,
-          "name": "Sliver Gravemother"
-        }
-      ]
-    },
-    {
-      "name": "Giada, Font of Hope",
-      "author": "MTGGoldfish",
-      "colors": [],
-      "tags": [
-        "metagame"
-      ],
-      "main": [
-        {
-          "count": 1,
-          "name": "Giada, Font of Hope <01a0b670-e04f-7c42-941c-16e6e0cc9387> [FDC]"
-        },
-        {
-          "count": 1,
-          "name": "Always Watching"
-        },
-        {
-          "count": 1,
-          "name": "Angel of the Ruins"
-        },
-        {
-          "count": 1,
-          "name": "Angelic Destiny"
-        },
-        {
-          "count": 1,
-          "name": "Angelic Field Marshal"
-        },
-        {
-          "count": 1,
-          "name": "Archangel of Tithes"
-        },
-        {
-          "count": 1,
-          "name": "Austere Command"
-        },
-        {
-          "count": 1,
-          "name": "Bishop of Wings"
-        },
-        {
-          "count": 1,
-          "name": "Cleansing Nova"
-        },
-        {
-          "count": 1,
-          "name": "Court of Grace"
-        },
-        {
-          "count": 1,
-          "name": "Day of Judgment"
-        },
-        {
-          "count": 1,
-          "name": "Emeria Shepherd"
-        },
-        {
-          "count": 1,
-          "name": "Exemplar of Light"
-        },
-        {
-          "count": 1,
-          "name": "Firemane Commando"
-        },
-        {
-          "count": 1,
-          "name": "Grasp of Fate"
-        },
-        {
-          "count": 1,
-          "name": "Herald of Eternal Dawn"
-        },
-        {
-          "count": 1,
-          "name": "Herald of War"
-        },
-        {
-          "count": 1,
-          "name": "Linvala, the Preserver"
-        },
-        {
-          "count": 1,
-          "name": "Lyra Dawnbringer"
-        },
-        {
-          "count": 1,
-          "name": "Metropolis Reformer"
-        },
-        {
-          "count": 1,
-          "name": "Norn's Choirmaster"
-        },
-        {
-          "count": 1,
-          "name": "Reya Dawnbringer"
-        },
-        {
-          "count": 1,
-          "name": "Righteous Valkyrie"
-        },
-        {
-          "count": 1,
-          "name": "Sephara, Sky's Blade"
-        },
-        {
-          "count": 1,
-          "name": "Speaker of the Heavens"
-        },
-        {
-          "count": 1,
-          "name": "Sunblast Angel"
-        },
-        {
-          "count": 1,
-          "name": "Endless Atlas"
-        },
-        {
-          "count": 1,
-          "name": "Metallic Mimic"
-        },
-        {
-          "count": 1,
-          "name": "Vanquisher's Banner"
-        },
-        {
-          "count": 1,
-          "name": "War Room"
-        },
-        {
-          "count": 1,
-          "name": "Cut a Deal"
-        },
-        {
-          "count": 1,
-          "name": "Defy Death"
-        },
-        {
-          "count": 1,
-          "name": "Invoke the Divine"
-        },
-        {
-          "count": 1,
-          "name": "Secret Rendezvous"
-        },
-        {
-          "count": 1,
-          "name": "Starnheim Aspirant"
-        },
-        {
-          "count": 1,
-          "name": "Swords to Plowshares"
-        },
-        {
-          "count": 1,
-          "name": "Thraben Watcher"
-        },
-        {
           "count": 1,
-          "name": "Valorous Stance"
+          "name": "Chaos Warp"
         },
         {
           "count": 1,
-          "name": "Youthful Valkyrie"
+          "name": "Strike It Rich"
         },
         {
           "count": 1,
-          "name": "Arcane Signet"
+          "name": "Thundering Falls"
         },
         {
           "count": 1,
-          "name": "Commander's Sphere"
+          "name": "Polluted Delta"
         },
         {
           "count": 1,
-          "name": "Heraldic Banner"
+          "name": "Narset's Reversal"
         },
         {
           "count": 1,
-          "name": "Mind Stone"
+          "name": "Overmaster"
         },
         {
           "count": 1,
-          "name": "Patchwork Banner"
+          "name": "Scalding Tarn"
         },
         {
           "count": 1,
-          "name": "Sol Ring"
+          "name": "Force of Will"
         },
         {
           "count": 1,
-          "name": "Swiftfoot Boots"
+          "name": "Riverpyre Verge"
         },
         {
           "count": 1,
-          "name": "Radiant Fountain"
+          "name": "Wooded Foothills"
         },
         {
           "count": 1,
-          "name": "Secluded Steppe"
+          "name": "Force of Negation"
         },
         {
           "count": 1,
-          "name": "Seraph Sanctuary"
+          "name": "Reliquary Tower"
         },
         {
           "count": 1,
-          "name": "Temple of the False God"
-        },
-        {
-          "count": 28,
-          "name": "Plains <272> [FDN]"
+          "name": "Pact of Negation"
         },
         {
           "count": 1,
-          "name": "Generous Gift <borderless> [CMM]"
+          "name": "Sleight of Hand"
         },
         {
           "count": 1,
-          "name": "Mangara, the Diplomat [M21]"
+          "name": "Spider-Sense"
         },
         {
           "count": 1,
-          "name": "Bruna, the Fading Light [INR]"
+          "name": "Stormcarved Coast"
         },
         {
           "count": 1,
-          "name": "Steel Seraph [BRO]"
+          "name": "An Offer You Can't Refuse"
         },
         {
           "count": 1,
-          "name": "Sublime Archangel [UMA]"
+          "name": "Hall of Echoes"
         },
         {
           "count": 1,
-          "name": "Gisela, the Broken Blade [EMN]"
+          "name": "Drift of Phantasms"
         },
         {
           "count": 1,
-          "name": "Resplendent Angel [M19]"
+          "name": "Swan Song"
         },
         {
           "count": 1,
-          "name": "Aegis Angel [M15]"
+          "name": "Rite of Flame"
         },
         {
           "count": 1,
-          "name": "Patron of the Valiant [JMP]"
+          "name": "Longshot, Rebel Bowman"
         },
         {
           "count": 1,
-          "name": "Requisition Raid [OTJ]"
+          "name": "Fierce Guardianship"
         },
         {
           "count": 1,
-          "name": "Evolving Wilds [LTC]"
+          "name": "Gandalf, Goblins' Bane"
         },
         {
           "count": 1,
-          "name": "Liliana the Faultless <019f70fa-6bc6-7922-8be5-b3129f79a790> [FRA]"
+          "name": "Consider"
         },
         {
           "count": 1,
-          "name": "Thorin's Last Stand <019fb8b6-7244-7dad-b22e-8fdf9eb0d738> [HOB]"
+          "name": "Tandem Lookout"
         },
         {
           "count": 1,
-          "name": "Angelic Sell-Sword [OTC]"
+          "name": "Redirect Lightning"
         },
         {
           "count": 1,
-          "name": "Your Fate Ends Here <01a0b510-2426-7d56-8b09-dbd32ec69f6e> [FRA] (F)"
+          "name": "Otawara, Soaring City"
         },
         {
           "count": 1,
-          "name": "The Grey Havens <borderless> [LTR]"
+          "name": "Slip Out the Back"
         },
         {
           "count": 1,
-          "name": "Angel of Sanctions [DRC]"
+          "name": "Blasphemous Act"
         },
         {
           "count": 1,
-          "name": "Urza's Incubator [MH3]"
+          "name": "Abrade"
         },
         {
           "count": 1,
-          "name": "Angel of Indemnity [OTC]"
-        },
-        {
-          "count": 2,
-          "name": "Plains <230> [THS]"
+          "name": "Past in Flames"
         },
         {
           "count": 1,
-          "name": "Authority of the Consuls [KLD]"
+          "name": "Flashback"
         }
       ],
       "sideboard": []

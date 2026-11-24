@@ -84,6 +84,7 @@ fn counter_replacement_recipient_is_permanents_or_yourself() {
             actor: PlayerId(actor),
             object_id,
             counter_type: CounterType::Plus1Plus1,
+            cause: crate::types::proposed_event::CounterCause::ResolvingEffect,
         },
         count: 1,
         applied: HashSet::new(),
@@ -93,6 +94,7 @@ fn counter_replacement_recipient_is_permanents_or_yourself() {
             actor: PlayerId(actor),
             player_id: PlayerId(player),
             counter_kind: crate::types::player::PlayerCounterKind::Poison,
+            cause: crate::types::proposed_event::CounterCause::ResolvingEffect,
         },
         count: 1,
         applied: HashSet::new(),
@@ -126,6 +128,7 @@ fn counter_replacement_recipient_is_permanents_or_yourself() {
                 placement: CounterPlacement::Energy {
                     actor: PlayerId(0),
                     player_id: PlayerId(0),
+                    cause: crate::types::proposed_event::CounterCause::ResolvingEffect,
                 },
                 count: 1,
                 applied: HashSet::new(),

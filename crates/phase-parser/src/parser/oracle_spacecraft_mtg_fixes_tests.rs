@@ -22,7 +22,7 @@ fn spacecraft_test_lines(
     (
         statics.into_iter().map(|(_, s)| s.definition).collect(),
         triggers.into_iter().map(|(_, t)| t).collect(),
-        abilities.into_iter().map(|(_, a)| a).collect(),
+        abilities.into_iter().map(|(_, a)| a.value).collect(),
         consumed,
     )
 }

@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
+use super::ability::is_false;
 use super::card_printing::SharedPrinting;
 use super::display_only::DisplayOnly;
 use super::event_kinds::BendingType;
@@ -76,6 +77,21 @@ pub struct CompanionInfo {
 pub struct Player {
     pub id: PlayerId,
     pub life: i32,
+    /// This seat has NO life total, so `life` is meaningless for it and must not
+    /// be presented as a resource. Damage and life loss it would take are
+    /// redirected into milling its library, and it is exempt from the CR 704.5a
+    /// "0 or less life" state-based action.
+    ///
+    /// True only for the Horde seat in a `GameFormat::Horde` game (a casual
+    /// variant, hence no CR number — see `horde::player_has_no_life_total`). Set
+    /// once at deck load, since the Horde seat is fixed for the whole game.
+    ///
+    /// Engine-derived and serialized so clients can render the seat truthfully
+    /// (showing its library — the Horde's real clock, as it loses by decking out)
+    /// instead of a frozen life total, WITHOUT re-deriving "which seat is the
+    /// Horde" on the frontend.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_no_life_total: bool,
     pub mana_pool: ManaPool,
 
     // Per-player zones
@@ -118,6 +134,14 @@ pub struct Player {
     /// Used by "if an opponent lost life during their last turn" intervening-if conditions.
     #[serde(default)]
     pub life_lost_last_turn: u32,
+    /// CR 601.2i + CR 603.4: Number of spells this player cast during the
+    /// previous turn, latched at the turn boundary from that turn's per-player
+    /// cast journal (`GameState::spells_cast_this_turn_by_player`) before the
+    /// journal is cleared. Read by `QuantityRef::SpellsCast { window: LastTurn }`
+    /// ("a player cast two or more spells last turn", the werewolf transform
+    /// clause). A player who has left the game keeps their snapshot (CR 800.4i).
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub spells_cast_last_turn: u32,
     #[serde(default)]
     pub descended_this_turn: bool,
     #[serde(default)]
@@ -166,6 +190,15 @@ pub struct Player {
     /// Used by "your Nth turn of the game" Oracle conditions (QuantityRef::TurnsTaken).
     #[serde(default)]
     pub turns_taken: u32,
+
+    /// CR 103.2a: Card count of this player's submitted starting deck
+    /// (library + command-zone decklist cards, single-counted; sideboard and
+    /// companion excluded per CR 103.2a / CR 702.139b). Latched once at deck
+    /// load by `load_deck_into_state` and never mutated mid-game — the rules
+    /// past tense in Whtz, the Bibliophile's "if you had 200 or more cards in
+    /// your starting deck" reads this snapshot, not the live library.
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub starting_deck_size: u32,
 
     // Elimination tracking (N-player support)
     #[serde(default)]
@@ -233,6 +266,7 @@ impl Default for Player {
         Player {
             id: PlayerId(0),
             life: 20,
+            has_no_life_total: false,
             mana_pool: ManaPool::default(),
             library: im::Vector::new(),
             hand: im::Vector::new(),
@@ -249,6 +283,7 @@ impl Default for Player {
             life_lost_this_turn: 0,
             energy_paid_or_lost_this_turn: 0,
             life_lost_last_turn: 0,
+            spells_cast_last_turn: 0,
             descended_this_turn: false,
             cards_drawn_this_turn: 0,
             dilemmas_faced_this_turn: 0,
@@ -269,6 +304,7 @@ impl Default for Player {
             can_look_at_top_of_library: false,
             commander_color_identity: Vec::new(),
             status: PlayerStatus::Active,
+            starting_deck_size: 0,
         }
     }
 }
@@ -393,5 +429,28 @@ mod tests {
         let json = serde_json::to_value(&live).expect("serialize");
         assert_eq!(json["cards_drawn_last_turn"], 3);
         assert_eq!(json["opponent_spells_cast_since_own_last_turn"], 1);
+    }
+
+    /// CR 103.2a: the latched starting-deck count omits the default zero on
+    /// the wire (old saves without the key load as 0), while a live nonzero
+    /// latch round-trips. Whtz, the Bibliophile's "if you had 200 or more
+    /// cards in your starting deck" reads this snapshot.
+    #[test]
+    fn starting_deck_size_latch_skips_zero_on_the_wire() {
+        let rest = Player::default();
+        let json = serde_json::to_value(&rest).expect("serialize");
+        let object = json.as_object().expect("object");
+        assert!(!object.contains_key("starting_deck_size"));
+        let back: Player = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(back.starting_deck_size, 0);
+
+        let live = Player {
+            starting_deck_size: 200,
+            ..Player::default()
+        };
+        let json = serde_json::to_value(&live).expect("serialize");
+        assert_eq!(json["starting_deck_size"], 200);
+        let back: Player = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(back.starting_deck_size, 200);
     }
 }

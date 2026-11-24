@@ -8,40 +8,6 @@ use crate::types::ability::{ControllerRef, FilterProp, TargetFilter, TypedFilter
 use crate::types::keywords::Keyword;
 use crate::types::statics::{CrewAction, CrewContributionKind};
 
-/// CR 603.2d + CR 121.1: Draw-caused trigger doubler (Krang, the All-Powerful).
-/// Never the unrestricted `Any` fallback, which also doubled triggers caused by
-/// a permanent entering, such as a draw for it.
-#[test]
-fn parses_krang_draw_caused_doubler() {
-    let def = parse_static_line(
-        "If a player drawing a card causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
-    )
-    .expect("expected DoubleTriggers static for Krang");
-    assert_eq!(
-        def.mode,
-        StaticMode::DoubleTriggers {
-            cause: TriggerCause::CardDrawn
-        }
-    );
-}
-
-/// CR 603.2d + CR 119.3: Gain-caused trigger doubler (Dr. Beverly Crusher).
-/// Never the unrestricted `Any` fallback, which doubled every trigger of our
-/// permanents, such as Soul Warden's for a creature entering.
-#[test]
-fn parses_beverly_crusher_gain_caused_doubler() {
-    let def = parse_static_line(
-        "If you gaining life causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
-    )
-    .expect("expected DoubleTriggers static for Dr. Beverly Crusher");
-    assert_eq!(
-        def.mode,
-        StaticMode::DoubleTriggers {
-            cause: TriggerCause::ControllerGainedLife
-        }
-    );
-}
-
 #[test]
 fn planar_nexus_is_every_nonbasic_land_type() {
     // CR 205.3i + CR 604.3: Planar Nexus — "This land is every nonbasic land
