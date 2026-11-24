@@ -5214,7 +5214,7 @@ fn resolve_ref(
     // simultaneous event has no static effect yet (a co-entering March of the
     // Machines has not made an existing artifact a creature). The view has no
     // co-entrant on its battlefield, so the recursion ends there.
-    if ctx.entering.is_some() {
+    if let Some(entering) = ctx.entering {
         if let Some(view) = state
             .active_pre_entry_battlefield_snapshot()
             .and_then(|snapshot| {
@@ -5223,6 +5223,28 @@ fn resolve_ref(
         {
             return resolve_ref(
                 &view,
+                qty,
+                controller,
+                ctx,
+                targets,
+                chosen_x,
+                ability,
+                ability_targets,
+            );
+        }
+        // CR 614.12 + CR 702.116a: a token entering with others of its batch (the
+        // copies of one copy-token instruction, as myriad's) is read before that
+        // event, with its co-entrants absent though the earlier ones are placed
+        // already: with Giada, Font of Hope each copy counts the Angels there before
+        // the batch, never another copy. The board has no co-entrant on its
+        // battlefield, so the recursion reads it borrowed and ends there.
+        let co_entrants =
+            crate::game::effects::token_copy::entering_token_co_entrants(state, entering);
+        if let std::borrow::Cow::Owned(board) =
+            crate::game::filter::pre_entry_board(state, &co_entrants)
+        {
+            return resolve_ref(
+                &board,
                 qty,
                 controller,
                 ctx,

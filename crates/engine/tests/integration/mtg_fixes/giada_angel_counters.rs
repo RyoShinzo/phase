@@ -119,3 +119,30 @@ fn giada_myriad_copies_enter_at_the_same_time() {
         "one copy attacks each other opponent"
     );
 }
+
+/// CR 614.12: the copies of one copy-token instruction enter at the same time, so
+/// with Giada each copy of the Angel counts Giada and the Angel, never the other
+/// copy: two counters on each.
+#[test]
+fn giada_copies_of_one_instruction_count_only_angels_before_them() {
+    let mut scenario = GameScenario::new();
+    scenario.at_phase(Phase::PreCombatMain);
+    scenario
+        .add_creature_from_oracle(P0, "Giada, Font of Hope", 2, 2, GIADA)
+        .with_subtypes(vec!["Angel"]);
+    let angel = scenario
+        .add_creature_from_oracle(P0, "Serra Angel", 4, 4, "Flying, vigilance")
+        .with_subtypes(vec!["Angel"])
+        .id();
+    let spell = scenario
+        .add_spell_to_hand_from_oracle(
+            P0,
+            "Twin Copies",
+            false,
+            "Create two tokens that are copies of target creature you control.",
+        )
+        .id();
+    let mut runner = scenario.build();
+    runner.cast(spell).target_objects(&[angel]).resolve();
+    assert_eq!(token_angel_counters(&runner), vec![2, 2]);
+}
