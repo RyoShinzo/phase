@@ -1349,10 +1349,17 @@ fn parse_you_attack_tail(rest: &str) -> YouAttackTail {
             terminated(parse_you_attack_player_object, parse_you_attack_tail_end),
             YouAttackTail::AttackedPlayer,
         ),
+        // CR 303.4b + CR 508.1b: "enchanted opponent or a planeswalker they
+        // control" (Tenuous Truce) is the same defender-scoped head with a
+        // planeswalker leg; the event parser's attack-target grammar reads both.
         value(
             YouAttackTail::EnchantedPlayer,
             (
                 preceded(tag(" "), parse_enchanted_player_noun),
+                opt((
+                    tag(" or a planeswalker "),
+                    alt((tag("they control"), tag("that player controls"))),
+                )),
                 parse_you_attack_tail_end,
             ),
         ),

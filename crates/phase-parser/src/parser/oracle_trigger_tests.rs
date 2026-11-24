@@ -47069,7 +47069,15 @@ fn you_attack_head_tail_grammar() {
             Some(Unrecognized),
         ),
         ("whenever you attack a player.", Some(Unrecognized)),
-        ("whenever you attack enchanted opponent", Some(Unrecognized)),
+        // CR 303.4b: "enchanted opponent" is the enchanted player (Tenuous Truce).
+        (
+            "whenever you attack enchanted opponent",
+            Some(EnchantedPlayer),
+        ),
+        (
+            "when you attack enchanted opponent or a planeswalker they control",
+            Some(EnchantedPlayer),
+        ),
         (
             "whenever you attack the player who has the initiative",
             Some(Unrecognized),
