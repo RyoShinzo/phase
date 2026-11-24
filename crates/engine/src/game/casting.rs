@@ -38522,3 +38522,8 @@ mod selected_impulse_authority_tests {
         assert!(!exile_cast_pays_printed_mana_cost(state, obj, P0, None));
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "casting_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

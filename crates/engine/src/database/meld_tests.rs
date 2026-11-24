@@ -496,19 +496,3 @@ fn meld_instigator_has_no_unimplemented_mechanics() {
         "meld instigator must not be flagged as having unimplemented mechanics, got: {missing:?}"
     );
 }
-
-/// CR 702 + CR 113.3: a keyword the card only offers as a choice is not its
-/// own. Angelic Skirmisher's data lists vigilance beside flying; only flying is
-/// printed as a keyword line.
-#[test]
-fn keyword_offered_as_a_choice_is_not_a_printed_keyword() {
-    let text = "Flying\nAt the beginning of each combat, choose first strike, vigilance, or lifelink. Creatures you control gain that ability until end of turn.";
-    let mut card = atomic("Angelic Skirmisher", "Creature — Angel", &["Creature"], text);
-    card.subtypes = vec!["Angel".to_string()];
-    card.keywords = Some(vec!["Flying".to_string(), "Vigilance".to_string()]);
-    let face = parse_face(&card);
-    // allow-raw-authority: this asserts the synthesized CardFace's printed keywords, not a live object's effective keywords
-    assert!(face.keywords.contains(&Keyword::Flying));
-    // allow-raw-authority: this asserts the synthesized CardFace's printed keywords, not a live object's effective keywords
-    assert!(!face.keywords.contains(&Keyword::Vigilance));
-}

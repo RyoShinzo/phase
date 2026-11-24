@@ -50,3 +50,7 @@ pub fn is_card_playable(db: &CardDatabase, name: &str) -> bool {
         None => false,
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+mod mtg_fixes_tests;

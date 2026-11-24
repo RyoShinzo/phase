@@ -64,7 +64,11 @@ fn holy_frazzle_cannon_counters_the_attacker_and_each_creature_sharing_a_type() 
         .expect("declare the equipped Knight");
     runner.advance_until_stack_empty();
 
-    assert_eq!(plus_counters(&runner, attacker), 1, "the attacker gets one counter, not two");
+    assert_eq!(
+        plus_counters(&runner, attacker),
+        1,
+        "the attacker gets one counter, not two"
+    );
     assert_eq!(plus_counters(&runner, knight), 1, "shares Knight");
     assert_eq!(plus_counters(&runner, human), 1, "shares Human");
     assert_eq!(plus_counters(&runner, zombie), 0, "shares no type");

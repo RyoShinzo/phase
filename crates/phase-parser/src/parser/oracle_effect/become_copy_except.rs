@@ -3761,29 +3761,6 @@ mod tests {
         );
     }
 
-    /// CR 707.9a: "the token has flying" is the same keyword grant as "it has
-    /// flying" (Irenicus's Vile Duplication); the flying used to be dropped.
-    #[test]
-    fn irenicuss_vile_duplication_token_has_flying_and_is_not_legendary() {
-        let (_, mods) = parse_except_clause(
-            ", except the token has flying and it isn't legendary.",
-            "Irenicus's Vile Duplication",
-            &ParseContext::default(),
-        )
-        .unwrap();
-        assert!(
-            mods.contains(&ContinuousModification::AddKeyword {
-                keyword: Keyword::Flying,
-            }),
-            "the token must get flying; got {mods:?}"
-        );
-        assert!(
-            mods.iter()
-                .any(|m| matches!(m, ContinuousModification::RemoveSupertype { .. })),
-            "the token must not be legendary; got {mods:?}"
-        );
-    }
-
     /// V11 (issue #8395; CR 707.9b + CR 205.1b): Rebuild the City — "Create three
     /// tokens that are copies of it, except they're 3/3 creatures in addition to
     /// their other types and they have vigilance and menace."
@@ -4165,3 +4142,8 @@ mod tests {
         );
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "become_copy_except_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

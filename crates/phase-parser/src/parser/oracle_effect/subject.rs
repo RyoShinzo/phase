@@ -11197,16 +11197,6 @@ mod tests {
     }
 
     #[test]
-    fn starts_with_subject_prefix_owner_or_controller_of() {
-        assert!(starts_with_subject_prefix(
-            "the owner of up to one target creature draws two cards"
-        ));
-        assert!(starts_with_subject_prefix(
-            "the controller of target creature loses 2 life"
-        ));
-    }
-
-    #[test]
     fn starts_with_subject_prefix_an_opponent() {
         assert!(starts_with_subject_prefix("an opponent discards a card"));
         assert!(starts_with_subject_prefix(
@@ -14399,3 +14389,8 @@ mod entry_onset_tests {
         }
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "subject_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

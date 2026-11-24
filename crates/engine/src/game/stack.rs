@@ -8887,46 +8887,6 @@ mod tests {
     }
 
     #[test]
-    fn warp_granted_only_in_hand_still_exiles() {
-        // CR 702.185a: a card that had warp only in hand (Tannuk, Steadfast Second)
-        // has no warp keyword on the battlefield; its paid warp cost still exiles it.
-        let mut state = setup();
-        state.turn_number = 3;
-        let obj_id = create_object(
-            &mut state,
-            CardId(1),
-            PlayerId(0),
-            "Granted Warp Ship".to_string(),
-            Zone::Battlefield,
-        );
-        state
-            .objects
-            .get_mut(&obj_id)
-            .unwrap()
-            .card_types
-            .core_types
-            .push(CoreType::Artifact);
-        state.stack.push_back(StackEntry {
-            id: obj_id,
-            source_id: obj_id,
-            controller: PlayerId(0),
-            kind: StackEntryKind::Spell {
-                card_id: CardId(1),
-                ability: None,
-                casting_variant: crate::types::game_state::CastingVariant::Warp,
-                actual_mana_spent: 0,
-            },
-        });
-        let mut events = Vec::new();
-        resolve_top(&mut state, &mut events);
-        assert_eq!(
-            state.delayed_triggers.len(),
-            1,
-            "a paid warp cost creates the end-step exile without a warp keyword"
-        );
-    }
-
-    #[test]
     fn warp_exile_respects_turn_restriction() {
         // CR 702.185a: WarpExile cards should not be castable on the same turn
         // they were exiled, only after the turn ends.
@@ -15630,127 +15590,6 @@ mod tests {
             );
         }
 
-        /// A 1/1 creature of one creature type, on the battlefield, not yet
-        /// marked as entered.
-        fn typed_creature(state: &mut GameState, card_id: u64, subtype: &str) -> ObjectId {
-            let id = create_object(
-                state,
-                CardId(card_id),
-                PlayerId(0),
-                format!("{subtype} {card_id}"),
-                Zone::Battlefield,
-            );
-            let o = state.objects.get_mut(&id).unwrap();
-            o.base_power = Some(1);
-            o.base_toughness = Some(1);
-            o.power = Some(1);
-            o.toughness = Some(1);
-            o.base_card_types.core_types = vec![CoreType::Creature];
-            o.base_card_types.subtypes = vec![subtype.to_string()];
-            o.card_types = o.base_card_types.clone();
-            id
-        }
-
-        /// Build a Coat of Arms board: "Each creature gets +1/+1 for each other
-        /// creature on the battlefield that shares at least one creature type
-        /// with it", over two Faerie 1/1s. The count's
-        /// `SharesQuality { reference: ParentTarget }` binds to each recipient
-        /// (CR 613.4c), so whether an entrant joins a recipient's count depends
-        /// on that recipient's creature types, and the probe without a
-        /// recipient can never see it.
-        fn shared_type_count_anthem_board() -> GameState {
-            use crate::types::ability::{
-                ContinuousModification, FilterProp, SharedQuality, SharedQualityRelation,
-                StaticDefinition,
-            };
-            use crate::types::statics::StaticMode;
-            let mut state = setup();
-            state.all_creature_types = vec!["Cat".to_string(), "Faerie".to_string()];
-            for card_id in [380, 381] {
-                typed_creature(&mut state, card_id, "Faerie");
-            }
-            let coat = create_object(
-                &mut state,
-                CardId(390),
-                PlayerId(0),
-                "Coat of Arms".to_string(),
-                Zone::Battlefield,
-            );
-            let sharers = QuantityExpr::Ref {
-                qty: QuantityRef::ObjectCount {
-                    filter: TargetFilter::Typed(TypedFilter {
-                        type_filters: vec![TypeFilter::Creature],
-                        properties: vec![
-                            FilterProp::Another,
-                            FilterProp::SharesQuality {
-                                quality: SharedQuality::CreatureType,
-                                reference: Some(Box::new(TargetFilter::ParentTarget)),
-                                relation: SharedQualityRelation::Shares,
-                            },
-                        ],
-                        ..Default::default()
-                    }),
-                },
-            };
-            let mut sd = StaticDefinition::new(StaticMode::Continuous);
-            sd.affected = Some(TargetFilter::Typed(TypedFilter::new(TypeFilter::Creature)));
-            sd.modifications = vec![
-                ContinuousModification::AddDynamicPower {
-                    value: sharers.clone(),
-                },
-                ContinuousModification::AddDynamicToughness { value: sharers },
-            ];
-            {
-                let o = state.objects.get_mut(&coat).unwrap();
-                o.base_static_definitions = Arc::new(vec![sd.clone()]);
-                o.static_definitions = vec![sd].into();
-                o.base_card_types.core_types = vec![CoreType::Artifact];
-                o.card_types.core_types = vec![CoreType::Artifact];
-            }
-            state.layers_dirty = crate::types::game_state::LayersDirty::Full;
-            state
-        }
-
-        /// CR 611.3a + CR 613.4c: a third Faerie entering joins the shared-type
-        /// count of each Faerie already there, so the flush must escalate: each
-        /// Faerie is 3/3, the pre-existing ones included.
-        #[test]
-        fn shared_type_count_entry_escalates_and_matches_full() {
-            let (normal, escalated, forced) =
-                flush_entry_and_forced(shared_type_count_anthem_board, |s| {
-                    let id = typed_creature(s, 382, "Faerie");
-                    crate::game::layers::mark_layers_entered(s, id);
-                    id
-                });
-            assert!(
-                escalated,
-                "a Faerie entry joins each pre-existing Faerie's shared-type count"
-            );
-            assert_pt_identical(&normal, &forced, "shared-type count Faerie entry");
-            let faeries: Vec<_> = normal
-                .battlefield
-                .iter()
-                .filter_map(|id| normal.objects.get(id))
-                .filter(|o| o.card_types.subtypes.iter().any(|t| t == "Faerie"))
-                .map(|o| (o.power, o.toughness))
-                .collect();
-            assert_eq!(faeries, vec![(Some(3), Some(3)); 3]);
-        }
-
-        /// A Cat entering shares no creature type with the Faeries, so it joins
-        /// no recipient's count and the flush stays incremental.
-        #[test]
-        fn shared_type_count_unrelated_entry_does_not_escalate_and_matches_full() {
-            let (normal, escalated, forced) =
-                flush_entry_and_forced(shared_type_count_anthem_board, |s| {
-                    let id = typed_creature(s, 383, "Cat");
-                    crate::game::layers::mark_layers_entered(s, id);
-                    id
-                });
-            assert!(!escalated, "a Cat joins no Faerie's shared-type count");
-            assert_pt_identical(&normal, &forced, "shared-type count Cat entry");
-        }
-
         /// (e) FAIL-CLOSED KEY-ABSENT — when a source-level population-gated
         /// static's key is ABSENT from `static_gate_truth` (e.g. the cache was
         /// never refreshed for it, or it was phased out at the last full eval),
@@ -18419,3 +18258,8 @@ mod stack_bound_reveal_release_tests {
         assert!(state.stack_bound_reveals.is_empty());
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "stack_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

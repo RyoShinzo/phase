@@ -2463,22 +2463,6 @@ mod tests {
         );
     }
 
-    /// The or-closed list grammar reads an Oxford-comma list closed by "or",
-    /// and rolls an unclosed comma run back to its first leg, leaving the
-    /// comma for the caller.
-    #[test]
-    fn or_closed_list_rolls_back_unclosed_comma_run() {
-        let mut list = parse_or_closed_list(parse_number);
-        assert_eq!(list("1, 2, or 3"), Ok(("", vec![1, 2, 3])));
-        assert_eq!(list("1 or 2 tokens"), Ok((" tokens", vec![1, 2])));
-        assert_eq!(list("1, 2, 3 tokens"), Ok((", 2, 3 tokens", vec![1])));
-        assert_eq!(
-            list("1, 2, or 3, 4 tokens"),
-            Ok((", 4 tokens", vec![1, 2, 3]))
-        );
-        assert!(list("tokens").is_err());
-    }
-
     /// Everything that is not a signed nonzero digit count stays declined: `[0]`
     /// puts zero counters and no printed effect uses it, `[+X]` / `[−X]` are the
     /// announced-X forms of a cost, an unsigned count and a number word are not the
@@ -2514,3 +2498,8 @@ mod tests {
         }
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "primitives_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

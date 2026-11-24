@@ -54,7 +54,11 @@ fn board() -> (GameRunner, [ObjectId; 3], [ObjectId; 2]) {
         .get_mut(&discovery)
         .unwrap()
         .chosen_attributes = vec![ChosenAttribute::CreatureType("Knight".to_string())];
-    (runner, [knight_a, knight_b, soldier], [new_knight, new_soldier])
+    (
+        runner,
+        [knight_a, knight_b, soldier],
+        [new_knight, new_soldier],
+    )
 }
 
 /// Two Knights and a Soldier attack in one declaration: two triggers, two cards.
@@ -86,7 +90,11 @@ fn kindred_discovery_draws_for_each_entering_creature_of_the_chosen_type() {
     runner.cast(new_knight).resolve();
     runner.advance_until_stack_empty();
     // The cast Knight left the hand, the trigger drew one.
-    assert_eq!(hand_size(&runner), before, "the Knight entering draws one card");
+    assert_eq!(
+        hand_size(&runner),
+        before,
+        "the Knight entering draws one card"
+    );
     runner.cast(new_soldier).resolve();
     runner.advance_until_stack_empty();
     assert_eq!(

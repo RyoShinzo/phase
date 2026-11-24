@@ -275,3 +275,7 @@ pub mod test_helpers {
 
 #[cfg(test)]
 mod snapshot_tests;
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+mod mtg_fixes_tests;

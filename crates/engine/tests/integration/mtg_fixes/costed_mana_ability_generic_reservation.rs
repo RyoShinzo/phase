@@ -114,7 +114,11 @@ fn auto_pays_with_signet_and_rock(rock_name: &str, rock_oracle: &str) {
         0,
         "every unit paid the spell or the Signet"
     );
-    assert_eq!(runner.state().players[0].life, 20, "no pain mana was needed");
+    assert_eq!(
+        runner.state().players[0].life,
+        20,
+        "no pain mana was needed"
+    );
 }
 
 #[test]
@@ -162,9 +166,19 @@ fn signet_sub_cost_uses_surplus_mana_and_leaves_a_land_untapped() {
         })
         .expect("the automatic cast is accepted");
 
-    assert_eq!(runner.state().objects[&spell].zone, Zone::Stack, "the spell was cast");
-    assert!(runner.state().objects[&sol_ring].tapped, "Sol Ring paid {{1}} and the Signet's {{1}}");
-    assert!(runner.state().objects[&signet].tapped, "Boros Signet paid {{R}}{{W}}");
+    assert_eq!(
+        runner.state().objects[&spell].zone,
+        Zone::Stack,
+        "the spell was cast"
+    );
+    assert!(
+        runner.state().objects[&sol_ring].tapped,
+        "Sol Ring paid {{1}} and the Signet's {{1}}"
+    );
+    assert!(
+        runner.state().objects[&signet].tapped,
+        "Boros Signet paid {{R}}{{W}}"
+    );
     assert!(
         !runner.state().objects[&plains].tapped,
         "Sol Ring's second {{C}} paid the Signet, so the Plains stays untapped"

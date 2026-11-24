@@ -11,7 +11,7 @@ use engine::types::keywords::Keyword;
 use engine::types::mana::ManaCost;
 use engine::types::phase::Phase;
 
-use super::rules::cast_spell_action;
+use crate::rules::cast_spell_action;
 
 /// Verbatim Oracle text (Scryfall).
 const AKROMAS_WILL: &str = "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n\

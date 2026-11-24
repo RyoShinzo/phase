@@ -409,34 +409,6 @@ mod tests {
     }
 
     #[test]
-    fn creature_threshold_follows_reminder_then_highest_symbol() {
-        let prometheus = [
-            "Station (Station only as a sorcery. It's an artifact creature at 4+.)",
-            "4+ | Flying",
-            "8+ | Multivector Assault Mode — Whenever ~ deals combat damage to an opponent, it deals that much damage to each other opponent.",
-        ];
-        assert_eq!(spacecraft_creature_threshold(&prometheus), Some(4));
-        let reminderless = ["Station", "2+ | Vigilance", "8+ | Flying"];
-        assert_eq!(spacecraft_creature_threshold(&reminderless), Some(8));
-        assert_eq!(spacecraft_creature_threshold(&["Station"]), None);
-    }
-
-    #[test]
-    fn ability_word_trigger_keeps_station_gate() {
-        let lines = [
-            "8+ | Multivector Assault Mode — Whenever ~ deals combat damage to an opponent, it deals that much damage to each other opponent.",
-        ];
-        let (_, triggers, _, consumed) =
-            spacecraft_test_lines(&lines, "Test", PrintedTriggerIndex::from_slot_for_test(0));
-        assert_eq!(consumed, vec![0]);
-        assert_eq!(triggers.len(), 1);
-        assert!(matches!(
-            triggers[0].condition,
-            Some(TriggerCondition::HasCounters { minimum: 8, .. })
-        ));
-    }
-
-    #[test]
     fn keyword_threshold_line_parses_to_addkeyword_static() {
         let lines = ["12+ | Flying"];
         let (statics, triggers, abilities, consumed) =
@@ -588,3 +560,8 @@ mod tests {
         let _ = CounterType::Generic(STATION_COUNTER.to_string());
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "oracle_spacecraft_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

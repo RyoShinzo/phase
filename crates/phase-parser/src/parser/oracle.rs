@@ -14712,3 +14712,8 @@ mod die_result_row_failure_marker_tests {
         assert!(!has_unimplemented(&parseable));
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "oracle_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

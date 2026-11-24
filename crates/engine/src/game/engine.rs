@@ -31637,3 +31637,8 @@ At the beginning of combat on your turn, you may choose two. Each mode must targ
         assert_eq!(remembered.state().loop_decision_tally.optional, 1);
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "engine_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

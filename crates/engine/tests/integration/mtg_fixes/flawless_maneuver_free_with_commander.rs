@@ -12,10 +12,11 @@ use engine::types::mana::{ManaCost, ManaCostShard};
 use engine::types::phase::Phase;
 use engine::types::zones::Zone;
 
-use super::rules::cast_spell_action;
+use crate::rules::cast_spell_action;
 
 /// Verbatim Oracle text (Scryfall).
-const FLAWLESS_MANEUVER: &str = "If you control a commander, you may cast this spell without paying its mana cost.\n\
+const FLAWLESS_MANEUVER: &str =
+    "If you control a commander, you may cast this spell without paying its mana cost.\n\
     Creatures you control gain indestructible until end of turn.";
 
 /// No mana anywhere, a Knight, a creature that is a commander only if
@@ -47,7 +48,10 @@ fn offered(runner: &GameRunner, id: ObjectId) -> bool {
 #[test]
 fn flawless_maneuver_is_free_with_a_commander() {
     let (mut runner, knight, maneuver) = board(true);
-    assert!(offered(&runner, maneuver), "the free cast is offered with no mana");
+    assert!(
+        offered(&runner, maneuver),
+        "the free cast is offered with no mana"
+    );
     let cast = cast_spell_action(&runner, maneuver);
     runner.act(cast).expect("the cast is accepted");
     // CR 118.9: the engine asks whether to use the alternative cost (no mana)
@@ -67,10 +71,17 @@ fn flawless_maneuver_is_free_with_a_commander() {
 #[test]
 fn flawless_maneuver_costs_mana_without_a_commander() {
     let (mut runner, knight, maneuver) = board(false);
-    assert!(!offered(&runner, maneuver), "no cast is offered without mana or a commander");
+    assert!(
+        !offered(&runner, maneuver),
+        "no cast is offered without mana or a commander"
+    );
     let cast = cast_spell_action(&runner, maneuver);
     let _ = runner.act(cast);
     runner.advance_until_stack_empty();
-    assert_eq!(runner.state().objects[&maneuver].zone, Zone::Hand, "it stays in hand");
+    assert_eq!(
+        runner.state().objects[&maneuver].zone,
+        Zone::Hand,
+        "it stays in hand"
+    );
     assert!(!runner.state().objects[&knight].has_keyword(&Keyword::Indestructible));
 }

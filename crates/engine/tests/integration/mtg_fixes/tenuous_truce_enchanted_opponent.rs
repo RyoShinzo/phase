@@ -51,7 +51,13 @@ fn table() -> (GameRunner, ObjectId, Vec<ObjectId>, Vec<ObjectId>) {
         creatures.push(scenario.add_creature(player, "Grizzly Bears", 2, 2).id());
         walkers.push(
             scenario
-                .add_planeswalker_from_oracle(player, "Test Walker", "Test", 5, "+1: You gain 1 life.")
+                .add_planeswalker_from_oracle(
+                    player,
+                    "Test Walker",
+                    "Test",
+                    5,
+                    "+1: You gain 1 life.",
+                )
                 .id(),
         );
         for _ in 0..10 {
@@ -74,12 +80,17 @@ fn hand_turn_to(runner: &mut GameRunner, player: PlayerId) {
         if runner.waiting_for_kind() == "DeclareAttackers" {
             return;
         }
-        runner.act(GameAction::PassPriority).expect("pass toward combat");
+        runner
+            .act(GameAction::PassPriority)
+            .expect("pass toward combat");
     }
     panic!("expected DeclareAttackers");
 }
 
-fn truce_zone_after_attack(attacker: PlayerId, target: impl Fn(&[ObjectId]) -> AttackTarget) -> Zone {
+fn truce_zone_after_attack(
+    attacker: PlayerId,
+    target: impl Fn(&[ObjectId]) -> AttackTarget,
+) -> Zone {
     let (mut runner, truce, creatures, walkers) = table();
     hand_turn_to(&mut runner, attacker);
     runner
@@ -101,11 +112,20 @@ fn tenuous_truce_is_sacrificed_only_for_attacks_between_us_and_the_enchanted_opp
     assert_eq!(truce_zone_after_attack(P2, walker_of(P0)), Zone::Graveyard);
     // Attacks between other pairs leave it.
     assert_eq!(truce_zone_after_attack(P0, player(P1)), Zone::Battlefield);
-    assert_eq!(truce_zone_after_attack(P0, walker_of(P1)), Zone::Battlefield);
+    assert_eq!(
+        truce_zone_after_attack(P0, walker_of(P1)),
+        Zone::Battlefield
+    );
     assert_eq!(truce_zone_after_attack(P2, player(P1)), Zone::Battlefield);
-    assert_eq!(truce_zone_after_attack(P2, walker_of(P3)), Zone::Battlefield);
+    assert_eq!(
+        truce_zone_after_attack(P2, walker_of(P3)),
+        Zone::Battlefield
+    );
     assert_eq!(truce_zone_after_attack(P3, player(P0)), Zone::Battlefield);
-    assert_eq!(truce_zone_after_attack(P1, walker_of(P0)), Zone::Battlefield);
+    assert_eq!(
+        truce_zone_after_attack(P1, walker_of(P0)),
+        Zone::Battlefield
+    );
 }
 
 /// Each player's end step in turn: only P2's draws, one card for P0 and one for P2.
@@ -115,17 +135,29 @@ fn tenuous_truce_draws_only_at_the_enchanted_opponents_end_step() {
         let (mut runner, truce, _, _) = table();
         hand_turn_to(&mut runner, active);
         runner.declare_attackers(&[]).expect("no attack");
-        let hands: Vec<usize> = runner.state().players.iter().map(|p| p.hand.len()).collect();
+        let hands: Vec<usize> = runner
+            .state()
+            .players
+            .iter()
+            .map(|p| p.hand.len())
+            .collect();
         for _ in 0..80 {
             if runner.state().phase == Phase::End
                 && matches!(runner.state().waiting_for, WaitingFor::Priority { .. })
             {
                 break;
             }
-            runner.act(GameAction::PassPriority).expect("pass toward the end step");
+            runner
+                .act(GameAction::PassPriority)
+                .expect("pass toward the end step");
         }
         assert_eq!(runner.state().phase, Phase::End);
-        let triggered = runner.state().stack.iter().filter(|e| e.source_id == truce).count();
+        let triggered = runner
+            .state()
+            .stack
+            .iter()
+            .filter(|e| e.source_id == truce)
+            .count();
         runner.advance_until_stack_empty();
         let drawn: Vec<usize> = runner
             .state()
@@ -136,10 +168,18 @@ fn tenuous_truce_draws_only_at_the_enchanted_opponents_end_step() {
             .collect();
         if active == P2 {
             assert_eq!(triggered, 1, "the enchanted opponent's end step triggers");
-            assert_eq!(drawn, vec![1, 0, 1, 0], "we and the enchanted opponent draw");
+            assert_eq!(
+                drawn,
+                vec![1, 0, 1, 0],
+                "we and the enchanted opponent draw"
+            );
         } else {
             assert_eq!(triggered, 0, "{active:?}'s end step does not trigger");
-            assert_eq!(drawn, vec![0, 0, 0, 0], "nobody draws at {active:?}'s end step");
+            assert_eq!(
+                drawn,
+                vec![0, 0, 0, 0],
+                "nobody draws at {active:?}'s end step"
+            );
         }
     }
 }

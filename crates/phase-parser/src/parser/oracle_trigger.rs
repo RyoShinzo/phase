@@ -26514,3 +26514,8 @@ mod attached_set_trigger_tests {
         ));
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "oracle_trigger_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

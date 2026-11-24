@@ -70,6 +70,10 @@ fn vanquishers_banner_ignores_an_opponents_knight_spell() {
         engine::types::zones::Zone::Battlefield,
         "the opponent's Knight was cast and resolved"
     );
-    assert_eq!(library(&runner, 0), 5, "an opponent's Knight spell draws us nothing");
+    assert_eq!(
+        library(&runner, 0),
+        5,
+        "an opponent's Knight spell draws us nothing"
+    );
     assert_eq!(library(&runner, 1), 5, "nor its caster");
 }

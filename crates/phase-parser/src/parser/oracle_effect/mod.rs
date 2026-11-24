@@ -57765,3 +57765,7 @@ mod iteration_destination_rebinding_tests {
         );
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+mod mtg_fixes_tests;

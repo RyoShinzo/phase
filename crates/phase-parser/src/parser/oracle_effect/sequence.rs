@@ -11729,56 +11729,6 @@ mod tests {
     }
 
     #[test]
-    fn quoted_grant_splits_before_token_goaded_followup() {
-        // CR 701.15a + CR 701.15b: Nettling Nuisance — "The token is goaded for
-        // the rest of the game." after the token's quoted ability is the goad
-        // follow-up, a clause of its own; attached, the token parse dropped it.
-        for followup in ["The token is goaded.", "The token is goaded for the rest of the game."] {
-            let chunks = clause_texts(&format!(
-                "that player creates a 4/2 red Pirate creature token with \"This token can't block.\" {followup}"
-            ));
-            assert_eq!(chunks.len(), 2, "expected the goad follow-up split off: {chunks:?}");
-        }
-    }
-
-    /// CR 701.15a + CR 701.15b: the token keeps its quoted "can't block" and is
-    /// goaded for the rest of the game (Nettling Nuisance).
-    #[test]
-    fn token_with_quoted_ability_then_goaded_chain() {
-        use super::super::parse_effect_chain;
-
-        let def = parse_effect_chain(
-            "that player creates a 4/2 red Pirate creature token with \"This token can't block.\" The token is goaded for the rest of the game.",
-            AbilityKind::Spell,
-        );
-        assert!(
-            matches!(def.effect.as_ref(), Effect::Token { static_abilities, .. } if static_abilities.iter().any(|s| s.mode == StaticMode::CantBlock)),
-            "token with its quoted can't-block: {:?}",
-            def.effect
-        );
-        assert_eq!(def.duration, None, "the goad's duration is not the token's");
-        let sub = def.sub_ability.as_ref().expect("goad sub_ability");
-        match sub.effect.as_ref() {
-            Effect::GenericEffect {
-                static_abilities,
-                duration,
-                target,
-                ..
-            } => {
-                assert_eq!(*target, Some(TargetFilter::LastCreated));
-                assert_eq!(*duration, Some(Duration::Permanent));
-                assert!(static_abilities[0].modifications.iter().any(|m| matches!(
-                    m,
-                    ContinuousModification::AddStaticMode {
-                        mode: StaticMode::Goaded
-                    }
-                )));
-            }
-            other => panic!("expected GenericEffect goad sub, got {other:?}"),
-        }
-    }
-
-    #[test]
     fn quoted_grant_splits_before_imperative_sibling_sentence() {
         // CR 111.3 + CR 608.2c (issue #5844): Alien Invasion — the token's quoted
         // ability ends the sentence (`able."`); the following IMPERATIVE sentence
@@ -18132,3 +18082,8 @@ mod loyalty_symbol_clause_start_tests {
         assert!(removal.sub_ability.is_none(), "{def:#?}");
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "sequence_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;
