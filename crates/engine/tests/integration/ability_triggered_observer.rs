@@ -1844,7 +1844,8 @@ fn v13_ravenous_draw_trigger_is_observed_and_its_counters_are_not() {
 }
 
 /// V17: a player-scope single firing's record is every qualifying attacker
-/// (CR 508.3d), though its narrowed context names the first one. Roku attacks
+/// (CR 508.3d), and so is its context: every attacker grouped under the attacked
+/// player, its planeswalkers included (mtg-fixes, Mangara, the Diplomat). Roku attacks
 /// P1's Jace Beleren; a Raging Goblin attacks P1 and is declared first.
 #[test]
 fn v17_player_scope_record_names_every_qualifying_attacker() {
@@ -1888,8 +1889,8 @@ fn v17_player_scope_record_names_every_qualifying_attacker() {
     assert_eq!(roku_events.len(), 1, "{roku_events:?}");
     assert_eq!(
         attackers_of(roku_events[0].as_ref()),
-        vec![goblin],
-        "the narrowed context names the first declared attacker"
+        vec![goblin, roku],
+        "the context names every attacker at P1 and P1's planeswalker"
     );
     let firings = observer_firings(runner.state(), ascension);
     assert_eq!(firings.len(), 1, "{firings:?}");

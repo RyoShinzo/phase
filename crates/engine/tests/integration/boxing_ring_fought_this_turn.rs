@@ -260,9 +260,9 @@ fn an_ineligible_fighter_records_nothing() {
 
     r.cast(kogla).commit();
     for _ in 0..10 {
-        if r.state().objects[&kogla].zone == Zone::Battlefield && !r.state().stack.is_empty() {
-            break;
-        }
+        // CR 601.2c: "up to one target creature" may be left empty, so the
+        // trigger asks for its target even with one legal choice (mtg-fixes,
+        // Bridgeworks Battle); answer that before reading the stack.
         if matches!(
             r.state().waiting_for,
             WaitingFor::TriggerTargetSelection { .. }
@@ -272,6 +272,9 @@ fn an_ineligible_fighter_records_nothing() {
             })
             .expect("Kogla's trigger targets their creature");
             continue;
+        }
+        if r.state().objects[&kogla].zone == Zone::Battlefield && !r.state().stack.is_empty() {
+            break;
         }
         r.act(GameAction::PassPriority).expect("priority passes");
     }
