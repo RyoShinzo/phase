@@ -5537,10 +5537,7 @@ fn incubator_phyrexian_back_face() -> BackFaceData {
         // Built in code from CR 111.10i, not parsed from printed text, so there is
         // no parse to have gone wrong.
         parse_warnings: vec![],
-        // CR 111.10i + CR 712.9: an Incubator is a transforming double-faced token.
-        // The back face records that layout, which `is_double_faced_permanent` reads,
-        // so a mass transform ("transform all Incubator tokens you control") keeps it.
-        layout_kind: Some(crate::types::card::LayoutKind::Transform),
+        layout_kind: None,
         is_swap_snapshot: false,
         trigger_printed_origins: Vec::new(),
     }
