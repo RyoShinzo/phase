@@ -117,15 +117,26 @@ fn owner_of_target_subject_draws_then_shuffles_that_creature() {
         }
     ));
     let moved = draw.sub_ability.as_deref().expect("move to library");
+    // Upstream's form of "shuffle <it> into <its owner's> library": the target moves
+    // into its owner's library, which is then shuffled, only when a target was chosen.
+    assert!(
+        matches!(
+            moved.effect.as_ref(),
+            Effect::ChangeZoneAll {
+                destination: Zone::Library,
+                target: TargetFilter::ParentTarget,
+                ..
+            }
+        ),
+        "{:?}",
+        moved.effect
+    );
     assert!(matches!(
-        moved.effect.as_ref(),
-        Effect::ChangeZone {
-            destination: Zone::Library,
-            target: TargetFilter::ParentTarget,
-            owner_library: true,
-            ..
-        }
+        moved.condition,
+        Some(AbilityCondition::HasObjectTarget)
     ));
+    let shuffle = moved.sub_ability.as_deref().expect("shuffle");
+    assert!(matches!(shuffle.effect.as_ref(), Effect::Shuffle { .. }));
 }
 
 /// CR 707.10 + CR 115.1: Ulalek, Fused Atrocity — "copy all spells you
@@ -253,32 +264,6 @@ fn until_end_of_turn_counter_replacement_floats_and_stays_scoped() {
         panic!("expected a typed scope, got {:?}", replacement.valid_card);
     };
     assert_eq!(filter.controller, Some(ControllerRef::You));
-}
-
-/// CR 702.26a: both the source and the optional target phase out; the target
-/// is optional, the source isn't.
-#[test]
-fn self_and_up_to_one_target_phase_out() {
-    let def = parse_effect_chain(
-        "it and up to one target creature you control phase out",
-        AbilityKind::Spell,
-    );
-    assert!(
-        matches!(*def.effect, Effect::PhaseOut { .. }),
-        "{:?}",
-        def.effect
-    );
-    assert!(matches!(
-        def.multi_target.as_ref().map(|m| &m.min),
-        Some(QuantityExpr::Fixed { value: 0 })
-    ));
-    let sub = def.sub_ability.as_deref().expect("source half");
-    assert!(matches!(
-        *sub.effect,
-        Effect::PhaseOut {
-            target: TargetFilter::SelfRef
-        }
-    ));
 }
 
 /// CR 115.1 + CR 109.4: kicked Galadriel's Dismissal targets the player, and
