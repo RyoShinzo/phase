@@ -19257,13 +19257,23 @@ fn plan_all_auto_tap_rows(
     if !plan
         .to_tap
         .iter()
-        .any(|option| counted_single_color_bundle(state, option, output_projection))
-        || !plan
-            .to_tap
-            .iter()
-            .any(|option| mana_source_has_mana_sub_cost(state, option))
+        .any(|option| mana_source_has_mana_sub_cost(state, option))
     {
         return plan;
+    }
+    if !plan
+        .to_tap
+        .iter()
+        .any(|option| counted_single_color_bundle(state, option, output_projection))
+    {
+        return sub_cost_rows_first_without_spare_mana(
+            state,
+            available,
+            plan,
+            needs.len() + generic_units,
+            floating_mana,
+            output_projection,
+        );
     }
     let mut expanded = plan_auto_tap_rows(
         state,
@@ -19304,6 +19314,67 @@ fn plan_all_auto_tap_rows(
         AutoTapFunding::Conservative,
         Some(&scalar_output),
     )
+}
+
+/// CR 605.3b + CR 118.3 + CR 118.10: whether a plan with every row and a fixed
+/// sub-cost row (a Signet's `{1}`) resolves that row first, as a proven plan does.
+///
+/// By default the other selected sources resolve first and the sub-cost is paid
+/// from the mana they float. That works when the plan's rows make enough mana for
+/// the cost and the sub-costs together, as Sol Ring's `{C}{C}` for a `{1}` leaves
+/// a unit for a Signet's `{1}`. When they make less, the floated mana is the
+/// cost's own: the sub-cost's generic pips may take any of it (the outer cost's
+/// colour demand reserves only its coloured shards), and the outer cost is then
+/// short while a source the plan left unused stays untapped. Aurelia, the
+/// Warleader (`{2}{R}{R}{W}{W}`) from two Mountains, two Plains, a colourless rock
+/// and Boros Signet fell back to manual payment that way. Then the sub-cost row
+/// resolves first when [`planned_mana_sub_costs_fundable`] holds, which plans the
+/// sub-cost from the unused sources against an empty pool exactly as the nested
+/// payment of Phase 3 will.
+fn sub_cost_rows_first_without_spare_mana(
+    state: &GameState,
+    rows: &[ManaSourceOption],
+    mut plan: AutoTapPlan,
+    cost_units: usize,
+    floating_mana: bool,
+    output_projection: Option<&AutoTapOutput>,
+) -> AutoTapPlan {
+    if !plan.covers_cost {
+        return plan;
+    }
+    let sub_cost_units: usize = plan
+        .to_tap
+        .iter()
+        .filter_map(|option| {
+            let ability = state
+                .objects
+                .get(&option.object_id)?
+                .abilities
+                .get(option.ability_index?)?;
+            mana_abilities::mana_sub_cost_of(&ability.cost)
+        })
+        .map(|sub_cost| sub_cost.mana_value() as usize)
+        .sum();
+    let produced: usize = plan
+        .to_tap
+        .iter()
+        .map(|option| option.atomic_combination.as_ref().map_or(1, Vec::len))
+        .sum();
+    if sub_cost_units > 0
+        && produced < cost_units + sub_cost_units
+        && planned_mana_sub_costs_fundable(
+            state,
+            rows,
+            &plan,
+            &mut plan.used_sources.clone(),
+            floating_mana,
+            AutoTapRowPolicy::AllRows,
+            output_projection,
+        )
+    {
+        plan.activation_order = AutoTapActivationOrder::ManaCostsFirst;
+    }
+    plan
 }
 
 /// CR 106.3 + CR 118.1: a counted mana output does not erase activation costs.
