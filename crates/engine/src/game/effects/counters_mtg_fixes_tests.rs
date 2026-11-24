@@ -4,57 +4,9 @@
 
 use super::*;
 use crate::game::zones::create_object;
-use crate::types::identifiers::{CardId, ObjectId};
+use crate::types::identifiers::CardId;
 use crate::types::player::PlayerId;
 use crate::types::zones::Zone;
-
-/// CR 603.2 + CR 603.2c: `CounterAdded` events of an action that ends while
-/// a counter batch is paused are held in the batch and handed back, each
-/// once, to the action that settles it; other events and actions without a
-/// paused batch are left alone.
-#[test]
-fn paused_counter_batch_holds_placements_for_the_settling_action() {
-    let added = |object: u64| GameEvent::CounterAdded {
-        object_id: ObjectId(object),
-        counter_type: CounterType::Plus1Plus1,
-        count: 2,
-        actor: PlayerId(0),
-    };
-    let other = GameEvent::EffectResolved {
-        kind: EffectKind::PutCounterAll,
-        source_id: ObjectId(20),
-        subject: None,
-    };
-
-    let mut state = GameState::new_two_player(42);
-    hold_counter_events_in_paused_batch(&mut state, &[added(10)]);
-    assert!(
-        state.active_counter_additions().is_none(),
-        "no batch is paused, so nothing is held"
-    );
-
-    state.push_counter_additions(PendingCounterAdditionQueue {
-        remaining: Vec::new(),
-        held_events: Vec::new(),
-        completion: None,
-    });
-    hold_counter_events_in_paused_batch(&mut state, &[added(10), other.clone()]);
-    hold_counter_events_in_paused_batch(&mut state, &[added(11)]);
-    assert_eq!(
-        state.active_counter_additions().unwrap().held_events,
-        vec![added(10), added(11)],
-        "each answer's placements are held, other events are not"
-    );
-
-    let mut events = vec![added(12)];
-    drain_pending_counter_additions(&mut state, &mut events);
-    assert!(state.active_counter_additions().is_none());
-    assert_eq!(
-        events,
-        vec![added(12), added(10), added(11)],
-        "the settling action's scan sees every placement of the batch once"
-    );
-}
 
 /// CR 614.1c + CR 122.6 + CR 614.5: a creature entering with counters of
 /// one kind from several contributions (Mikaeus, the Lunarch's X counters

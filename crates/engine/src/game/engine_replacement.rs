@@ -868,11 +868,12 @@ fn settle_replacement_choice_wait(
         super::triggers::park_entry_observer_triggers_if_paused(state, events, action_event_start);
         // CR 603.2 + CR 603.2c: an answer that placed one recipient's counters
         // and paused on the next recipient's replacement-order choice ends on a
-        // prompt, so no trigger scan sees its `CounterAdded`. Hold them in the
-        // paused counter batch for the answer that settles it.
-        super::effects::counters::hold_counter_events_in_paused_batch(
+        // prompt, so no post-action scan sees its `CounterAdded`. Park their
+        // observers' triggers for the answer that settles the batch.
+        super::triggers::park_counter_observer_triggers_if_paused(
             state,
-            &events[action_event_start.min(events.len())..],
+            events,
+            action_event_start,
         );
         return waiting_for;
     };
@@ -15198,7 +15199,6 @@ mod entry_continuation_release_tests {
         state.push_counter_additions(PendingCounterAdditionQueue {
             remaining: Vec::new(),
             completion: None,
-            held_events: Vec::new(),
         });
         assert!(release_settled_entry_continuation(&mut state).is_empty());
         assert_eq!(state.deferred_entry_events, vec![seeded(entry, COMPLETED)]);
@@ -16181,7 +16181,6 @@ mod entry_continuation_release_tests {
             state.push_counter_additions(PendingCounterAdditionQueue {
                 remaining: Vec::new(),
                 completion: None,
-                held_events: Vec::new(),
             });
         }
         let mut events = Vec::new();

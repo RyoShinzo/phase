@@ -12481,6 +12481,26 @@ pub(crate) fn park_entry_observer_triggers_if_paused(
     );
 }
 
+/// CR 603.2 + CR 603.2c + CR 616.1: the park for a replacement-order answer that
+/// placed one recipient's counters and paused on the next recipient's order
+/// choice (a placement on several creatures, each asking the order of two counter
+/// replacements). The answer ends on a prompt, so no post-action scan sees its
+/// `CounterAdded`; its "counters are put on" observers are queued here and
+/// dispatched with the rest once the batch settles, each placement once.
+pub(crate) fn park_counter_observer_triggers_if_paused(
+    state: &mut GameState,
+    events: &mut Vec<GameEvent>,
+    slice_start: usize,
+) {
+    park_observer_triggers_if_paused_matching(
+        state,
+        events,
+        slice_start,
+        |event| matches!(event, GameEvent::CounterAdded { .. }),
+        DelayedObservers::Collect,
+    );
+}
+
 /// CR 603.2 + CR 603.6a + CR 702.104a + CR 303.4f: the entry collector for an
 /// answer handler that returns its result directly, bypassing
 /// `run_post_action_pipeline` (the Tribute answer, which is what puts the
@@ -64298,7 +64318,6 @@ mod entry_continuation_hold_tests {
         state.push_counter_additions(PendingCounterAdditionQueue {
             remaining: Vec::new(),
             completion: None,
-            held_events: Vec::new(),
         });
         let mut events = Vec::new();
         assert!(drain_deferred_trigger_queue(&mut state, &mut events).is_none());

@@ -341,7 +341,6 @@ pub(crate) fn stash_pending_counter_additions(
 ) {
     state.push_counter_additions(PendingCounterAdditionQueue {
         remaining,
-        held_events: Vec::new(),
         completion: Some(completion),
     });
 }
@@ -396,7 +395,6 @@ pub(crate) fn park_pending_counter_completion_at_child_boundary(
 ) {
     let queue = PendingCounterAdditionQueue {
         remaining: Vec::new(),
-        held_events: Vec::new(),
         completion: Some(completion),
     };
     match state
@@ -585,7 +583,6 @@ fn park_counter_completion_outside_active_direct_choice(
     }
     let queue = PendingCounterAdditionQueue {
         remaining: Vec::new(),
-        held_events: Vec::new(),
         completion: Some(completion),
     };
     if state
@@ -643,40 +640,6 @@ fn ready_copy_entry_completion(
     }
 }
 
-/// CR 603.2 + CR 603.2c: hold the `CounterAdded` events of an action that ends
-/// on a prompt while a counter-addition batch is paused on its next placement's
-/// replacement choice (CR 616.1). An action that ends on a prompt is not scanned
-/// for triggers, so without this each answer's placement but the last would
-/// never trigger "counters are put on" observers. The batch hands them back to
-/// the action that settles it ([`drain_pending_counter_additions`]), whose scan
-/// then sees each recipient's counters as its own event. Events already parked as trigger witnesses are left
-/// out, so nothing triggers twice.
-pub(crate) fn hold_counter_events_in_paused_batch(state: &mut GameState, events: &[GameEvent]) {
-    if state.active_counter_additions().is_none() {
-        return;
-    }
-    let mut parked: Vec<&GameEvent> = state
-        .deferred_triggers
-        .iter()
-        .flat_map(|context| context.trigger_events.iter())
-        .collect();
-    let held: Vec<GameEvent> = events
-        .iter()
-        .filter(|event| matches!(event, GameEvent::CounterAdded { .. }))
-        .filter(|event| match parked.iter().position(|p| *p == *event) {
-            Some(index) => {
-                parked.remove(index);
-                false
-            }
-            None => true,
-        })
-        .cloned()
-        .collect();
-    if let Some(queue) = state.active_counter_additions_mut() {
-        queue.held_events.extend(held);
-    }
-}
-
 pub(crate) fn drain_pending_counter_additions(state: &mut GameState, events: &mut Vec<GameEvent>) {
     // Leave a ready fallible action resident without cloning or re-parking it.
     while let Some(mut queue) = state
@@ -689,9 +652,6 @@ pub(crate) fn drain_pending_counter_additions(state: &mut GameState, events: &mu
                 .take_active_counter_additions()
                 .expect("settled counter-additions queue must own the active frame")
                 .expect("settled counter-additions frame must exist");
-            // CR 603.2c: the batch has settled; hand its earlier answers'
-            // placements to this action's trigger scan.
-            events.append(&mut queue.held_events);
             if let Some(PendingEffectResolved {
                 kind,
                 source_id,
@@ -856,12 +816,7 @@ pub(crate) fn resume_copy_target_entry_completions(
             .take_active_counter_additions()
             .ok()
             .flatten()
-            .and_then(|mut queue| {
-                // CR 603.2c: hand the settled batch's held placements to this
-                // action's trigger scan.
-                events.append(&mut queue.held_events);
-                queue.completion.take()
-            })
+            .and_then(|mut queue| queue.completion.take())
             .ok_or_else(|| {
                 crate::game::engine::EngineError::InvalidAction(
                     "Copy entry completion lost its counter frame".to_string(),
@@ -6472,7 +6427,6 @@ mod tests {
                 count: 1,
                 cause: CounterCause::Other,
             }],
-            held_events: Vec::new(),
             completion: Some(PendingEffectResolved::with_post_actions_without_effect(
                 EffectKind::Token,
                 ObjectId(20),

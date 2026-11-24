@@ -11884,15 +11884,6 @@ pub struct PendingCounterAdditionQueue {
     pub remaining: Vec<PendingCounterAddition>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub completion: Option<PendingEffectResolved>,
-    /// CR 603.2 + CR 603.2c: `CounterAdded` events of this batch's placements
-    /// that an earlier answer emitted before the batch paused again on the next
-    /// placement's replacement-order choice. An action that ends on a prompt is
-    /// never scanned for triggers, so they are held here and handed to the
-    /// action that settles the batch, whose trigger scan sees every placement
-    /// at once, so each recipient's counters trigger "counters are put on a
-    /// creature" observers once.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub held_events: Vec<crate::types::events::GameEvent>,
 }
 
 /// CR 701.12c + CR 119.7 + CR 119.8 + CR 616.1: Remaining deltas from a

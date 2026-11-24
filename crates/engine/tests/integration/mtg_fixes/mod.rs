@@ -7,6 +7,7 @@ mod akromas_will_commander_both_modes;
 mod alternative_cost_without_mana_takes_cost_changes;
 mod bridgeworks_battle_up_to_one_fight;
 mod costed_mana_ability_generic_reservation;
+mod counter_batch_paused_per_recipient;
 mod court_of_ambition;
 mod curse_static_effects;
 mod flawless_maneuver_free_with_commander;
