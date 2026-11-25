@@ -1781,6 +1781,25 @@ pub fn parse_mana_spend_restriction(
     })
     .is_some()
     {
+        // CR 106.6: "to activate abilities of artifact sources" (Steelswarm
+        // Operator), "… of land sources", "… of artifacts" — activation-only AND
+        // the source's type. The restrictions are AND gates, so the type gate is
+        // the activation half of `SpellTypeOrAbilityActivation { X, OfSpellType }`,
+        // whose spell half `ActivateOnly` shuts off.
+        if let Ok((_, Some(ActivationQualifier::OfType(quality)))) =
+            all_consuming(parse_activation_tail_after_or).parse(base_lower.as_str())
+        {
+            return Some((
+                vec![
+                    ManaSpendRestriction::ActivateOnly,
+                    ManaSpendRestriction::SpellTypeOrAbilityActivation {
+                        spell_type: quality,
+                        ability: AbilityActivationScope::OfSpellType,
+                    },
+                ],
+                vec![],
+            ));
+        }
         return Some((vec![ManaSpendRestriction::ActivateOnly], vec![]));
     }
 
@@ -5009,3 +5028,8 @@ mod tests {
         .is_none());
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "mana_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;
