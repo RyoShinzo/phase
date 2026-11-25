@@ -393,17 +393,54 @@ fn strip_cost_mod_cast_scope_suffix(input: &str) -> &str {
 /// `oracle_static::dispatch::parse_static_line_inner` (composition — attach the
 /// matching `StaticCondition` to any enforceable continuous static the
 /// dispatcher would otherwise refuse). CR 604.1 + CR 611.3a + CR 102.1.
+///
+/// A window may also name a step or phase of that turn ("During each
+/// opponent's end step, …", Final-Word Phantom; "During your end step, …",
+/// Zurgo, Thunder's Decree): the turn owner and the step compose as
+/// `And([<turn owner>, CurrentPhaseIs])`, the same shape Scotty, Miracle
+/// Worker's "during your main phase" carries.
 pub(crate) fn parse_leading_turn_scope(text: &str) -> OracleResult<'_, StaticCondition> {
-    alt((
-        value(
-            StaticCondition::Not {
-                condition: Box::new(StaticCondition::DuringYourTurn),
-            },
-            tag("during turns other than yours, "),
+    terminated(
+        preceded(
+            tag("during "),
+            alt((
+                value(
+                    StaticCondition::Not {
+                        condition: Box::new(StaticCondition::DuringYourTurn),
+                    },
+                    tag("turns other than yours"),
+                ),
+                value(StaticCondition::DuringYourTurn, tag("your turn")),
+                parse_turn_owner_step_window,
+            )),
         ),
-        value(StaticCondition::DuringYourTurn, tag("during your turn, ")),
-    ))
+        tag(", "),
+    )
     .parse(text)
+}
+
+/// CR 500.1 + CR 102.1 + CR 102.3: "<your | each opponent's> <step or phase>"
+/// — a step or phase (CR 500.1, named by the shared `parse_phase_name_set`) of
+/// the controller's turn (CR 102.1: `DuringYourTurn`) or of each opponent's
+/// turn (CR 102.3: `DuringOpponentsTurn`, which in team games excludes a
+/// teammate's turn).
+fn parse_turn_owner_step_window(input: &str) -> OracleResult<'_, StaticCondition> {
+    let (input, owner) = alt((
+        value(StaticCondition::DuringYourTurn, tag("your ")),
+        value(
+            StaticCondition::DuringOpponentsTurn,
+            preceded(tag("each opponent"), alt((tag("'s "), tag("\u{2019}s ")))),
+        ),
+    ))
+    .parse(input)?;
+    let (input, phases) =
+        crate::parser::oracle_effect::conditions::parse_phase_name_set(input)?;
+    Ok((
+        input,
+        StaticCondition::And {
+            conditions: vec![owner, StaticCondition::CurrentPhaseIs { phases }],
+        },
+    ))
 }
 
 /// CR 604.1 + CR 601.2f: Strip an inline "during your turn" timing clause from

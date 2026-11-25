@@ -4273,7 +4273,19 @@ pub(crate) fn parse_static_line_inner(
         nom_on_lower(tp.original, tp.lower, super::parse_leading_turn_scope)
     {
         if let Some(mut def) = parse_static_line_inner(remainder.trim(), inverted) {
-            if is_enforceable_continuous_static(&def) {
+            // CR 601.3b + CR 604.1: a "cast … as though they had flash"
+            // permission takes the window too (Final-Word Phantom: "During each
+            // opponent's end step, you may cast spells as though they had
+            // flash."). Its one reader, `casting::as_though_flash_permission`,
+            // iterates `game_active_statics`, which applies each definition's
+            // condition, so the window gates the permission live.
+            let takes_window = is_enforceable_continuous_static(&def)
+                || (def.mode == StaticMode::CastWithFlash
+                    && !def
+                        .condition
+                        .as_ref()
+                        .is_some_and(StaticCondition::contains_unrecognized));
+            if takes_window {
                 // CR 611.3a: both gates survive.
                 def.condition = Some(match def.condition.take() {
                     Some(existing) => StaticCondition::And {

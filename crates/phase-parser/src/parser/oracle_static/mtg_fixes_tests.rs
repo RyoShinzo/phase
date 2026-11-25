@@ -149,3 +149,76 @@ fn plural_pronoun_continuation_binds_previous_subject() {
         }]
     );
 }
+
+/// CR 604.1 + CR 500.1 + CR 102.1 + CR 102.3: a leading window that names a
+/// step or phase of a turn owner composes the owner and the step, beside the
+/// whole-turn forms, which stay as they were.
+#[test]
+fn leading_turn_scope_names_a_step_of_a_turn_owner() {
+    let step = |owner, phases| StaticCondition::And {
+        conditions: vec![owner, StaticCondition::CurrentPhaseIs { phases }],
+    };
+    for (line, expected) in [
+        (
+            "during each opponent's end step, x",
+            step(StaticCondition::DuringOpponentsTurn, vec![Phase::End]),
+        ),
+        (
+            "during each opponent\u{2019}s upkeep, x",
+            step(StaticCondition::DuringOpponentsTurn, vec![Phase::Upkeep]),
+        ),
+        (
+            "during your end step, x",
+            step(StaticCondition::DuringYourTurn, vec![Phase::End]),
+        ),
+        (
+            "during your main phase, x",
+            step(
+                StaticCondition::DuringYourTurn,
+                vec![Phase::PreCombatMain, Phase::PostCombatMain],
+            ),
+        ),
+        ("during your turn, x", StaticCondition::DuringYourTurn),
+        (
+            "during turns other than yours, x",
+            StaticCondition::Not {
+                condition: Box::new(StaticCondition::DuringYourTurn),
+            },
+        ),
+    ] {
+        let (rest, condition) = parse_leading_turn_scope(line).expect(line);
+        assert_eq!(rest, "x", "{line}");
+        assert_eq!(condition, expected, "{line}");
+    }
+    for line in [
+        "during your turns, x",
+        "during each opponent's turn x",
+        "during each player's end step, x",
+    ] {
+        assert!(parse_leading_turn_scope(line).is_err(), "{line}");
+    }
+}
+
+/// CR 601.3b + CR 604.1: Final-Word Phantom — "During each opponent's end
+/// step, you may cast spells as though they had flash." The permission
+/// Leyline of Anticipation's line gives, gated to each opponent's end step.
+#[test]
+fn cast_as_though_flash_takes_a_leading_step_window() {
+    let line = "During each opponent's end step, you may cast spells as though they had flash.";
+    let def = parse_static_line(line).expect(line);
+    let ungated = parse_static_line("You may cast spells as though they had flash.").unwrap();
+    assert_eq!(def.mode, StaticMode::CastWithFlash);
+    assert_eq!(def.affected, ungated.affected);
+    assert_eq!(
+        def.condition,
+        Some(StaticCondition::And {
+            conditions: vec![
+                StaticCondition::DuringOpponentsTurn,
+                StaticCondition::CurrentPhaseIs {
+                    phases: vec![Phase::End],
+                },
+            ],
+        })
+    );
+    assert_eq!(def.description.as_deref(), Some(line));
+}
