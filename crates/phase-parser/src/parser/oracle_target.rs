@@ -4609,6 +4609,17 @@ fn parse_type_phrase_folding_unbound<'a>(
         }
     }
 
+    // CR 205.2a + CR 205.3: a positive relative clause that mixes card types with
+    // subtypes ("creature you control that's an artifact or Human" — Paladin Danse,
+    // Steel Maverick). Each leg is its own `Or` branch, as in the card-type list
+    // below; read by neither the subtype list nor the card-type list on its own,
+    // either of which would stop at the first leg of the other kind and drop the
+    // rest, narrowing the clause.
+    if let Some((legs, consumed)) = parse_that_is_core_type_or_subtype_suffix(&lower[pos..]) {
+        relative_core_type_filters = legs;
+        pos += consumed;
+    }
+
     // CR 205.3 (#2905): positive "that's a/an <Subtype> [or a/an <Subtype>]"
     // relative-clause restriction ("creature you control that's an Ape or a
     // Monkey"). Append the subtype constraint as an adjective type filter so it
@@ -11654,6 +11665,37 @@ fn parse_that_is_core_type_suffix(text: &str) -> Option<(Vec<TypeFilter>, usize)
     let (rest, type_filters) = parse_relative_core_type_list(after_intro).ok()?;
     let consumed = leading_ws + intro_len + after_intro.len() - rest.len();
     Some((type_filters, consumed))
+}
+
+/// One leg of a relative clause that mixes card types with subtypes: a card type
+/// ("an artifact") or a subtype ("Human"), each as the `TypeFilter` its branch adds.
+fn parse_relative_type_or_subtype_leg(input: &str) -> Option<(TypeFilter, &str)> {
+    if let Ok((rest, type_filter)) = parse_relative_core_type_leg(input) {
+        return Some((type_filter, rest));
+    }
+    let (subtype, rest) = parse_relative_subtype_leg(input)?;
+    Some((TypeFilter::Subtype(subtype), rest))
+}
+
+/// CR 205.2a + CR 205.3: a positive "that's an artifact or Human" clause, a list
+/// that holds both a card type and a subtype, in any order. Returns its legs as
+/// the card-type list does, one `Or` branch each, and `None` unless both kinds
+/// are present, so pure lists stay with `parse_that_is_subtype_suffix` and
+/// `parse_that_is_core_type_suffix`. The bytes consumed include leading whitespace.
+fn parse_that_is_core_type_or_subtype_suffix(text: &str) -> Option<(Vec<TypeFilter>, usize)> {
+    let trimmed = text.trim_start();
+    let leading_ws = text.len() - trimmed.len();
+    let (after_intro, intro_len, negated) = parse_relative_clause_intro(trimmed)?;
+    if negated {
+        return None;
+    }
+    let (legs, list_len) = parse_relative_list(after_intro, parse_relative_type_or_subtype_leg)?;
+    let has_subtype = legs.iter().any(|leg| matches!(leg, TypeFilter::Subtype(_)));
+    let has_core_type = legs.iter().any(is_relative_core_type_filter);
+    if !(has_subtype && has_core_type) {
+        return None;
+    }
+    Some((legs, leading_ws + intro_len + list_len))
 }
 
 /// One leg of a positive relative clause that mixes token-ness with subtypes
@@ -28142,3 +28184,8 @@ mod zone_list_grammar {
         );
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "oracle_target_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;
