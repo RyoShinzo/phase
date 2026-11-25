@@ -4347,11 +4347,18 @@ pub(crate) fn admits_bulk_run(
     // only if every member creates member 1's token. A distinct-source run's
     // spec can read its member's source (a `Source`-scoped P/T quantity, a
     // static stamped with its creator), so each member's spec must match.
+    // `creator` (CR 607.2c) is the member's own source identity, as
+    // `source_id` is, so it differs between distinct sources just as that
+    // does and is set aside with it. Only a `FilterProp::CreatedWithSource`
+    // reads it, and a static of the run's sources that did would change
+    // member 1's token in its checkpoint's layer pass, which
+    // `resolve_bulk_members` refuses.
     if !run_members.iter().skip(1).all(|member| {
         bulk_token_shape(state, member).is_some_and(
             |(member_spec, member_owner, member_tapped, member_count)| {
                 TokenSpec {
                     source_id: spec.source_id,
+                    creator: spec.creator,
                     ..member_spec
                 } == spec
                     && member_owner == owner
