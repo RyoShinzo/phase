@@ -6,7 +6,8 @@ use super::*;
 use crate::parser::parse_oracle_text;
 use crate::types::ability::extract_target_filter_from_effect;
 use crate::types::ability::{
-    AbilityCondition, Comparator, ControllerRef, CopyRetargetPermission, Duration, FilterProp,
+    AbilityCondition, Comparator, ControllerRef, CopyRetargetPermission, DamageKindFilter, Duration,
+    FilterProp,
     QuantityExpr, QuantityRef, SearchSelectionConstraint, SharedQuality, TypeFilter, TypedFilter,
 };
 use crate::types::counter::CounterType;
@@ -417,4 +418,71 @@ fn choose_any_number_with_different_quality_is_a_constrained_object_choice() {
             ..
         }
     ));
+}
+
+/// CR 115.1 + CR 120.2a + CR 608.2i: "target player who was dealt combat damage
+/// by ~ this turn can't cast <type> spells" (Hope of Ghirapur) declares the
+/// narrowed player as a `TargetOnly` head, and the restriction below it applies
+/// to that declared player, with the leading duration on the restriction. A
+/// bare "target player" keeps the restriction's own companion slot.
+#[test]
+fn cant_cast_spells_target_player_who_was_dealt_combat_damage() {
+    let def = parse_effect_chain(
+        "Until your next turn, target player who was dealt combat damage by ~ this turn can't cast noncreature spells.",
+        AbilityKind::Activated,
+    );
+    let Effect::TargetOnly {
+        target: TargetFilter::PlayerMatching { player },
+    } = def.effect.as_ref()
+    else {
+        panic!("expected a narrowed player target, got {:?}", def.effect);
+    };
+    assert!(
+        matches!(
+            player.as_ref(),
+            PlayerFilter::OpponentDealtDamage {
+                kind: DamageKindFilter::CombatOnly,
+                source: Some(source),
+                min_sources: 1,
+                relation: PlayerRelation::All,
+            } if matches!(source.as_ref(), TargetFilter::SelfRef)
+        ),
+        "{player:?}"
+    );
+    let sub = def.sub_ability.as_deref().expect("the restriction");
+    let Effect::AddRestriction {
+        restriction:
+            GameRestriction::ProhibitActivity {
+                affected_players: RestrictionPlayerScope::ParentTargetedPlayer,
+                activity: ProhibitedActivity::CastSpells { spell_filter: Some(_) },
+                ..
+            },
+    } = sub.effect.as_ref()
+    else {
+        panic!("expected the restriction on the parent target, got {:?}", sub.effect);
+    };
+    assert_eq!(
+        sub.duration,
+        Some(Duration::UntilNextTurnOf {
+            player: PlayerScope::Controller,
+        })
+    );
+
+    let bare = parse_effect_chain(
+        "Target player can't cast noncreature spells this turn.",
+        AbilityKind::Spell,
+    );
+    assert!(
+        matches!(
+            bare.effect.as_ref(),
+            Effect::AddRestriction {
+                restriction: GameRestriction::ProhibitActivity {
+                    affected_players: RestrictionPlayerScope::TargetedPlayer,
+                    ..
+                },
+            }
+        ),
+        "{:?}",
+        bare.effect
+    );
 }

@@ -6947,6 +6947,27 @@ fn try_parse_cant_cast_spells_effect(tp: TextPair<'_>) -> Option<ParsedEffectCla
     })?;
     let rest_lower = &scope_tp.lower[scope_tp.lower.len() - rest_orig.len()..];
 
+    // CR 115.1 + CR 120.2a + CR 608.2i: "target player who was dealt combat
+    // damage by ~ this turn" (Hope of Ghirapur) narrows who may be targeted. The
+    // restriction's own companion player slot is a bare `TargetFilter::Player`,
+    // so the narrowed slot is declared by a `TargetOnly` head and the
+    // restriction reads it as the parent target (`ParentTargetedPlayer`). The
+    // predicate leaves are the shared controller-predicate look-backs.
+    let (target_predicate, rest_orig, rest_lower) =
+        match (&affected_players, nom_on_lower(rest_orig, rest_lower, |input| {
+            preceded(
+                tag(" who "),
+                super::oracle_target::parse_controller_predicate_leaves,
+            )
+            .parse(input)
+        })) {
+            (RestrictionPlayerScope::TargetedPlayer, Some((predicate, after))) => {
+                let after_lower = &rest_lower[rest_lower.len() - after.len()..];
+                (Some(predicate), after, after_lower)
+            }
+            _ => (None, rest_orig, rest_lower),
+        };
+
     let (spell_filter_text, remaining) = nom_on_lower(rest_orig, rest_lower, |input| {
         alt((
             value(None, tag(" can't cast spells")),
@@ -7052,6 +7073,37 @@ fn try_parse_cant_cast_spells_effect(tp: TextPair<'_>) -> Option<ParsedEffectCla
         Some(Box::new(lowered.value))
     };
 
+    let restriction = |affected_players| Effect::AddRestriction {
+        restriction: GameRestriction::ProhibitActivity {
+            source: ObjectId(0),
+            affected_players,
+            expiry: expiry.clone(),
+            activity: ProhibitedActivity::CastSpells {
+                spell_filter: spell_filter.clone(),
+            },
+        },
+    };
+    // CR 115.1: a narrowed target player is declared by the `TargetOnly` head,
+    // and the restriction below it applies to that declared player.
+    let (effect, sub_ability) = match target_predicate {
+        Some(predicate) => {
+            let mut restricted = AbilityDefinition::new(
+                AbilityKind::Spell,
+                restriction(RestrictionPlayerScope::ParentTargetedPlayer),
+            );
+            restricted.sub_ability = sub_ability;
+            (
+                Effect::TargetOnly {
+                    target: TargetFilter::PlayerMatching {
+                        player: Box::new(predicate),
+                    },
+                },
+                Some(Box::new(restricted)),
+            )
+        }
+        None => (restriction(affected_players), sub_ability),
+    };
+
     let clause = ParsedEffectClause {
         history,
         // The continuation owns its text and history, independently of this restriction.
@@ -7059,14 +7111,7 @@ fn try_parse_cant_cast_spells_effect(tp: TextPair<'_>) -> Option<ParsedEffectCla
         optional_targeting: false,
         unlowered_guard: None,
         linked_exile_return: None,
-        effect: Effect::AddRestriction {
-            restriction: GameRestriction::ProhibitActivity {
-                source: ObjectId(0),
-                affected_players,
-                expiry,
-                activity: ProhibitedActivity::CastSpells { spell_filter },
-            },
-        },
+        effect,
         duration: None,
         sub_ability,
         distribute: None,
