@@ -53579,6 +53579,7 @@ mod monarch_subject_axis_tests {
             QuantityRef::BattlefieldEntriesThisTurn {
                 player: player.clone(),
                 filter: TargetFilter::Any,
+                window: TurnWindow::ThisTurn,
             },
             QuantityRef::LandsPlayedThisTurn {
                 player: player.clone(),
