@@ -4344,6 +4344,8 @@ pub(super) fn handle_resolution_choice(
                                         attack_request: TokenAttackRequest::Unspecified,
                                         sacrifice_at: None,
                                         source_id: ObjectId(0),
+                                        // CR 607.2c: a source-less mint is created with no object.
+                                        creator: None,
                                         controller: player,
                                         // Source-less growth mint from a fodder profile; empty mods are stamp-proof.
                                         donor: None,

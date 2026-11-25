@@ -16997,6 +16997,7 @@ fn latched_property_kind(
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::CanEnchant { .. }
@@ -19155,6 +19156,7 @@ fn filter_prop_binding_diverges(prop: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::BlockingSource
         | FilterProp::PowerGTSource
         // CR 111.1 + CR 108.2b + CR 202: printed or intrinsic identity.

@@ -323,6 +323,7 @@ fn filter_prop_uses_object_population(prop: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::Untapped
         | FilterProp::HasHasteOrControlledSinceTurnBegan
@@ -946,6 +947,7 @@ fn filter_prop_characteristic_reads_at(prop: &FilterProp, depth: u32) -> Charact
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::Foretold
         | FilterProp::HasAdventure
         | FilterProp::WasKicked
@@ -1177,6 +1179,7 @@ fn entered_object_perturbs_filter_prop(
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::Untapped
         | FilterProp::HasHasteOrControlledSinceTurnBegan
@@ -3093,6 +3096,7 @@ fn filter_prop_contains_input(
             | FilterProp::SaddledSource
             | FilterProp::CrewedThisTurn { .. }
             | FilterProp::ConvokedSource
+            | FilterProp::CreatedWithSource
             | FilterProp::ProtectorMatches { .. }
             | FilterProp::HasHasteOrControlledSinceTurnBegan
             | FilterProp::WithKeyword { .. }
@@ -3885,6 +3889,7 @@ fn declared_group_controller(prop: &mut FilterProp) -> Option<&mut ControllerRef
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
         | FilterProp::HasKeywordKind { .. }
@@ -4479,6 +4484,7 @@ fn absent_search_property_truth(prop: &FilterProp) -> Option<bool> {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
@@ -9690,6 +9696,7 @@ pub(super) fn filter_reads_pt(filter: &TargetFilter) -> bool {
             | FilterProp::SaddledSource
             | FilterProp::CrewedThisTurn { .. }
             | FilterProp::ConvokedSource
+            | FilterProp::CreatedWithSource
             | FilterProp::ProtectorMatches { .. }
             | FilterProp::HasHasteOrControlledSinceTurnBegan
             | FilterProp::WithKeyword { .. }
@@ -10213,6 +10220,7 @@ fn spell_record_matches_property(record: &SpellCastRecord, prop: &FilterProp) ->
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::Untapped
         | FilterProp::HasHasteOrControlledSinceTurnBegan
@@ -11518,6 +11526,14 @@ fn matches_filter_prop(
         // (recorded in the source's `convoked_creatures`). Source-relative,
         // mirroring `SaddledSource`.
         FilterProp::ConvokedSource => source.convoked_creatures.contains(&object_id),
+        // CR 607.2c + CR 400.7: a token created with the filter source — its
+        // `created_with` names the source's exact incarnation, read through the
+        // same source authority as the crew relation, so a leaves-the-battlefield
+        // trigger names the incarnation that left (CR 603.10a) and an object that
+        // later took the same storage id created none of them.
+        FilterProp::CreatedWithSource => obj
+            .created_with
+            .is_some_and(|creator| combat_relation_source_ref(state, source) == Some(creator)),
         // CR 702.122b + CR 702.122c + CR 400.7: crew-payment relation, answered
         // from the per-turn crew ledger by exact incarnations.
         FilterProp::CrewedThisTurn { relation } => matches_crew_relation(
@@ -13087,6 +13103,7 @@ fn zone_change_record_matches_property(
         }
         FilterProp::SaddledSource
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::AttachedTo { to: AttachmentReferent::Source }
@@ -15849,6 +15866,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: copied,
+                creator: None,
                 controller: PlayerId(0),
                 // Test-only enter-as-copy fixture stages no donor.
                 donor: None,
@@ -28533,6 +28551,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 // Test-only enter-as-copy fixture stages no donor; empty mods are stamp-proof.
                 donor: None,
@@ -28927,6 +28946,7 @@ mod characteristic_read_classification_tests {
             | FilterProp::SaddledSource
             | FilterProp::CrewedThisTurn { .. }
             | FilterProp::ConvokedSource
+            | FilterProp::CreatedWithSource
             | FilterProp::HasHasteOrControlledSinceTurnBegan
             | FilterProp::WithKeyword { .. }
             | FilterProp::HasKeywordKind { .. }

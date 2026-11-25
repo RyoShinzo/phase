@@ -7613,6 +7613,8 @@ fn seed_representative_fodder(
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(0),
+            // CR 607.2c: a source-less mint is created with no object.
+            creator: None,
             controller: owner,
             // Source-less fodder mint from a captured profile; empty mods are stamp-proof.
             donor: None,

@@ -7399,6 +7399,13 @@ pub enum FilterProp {
     /// `QuantityRef::ConvokedCreatureCount` (both read `convoked_creatures`).
     /// Used by "a creature that convoked this spell" (Everything Comes to Dust).
     ConvokedSource,
+    /// CR 607.2c + CR 400.7: Matches a token created with the filter source —
+    /// "tokens created with this creature" (Faerie Artisans, Saproling Burst,
+    /// Arcane Artisan, Tetravus): the token's `created_with` names the source's
+    /// exact incarnation, so another object with the same storage id, or another
+    /// copy of the source, created none of them. Source-relative, mirroring
+    /// `ConvokedSource`.
+    CreatedWithSource,
     /// CR 310.9 + CR 310.9e: Matches battles whose protector satisfies
     /// `controller` relative to the ability source ("each battle they protect").
     ProtectorMatches {
@@ -8090,6 +8097,7 @@ impl FilterProp {
             | FilterProp::SaddledSource
             | FilterProp::CrewedThisTurn { .. }
             | FilterProp::ConvokedSource
+            | FilterProp::CreatedWithSource
             | FilterProp::ProtectorMatches { .. }
             | FilterProp::HasHasteOrControlledSinceTurnBegan
             | FilterProp::WithKeyword { .. }
@@ -9332,6 +9340,7 @@ fn filter_prop_binds_prior_target(prop: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
@@ -9588,6 +9597,7 @@ pub fn filter_prop_contains(prop: &FilterProp, leaf: &dyn Fn(&TargetFilter) -> b
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
@@ -9891,6 +9901,7 @@ pub fn filter_prop_grammar_any(
             | FilterProp::SaddledSource
             | FilterProp::CrewedThisTurn { .. }
             | FilterProp::ConvokedSource
+            | FilterProp::CreatedWithSource
             | FilterProp::ProtectorMatches { .. }
             | FilterProp::HasHasteOrControlledSinceTurnBegan
             | FilterProp::WithKeyword { .. }
@@ -10559,6 +10570,7 @@ pub fn rewrite_filter_prop<C>(
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
@@ -13075,6 +13087,7 @@ fn filter_prop_has_unsupported_selected_ref(prop: &FilterProp, nested: bool) -> 
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
         | FilterProp::HasKeywordKind { .. }
@@ -29799,6 +29812,7 @@ fn filter_prop_recipient_read(prop: &FilterProp) -> RecipientRead {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }

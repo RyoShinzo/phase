@@ -223,6 +223,8 @@ fn create_army_token(
         attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         sacrifice_at: None,
         source_id: ability.source_id,
+        // CR 607.2c: the Army is created with the amassing ability's source.
+        creator: super::token::token_creator_ref(state, ability),
         controller: ability.controller,
     };
 
@@ -419,6 +421,7 @@ mod tests {
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: P0,
             });
         scenario

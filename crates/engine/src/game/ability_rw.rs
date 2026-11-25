@@ -2702,6 +2702,7 @@ fn legacy_filter_prop(p: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
         | FilterProp::HasKeywordKind { .. }
@@ -3041,6 +3042,7 @@ fn member_bound_filter_prop(p: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
         | FilterProp::HasKeywordKind { .. }
@@ -4499,6 +4501,7 @@ fn filter_prop_operand_reads(prop: &FilterProp) -> RwProfile {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }

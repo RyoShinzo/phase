@@ -157,6 +157,7 @@ fn printed_card_copy_token_spec() -> CopyTokenSpec {
         attack_request: engine::types::proposed_event::TokenAttackRequest::Unspecified,
         sacrifice_at: None,
         source_id: ObjectId(1),
+        creator: None,
         controller: PlayerId(0),
         // Synthetic spec: no donor in scope (serde shape fixture only).
         donor: None,

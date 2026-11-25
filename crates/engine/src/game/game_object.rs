@@ -1328,6 +1328,17 @@ pub struct GameObject {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entered_via_ability_source: Option<ObjectId>,
 
+    /// CR 607.2c + CR 400.7: For a token, the exact object it was created with —
+    /// the source of the ability whose effect created it, as that ability named
+    /// its source (`TokenSpec::creator` / `CopyTokenSpec::creator`). Read by
+    /// `FilterProp::CreatedWithSource` ("tokens created with this creature").
+    /// `None` for a card and for a token no ability of an object created.
+    /// Cleared when the object leaves the battlefield: the object that arrives
+    /// elsewhere is a new object (CR 400.7), and a token there ceases to exist
+    /// (CR 704.5d).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created_with: Option<ObjectIncarnationRef>,
+
     /// CR 601.3b + CR 702.8a: Which cast-timing permission was used to cast
     /// the spell that became this permanent, and on which turn. Used by trigger
     /// conditions that care whether normal sorcery timing was bypassed.
@@ -2146,6 +2157,7 @@ fn _gameobject_partition_is_total(o: &GameObject) {
         cast_variant_paid: _,
         cast_cost_paid_object: _,
         entered_via_ability_source: _,
+        created_with: _,
         cast_timing_permission: _,
         cost_x_paid: _,
         fused_split_spell: _,
@@ -3504,6 +3516,7 @@ impl GameObject {
             cast_variant_paid: None,
             cast_cost_paid_object: None,
             entered_via_ability_source: None,
+            created_with: None,
             cast_timing_permission: None,
             cost_x_paid: None,
             fused_split_spell: false,
@@ -4184,6 +4197,9 @@ impl GameObject {
         // scoped — a permanent that leaves the battlefield is a new object on any
         // re-entry. Clear conservatively on exit, mirroring `cast_from_zone`.
         self.entered_via_ability_source = None;
+        // CR 607.2c + CR 400.7: the object that arrives in the new zone was
+        // created with nothing.
+        self.created_with = None;
         // CR 305.1 + CR 603.4: Land-play provenance is likewise battlefield-
         // entry scoped and must not survive a later zone change.
         self.played_from_zone = None;

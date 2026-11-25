@@ -1996,6 +1996,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(50),
+            creator: None,
             controller: PlayerId(1),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -2094,6 +2095,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(70),
+            creator: None,
             controller: PlayerId(1),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -2187,6 +2189,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(60),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };

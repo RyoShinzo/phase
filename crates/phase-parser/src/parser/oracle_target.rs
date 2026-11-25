@@ -3436,6 +3436,7 @@ pub fn parse_type_phrase_folding_with_ctx<'a>(
 ) -> (TargetFilter, &'a str) {
     let (mut filter, rest) = parse_type_phrase_folding_unbound(text, ctx);
     exclude_parent_target_from_its_controllers_others(&mut filter);
+    exclude_created_tokens_from_created_with_others(&mut filter);
     (filter, rest)
 }
 
@@ -3444,7 +3445,7 @@ pub fn parse_type_phrase_folding_with_ctx<'a>(
 /// the target's fellow objects, so its "other" excludes that target, not the
 /// ability's source (Craterous Stomp, Mark for Death, Flames of the Raze-Boar).
 pub(crate) fn exclude_parent_target_from_its_controllers_others(filter: &mut TargetFilter) {
-    rewrite_other_as_parent_target_exclusion(filter, &|typed| {
+    rewrite_other_as_exclusion(filter, TargetFilter::ParentTarget, &|typed| {
         typed.controller == Some(ControllerRef::ParentTargetController)
     });
 }
@@ -3453,11 +3454,24 @@ pub(crate) fn exclude_parent_target_from_its_controllers_others(filter: &mut Tar
 /// parent target" — for a population whose "other" names the chain's target
 /// rather than the ability's source.
 pub(crate) fn exclude_parent_target_from_others(filter: &mut TargetFilter) {
-    rewrite_other_as_parent_target_exclusion(filter, &|_| true);
+    rewrite_other_as_exclusion(filter, TargetFilter::ParentTarget, &|_| true);
 }
 
-fn rewrite_other_as_parent_target_exclusion(
+/// CR 607.2c + CR 608.2c: "Then exile all other tokens created with this
+/// creature" (Faerie Artisans) — the source is never a token created with
+/// itself, so the "other" of a created-with population excludes the tokens the
+/// ability just created, not the ability's source.
+fn exclude_created_tokens_from_created_with_others(filter: &mut TargetFilter) {
+    rewrite_other_as_exclusion(filter, TargetFilter::LastCreated, &|typed| {
+        typed.properties.contains(&FilterProp::CreatedWithSource)
+    });
+}
+
+/// Rewrite every applicable typed leg's "other" (`Another`, other than the
+/// ability's source) to "other than `reference`".
+fn rewrite_other_as_exclusion(
     filter: &mut TargetFilter,
+    reference: TargetFilter,
     applies: &dyn Fn(&TypedFilter) -> bool,
 ) {
     match filter {
@@ -3465,14 +3479,14 @@ fn rewrite_other_as_parent_target_exclusion(
             for prop in &mut typed.properties {
                 if matches!(prop, FilterProp::Another) {
                     *prop = FilterProp::DistinctFrom {
-                        reference: Box::new(TargetFilter::ParentTarget),
+                        reference: Box::new(reference.clone()),
                     };
                 }
             }
         }
         TargetFilter::Or { filters } | TargetFilter::And { filters } => filters
             .iter_mut()
-            .for_each(|leg| rewrite_other_as_parent_target_exclusion(leg, applies)),
+            .for_each(|leg| rewrite_other_as_exclusion(leg, reference.clone(), applies)),
         _ => {}
     }
 }
@@ -4201,6 +4215,11 @@ fn parse_type_phrase_folding_unbound<'a>(
         };
 
     if let Some((prop, consumed)) = parse_crewed_by_source_suffix(&lower[pos..]) {
+        properties.push(prop);
+        pos += consumed;
+    }
+
+    if let Some((prop, consumed)) = parse_created_with_source_suffix(&lower[pos..]) {
         properties.push(prop);
         pos += consumed;
     }
@@ -6420,6 +6439,7 @@ fn prop_reads_creature_pt(prop: &FilterProp) -> bool {
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::ProtectorMatches { .. }
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
@@ -7358,6 +7378,31 @@ fn parse_crewed_by_source_suffix(text: &str) -> Option<(FilterProp, usize)> {
         },
         text.len() - rest.len(),
     ))
+}
+
+/// CR 607.2c: postnominal participle "created with <self>" ("all other tokens
+/// created with this creature", "tokens created with it") — the candidate is a
+/// token created with the filter source. The subject is a self-reference only
+/// (`parse_self_reference` yielding `SelfRef`: "~", "it", "this creature",
+/// "this enchantment", …), and a word boundary must follow, so "created with
+/// its …" or another object's name never parses.
+fn parse_created_with_source_suffix(text: &str) -> Option<(FilterProp, usize)> {
+    let (rest, subject) = preceded(
+        tag::<_, _, OracleError<'_>>(" created with "),
+        super::oracle_nom::target::parse_self_reference,
+    )
+    .parse(text)
+    .ok()?;
+    if subject != TargetFilter::SelfRef {
+        return None;
+    }
+    peek(alt((
+        value((), eof::<_, OracleError<'_>>),
+        value((), one_of(" ,.")),
+    )))
+    .parse(rest)
+    .ok()?;
+    Some((FilterProp::CreatedWithSource, text.len() - rest.len()))
 }
 
 /// The subject word of a postnominal combat-relation clause ("creatures it

@@ -1160,9 +1160,30 @@ fn build_token_spec(
         attack_request,
         sacrifice_at: ability.duration.clone(),
         source_id: ability.source_id,
+        creator: token_creator_ref(state, ability),
         controller: ability.controller,
         attach_to,
     }
+}
+
+/// CR 607.2c + CR 400.7: the exact object a token `ability` creates is "created
+/// with" — the ability's source as the ability names it. A triggered ability
+/// names the identity its trigger captured, an activated one the incarnation it
+/// was put on the stack with, so a source that left before the ability resolved
+/// is still the token's creator (Arcane Artisan's ruling). This is the identity
+/// `FilterProp::CreatedWithSource` compares against on the reading side
+/// (`filter::combat_relation_source_ref`), which a linked ability of the same
+/// source resolves to.
+pub(crate) fn token_creator_ref(
+    state: &GameState,
+    ability: &ResolvedAbility,
+) -> Option<ObjectIncarnationRef> {
+    ability
+        .trigger_source
+        .as_ref()
+        .map(|source| source.identity.reference)
+        .filter(|reference| reference.object_id == ability.source_id)
+        .or_else(|| ability.source_ref(state))
 }
 
 /// CR 702.6a + CR 111.4: Extract only unconditional intrinsic Equip activated
@@ -2422,6 +2443,8 @@ pub(crate) fn materialize_token_spec_body(
     let ch = &spec.characteristics;
     // CR 111.1: Mark as token for SBA cleanup (CR 704.5d)
     object.is_token = true;
+    // CR 607.2c: the object this token is created with.
+    object.created_with = spec.creator;
     // True token from a TokenSpec — image lives in the generic-token
     // database (Treasure, Spirit, Saproling, Soldier, etc.).
     object.display_source = DisplaySource::Token;
@@ -2552,6 +2575,9 @@ pub(crate) fn materialize_token_copy_body(
 ) {
     // CR 111.1: Mark as token for SBA cleanup (CR 704.5d)
     object.is_token = true;
+    // CR 607.2c: the object this copy token is created with. Not a copiable
+    // value (CR 707.2), so it comes from the creating effect, never the donor.
+    object.created_with = copy.creator;
     // CR 707.2: the copiable values, plus the display metadata that is not
     // itself copiable. `install_copiable_values_as_base` already installs
     // `loyalty`/`base_loyalty` from `values.loyalty` (CR 306.5b), so no separate
@@ -4495,6 +4521,9 @@ pub(crate) fn copy_probe_spec_for(
         attack_request: TokenAttackRequest::Unspecified,
         sacrifice_at,
         source_id,
+        // CR 607.2c: probe-only — the copy apply path stamps the creator from
+        // `CopyTokenSpec::creator`, never from this spec.
+        creator: None,
         controller,
         attach_to: TokenHostRequest::NotRequested,
     }
@@ -6464,6 +6493,7 @@ mod tests {
             },
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -8515,6 +8545,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(3),
+            creator: None,
             controller: PlayerId(0),
             attach_to: TokenHostRequest::NotRequested,
         };
@@ -8923,6 +8954,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -9022,6 +9054,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: voice,
+                creator: None,
                 controller: PlayerId(0),
                 donor: None,
             };
@@ -9127,6 +9160,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: TokenHostRequest::NotRequested,
         };
@@ -9209,6 +9243,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -9282,6 +9317,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -9364,6 +9400,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -9560,6 +9597,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10125,6 +10163,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(100),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10194,6 +10233,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(100),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10254,6 +10294,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(100),
+            creator: None,
             controller: PlayerId(0),
             attach_to: host,
         };
@@ -10408,6 +10449,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(101),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10487,6 +10529,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(102),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10545,6 +10588,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(100),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -11028,6 +11072,7 @@ mod tests {
                     attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                     sacrifice_at: Some(Duration::UntilEndOfCombat),
                     source_id,
+                    creator: None,
                     controller: PlayerId(0),
                     // Liminal resume carries values only; empty mods are stamp-proof.
                     donor: None,

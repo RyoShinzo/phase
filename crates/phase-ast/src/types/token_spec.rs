@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::ability::{Duration, EntryAttackDestination, StaticDefinition};
 use super::card_type::{CoreType, Supertype};
 use super::counter::CounterType;
-use super::identifiers::ObjectId;
+use super::identifiers::{ObjectId, ObjectIncarnationRef};
 use super::keywords::Keyword;
 use super::mana::ManaColor;
 use super::player::PlayerId;
@@ -78,6 +78,15 @@ pub struct TokenSpec {
     /// on the apply path for defending-player resolution (`enters_attacking`)
     /// and for the delayed-trigger source.
     pub source_id: ObjectId,
+    /// CR 607.2c + CR 400.7: the exact object the token is "created with": the
+    /// source of the ability whose effect creates it, as that ability names its
+    /// source (last known information for a source that has left), so a linked
+    /// "tokens created with [this object]" finds it even when the source left
+    /// before the ability resolved. Stamped onto the token as
+    /// `GameObject::created_with`. `None` for a producer that is no ability of
+    /// an object (each states why at its literal).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub creator: Option<ObjectIncarnationRef>,
     /// CR 107.3a: Ability controller — the player who controls the effect
     /// creating the token (distinct from `owner`, the player to whom the
     /// token belongs).

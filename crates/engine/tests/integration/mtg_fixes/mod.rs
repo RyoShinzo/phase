@@ -26,4 +26,5 @@ mod ripples_of_undeath_paid_choice;
 mod tenuous_truce_enchanted_opponent;
 mod titan_of_littjara_shares_type_with_itself;
 mod token_created_attacking_chooses_defender;
+mod tokens_created_with_source;
 mod vanquishers_banner_only_your_spells;

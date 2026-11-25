@@ -6768,6 +6768,9 @@ fn create_entry_copy_spec_for_replacement(
         sacrifice_at: duration.clone(),
         source_id: replacement_source,
         controller,
+        // CR 607.2c: the spec only reshapes an object entering as a copy; that
+        // object's own creation names what it was created with.
+        creator: None,
         // Forwards BecomeCopy mods, but no BecomeCopy+halving card exists, so the
         // None fallback (today's token-id read) preserves behavior on this route.
         donor: None,
@@ -18674,6 +18677,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(40),
+            creator: None,
             controller: PlayerId(0),
             // Test-only enter-as-copy fixture stages no donor.
             donor: None,
@@ -23432,6 +23436,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             };
@@ -25528,6 +25533,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(999),
+            creator: None,
             controller: owner_controller,
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         }
@@ -30007,6 +30013,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(0),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -30036,6 +30043,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: chatterfang,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -30112,6 +30120,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             }
@@ -30204,6 +30213,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         }
@@ -30434,6 +30444,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(0),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -30776,6 +30787,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(0),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         }
@@ -31031,6 +31043,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(0),
+            creator: None,
             controller: PlayerId(1),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -31567,6 +31580,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             }
@@ -31689,6 +31703,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             }
@@ -31874,6 +31889,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                creator: None,
                 controller: PlayerId(0),
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             }),

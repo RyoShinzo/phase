@@ -14,7 +14,7 @@ use crate::types::card_type::CoreType;
 use crate::types::counter::CounterType;
 use crate::types::events::GameEvent;
 use crate::types::game_state::{GameState, PendingCounterPostAction, WaitingFor};
-use crate::types::identifiers::ObjectId;
+use crate::types::identifiers::{ObjectId, ObjectIncarnationRef};
 use crate::types::mana::ManaColor;
 use crate::types::player::PlayerId;
 use crate::types::proposed_event::{
@@ -53,7 +53,11 @@ pub fn resolve(
     let proposed = ProposedEvent::CreateToken {
         redirected_to: None,
         owner: controller,
-        spec: Box::new(jace_token_spec(controller, source_id)),
+        spec: Box::new(jace_token_spec(
+            controller,
+            source_id,
+            super::token::token_creator_ref(state, ability),
+        )),
         copy: None,
         enter_tapped: EtbTapState::Unspecified,
         count: 1,
@@ -101,7 +105,11 @@ pub fn resolve(
 /// CR 701.71a: the blue Jace planeswalker token with 0 loyalty. Its two
 /// loyalty abilities come from the predefined subtype-keyed registry when the
 /// token enters (`predefined_token_abilities("Jace")`).
-fn jace_token_spec(controller: PlayerId, source_id: ObjectId) -> TokenSpec {
+fn jace_token_spec(
+    controller: PlayerId,
+    source_id: ObjectId,
+    creator: Option<ObjectIncarnationRef>,
+) -> TokenSpec {
     TokenSpec {
         characteristics: TokenCharacteristics {
             display_name: "Jace".to_string(),
@@ -123,6 +131,8 @@ fn jace_token_spec(controller: PlayerId, source_id: ObjectId) -> TokenSpec {
         attach_to: TokenHostRequest::NotRequested,
         sacrifice_at: None,
         source_id,
+        // CR 607.2c: the Jace token is created with the empowering ability's source.
+        creator,
         controller,
     }
 }

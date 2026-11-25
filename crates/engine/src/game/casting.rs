@@ -15320,6 +15320,7 @@ impl<'a> SpellCostView<'a> {
                 | FilterProp::SaddledSource
                 | FilterProp::CrewedThisTurn { .. }
                 | FilterProp::ConvokedSource
+                | FilterProp::CreatedWithSource
                 | FilterProp::ProtectorMatches { .. }
                 | FilterProp::HasHasteOrControlledSinceTurnBegan
                 | FilterProp::WithKeyword { .. }
@@ -35523,6 +35524,7 @@ fn filter_prop_reads_chosen_target(prop: &FilterProp, read: TargetRead) -> bool 
         | FilterProp::SaddledSource
         | FilterProp::CrewedThisTurn { .. }
         | FilterProp::ConvokedSource
+        | FilterProp::CreatedWithSource
         | FilterProp::HasHasteOrControlledSinceTurnBegan
         | FilterProp::WithKeyword { .. }
         | FilterProp::HasKeywordKind { .. }

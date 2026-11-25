@@ -14619,6 +14619,9 @@ fn token_description_to_spec(
         // Placeholder: overwritten at apply time with the replacement source's identity.
         source_id: crate::types::identifiers::ObjectId(0),
         controller: crate::types::player::PlayerId(0),
+        // CR 607.2c: a replacement effect is no activated or triggered ability,
+        // so the tokens it appends are created with no object.
+        creator: None,
         // Replacement-created tokens ("instead, create a token") are not the
         // "attached to" Aura/Role class; that path flows through `Effect::Token`.
         attach_to: crate::types::token_spec::TokenHostRequest::NotRequested,

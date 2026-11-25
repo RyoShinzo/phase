@@ -987,6 +987,7 @@ fn fmt_typed_filter(tf: &TypedFilter) -> String {
                 .into(),
             ),
             FilterProp::ConvokedSource => parts.push("convoked the source".into()),
+            FilterProp::CreatedWithSource => parts.push("created with the source".into()),
             FilterProp::ProtectorMatches { .. } => parts.push("protector matches".into()),
             FilterProp::Untapped => parts.push("untapped".into()),
             FilterProp::HasHasteOrControlledSinceTurnBegan => {
@@ -18714,6 +18715,7 @@ mod tests {
             attack_request,
             sacrifice_at: None,
             source_id: ObjectId(1),
+            creator: None,
             controller: PlayerId(0),
             attach_to: TokenHostRequest::NotRequested,
         };

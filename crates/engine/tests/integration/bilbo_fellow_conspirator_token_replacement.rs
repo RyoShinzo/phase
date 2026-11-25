@@ -67,6 +67,7 @@ fn artifact_token_spec(subtype: &str, controller: PlayerId) -> TokenSpec {
         attack_request: engine::types::proposed_event::TokenAttackRequest::Unspecified,
         sacrifice_at: None,
         source_id: engine::types::identifiers::ObjectId(0),
+        creator: None,
         controller,
         attach_to: TokenHostRequest::NotRequested,
     }

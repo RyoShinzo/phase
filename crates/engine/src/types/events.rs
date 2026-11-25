@@ -972,6 +972,9 @@ impl EventObjectSnapshot {
             // never from the event-subject grammar.
             | FilterProp::SharesCreatureTypeWithCommander
             | FilterProp::CantBeBeamedUp
+            // CR 607.2c: the subject snapshot carries no `created_with`, and no
+            // card's event-subject grammar names "a token created with ~".
+            | FilterProp::CreatedWithSource
             | FilterProp::Other { .. } => Unsupported,
         }
     }

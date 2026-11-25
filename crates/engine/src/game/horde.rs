@@ -1113,6 +1113,9 @@ fn reveal_library_token(
         // in as the source for the token-art lookup. No delayed trigger or
         // `enters_attacking` references it, so its removal leaves nothing dangling.
         source_id: card_id,
+        // CR 607.2c: a turn-based action is no ability of an object, so the
+        // revealed token is created with nothing.
+        creator: None,
         controller: horde,
         attach_to: TokenHostRequest::NotRequested,
     };

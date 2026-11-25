@@ -49343,6 +49343,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: object_id,
+            creator: None,
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
@@ -49401,6 +49402,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(3),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -49660,6 +49662,7 @@ mod tests {
                             crate::types::proposed_event::TokenAttackRequest::Unspecified,
                         sacrifice_at: None,
                         source_id: ObjectId(42),
+                        creator: None,
                         controller: PlayerId(0),
                         // Test batch: no donor in scope (no dynamic P/T mods).
                         donor: None,

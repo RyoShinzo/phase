@@ -710,6 +710,8 @@ pub fn apply_debug_action(
                 attack_request: TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: ObjectId(0),
+                // CR 607.2c: a debug spawn is created with no object.
+                creator: None,
                 controller: owner,
                 attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
             };
@@ -1273,6 +1275,8 @@ fn route_debug_token_to_battlefield(
         attack_request: TokenAttackRequest::Unspecified,
         sacrifice_at: None,
         source_id: object_id,
+        // CR 607.2c: a debug sandbox token is created with no object.
+        creator: None,
         controller: staged.controller,
         // Debug-token route stages no donor; empty mods are stamp-proof.
         donor: None,

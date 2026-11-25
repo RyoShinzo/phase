@@ -391,6 +391,7 @@ fn a_replacement_that_leaves_a_non_aura_entrant_still_creates_the_token() {
         attack_request: engine::types::proposed_event::TokenAttackRequest::Unspecified,
         sacrifice_at: None,
         source_id: board.source,
+        creator: None,
         controller: P0,
         // The announcement is untouched by the replacement: the instruction
         // named a host and nothing bound it.

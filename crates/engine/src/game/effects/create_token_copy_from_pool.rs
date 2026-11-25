@@ -161,6 +161,8 @@ pub fn resolve(
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: ability.duration.clone(),
             source_id: ability.source_id,
+            // CR 607.2c: the token is created with the creating ability's source.
+            creator: super::token::token_creator_ref(state, ability),
             controller: ability.controller,
             // Pool-drawn values name no donor object; empty mods are stamp-proof.
             donor: None,

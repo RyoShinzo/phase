@@ -85,3 +85,63 @@ fn paladin_danse_grant_reaches_artifacts_and_humans() {
     assert!(json.contains("\"Human\""), "Human leg dropped: {json}");
     assert!(json.contains("\"Artifact\""), "Artifact leg dropped: {json}");
 }
+
+fn tokens_with(properties: Vec<FilterProp>) -> TargetFilter {
+    TargetFilter::Typed(TypedFilter {
+        type_filters: vec![],
+        controller: None,
+        properties,
+    })
+}
+
+/// CR 607.2c: "tokens created with <self>" is a token created with the filter source, for each
+/// self-reference word a card of the class uses.
+#[test]
+fn tokens_created_with_a_self_reference() {
+    for subject in ["~", "it", "this creature", "this enchantment"] {
+        let phrase = format!("tokens created with {subject}. They can't be regenerated.");
+        let (filter, rest) = parse_type_phrase_folding(&phrase);
+        assert_eq!(
+            filter,
+            tokens_with(vec![FilterProp::Token, FilterProp::CreatedWithSource]),
+            "{phrase}"
+        );
+        assert_eq!(rest, ". They can't be regenerated.", "{phrase}");
+    }
+}
+
+/// CR 607.2c + CR 608.2c: in "all other tokens created with ~" (Faerie Artisans) the source is
+/// no token created with itself, so "other" excludes the tokens the ability just created.
+#[test]
+fn other_tokens_created_with_the_source_exclude_the_created_tokens() {
+    let (filter, rest) = parse_type_phrase_folding("all other tokens created with ~.");
+    assert_eq!(
+        filter,
+        tokens_with(vec![
+            FilterProp::DistinctFrom {
+                reference: Box::new(TargetFilter::LastCreated),
+            },
+            FilterProp::Token,
+            FilterProp::CreatedWithSource,
+        ])
+    );
+    assert_eq!(rest, ".");
+}
+
+/// Another object as the subject, or a word that only starts like a self-reference, is no
+/// created-with relation; and "other" outside it still excludes the source.
+#[test]
+fn created_with_needs_a_self_reference() {
+    for phrase in ["tokens created with target creature", "tokens created with its ability"] {
+        let (filter, _) = parse_type_phrase_folding(phrase);
+        let TargetFilter::Typed(typed) = filter else {
+            panic!("{phrase}: {filter:?}");
+        };
+        assert!(!typed.properties.contains(&FilterProp::CreatedWithSource), "{phrase}");
+    }
+    let (filter, _) = parse_type_phrase_folding("other tokens you control");
+    let TargetFilter::Typed(typed) = filter else {
+        panic!("{filter:?}");
+    };
+    assert!(typed.properties.contains(&FilterProp::Another));
+}

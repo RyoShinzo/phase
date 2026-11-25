@@ -424,3 +424,50 @@ fn then_for_each_counter_repeats_the_instruction() {
         sub.repeat_for
     );
 }
+
+/// CR 607.2c: Faerie Artisans' second sentence exiles the other tokens created with it, not every
+/// other token.
+#[test]
+fn faerie_artisans_exiles_only_its_other_tokens() {
+    let parsed = parse_with_keyword_names(
+        "Flying\nWhenever a nontoken creature an opponent controls enters, create a token that's a copy of that creature except it's an artifact in addition to its other types. Then exile all other tokens created with this creature.",
+        "Faerie Artisans",
+        &["Flying"],
+        &["Creature"],
+        &["Faerie", "Artificer"],
+    );
+    let execute = parsed.triggers[0].execute.as_ref().expect("the trigger's effect");
+    assert!(matches!(&*execute.effect, Effect::CopyTokenOf { .. }), "{:?}", execute.effect);
+    let exile = execute.sub_ability.as_ref().expect("the exile sentence");
+    let Effect::ChangeZoneAll { target, .. } = &*exile.effect else {
+        panic!("{:?}", exile.effect);
+    };
+    let TargetFilter::Typed(typed) = target else {
+        panic!("{target:?}");
+    };
+    assert!(typed.properties.contains(&FilterProp::Token));
+    assert!(typed.properties.contains(&FilterProp::CreatedWithSource));
+    assert!(typed.properties.contains(&FilterProp::DistinctFrom {
+        reference: Box::new(TargetFilter::LastCreated),
+    }));
+    assert!(!typed.properties.contains(&FilterProp::Another));
+}
+
+/// CR 607.2c: Saproling Burst's leaves-the-battlefield trigger destroys the tokens created with
+/// it, not every token.
+#[test]
+fn saproling_burst_destroys_only_its_tokens() {
+    let parsed = parse_with_keyword_names(
+        "Fading 7 (This enchantment enters with seven fade counters on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nRemove a fade counter from this enchantment: Create a green Saproling creature token. It has \"This token's power and toughness are each equal to the number of fade counters on Saproling Burst.\"\nWhen this enchantment leaves the battlefield, destroy all tokens created with this enchantment. They can't be regenerated.",
+        "Saproling Burst",
+        &["Fading"],
+        &["Enchantment"],
+        &[],
+    );
+    let found = parsed.triggers.iter().any(|trigger| {
+        trigger.execute.as_ref().is_some_and(|execute| {
+            format!("{:?}", execute.effect).contains("CreatedWithSource")
+        })
+    });
+    assert!(found, "{:?}", parsed.triggers);
+}

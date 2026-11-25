@@ -511,6 +511,11 @@ pub struct CopyTokenSpec {
     pub sacrifice_at: Option<Duration>,
     pub source_id: ObjectId,
     pub controller: PlayerId,
+    /// CR 607.2c + CR 400.7: the exact object the copy token is "created
+    /// with", as `TokenSpec::creator`. `None` for a producer that is no
+    /// ability of an object (each states why at its literal).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub creator: Option<ObjectIncarnationRef>,
     /// CR 608.2h + CR 707.9b: the copy donor whose live (or last-known)
     /// characteristics donor-referential copy exceptions read. Dynamic P/T
     /// exceptions ("half that creature's power", Saw in Half) resolve their
@@ -2426,6 +2431,7 @@ mod tests {
             attack_request: TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(1),
+            creator: None,
             controller: PlayerId(0),
             attach_to: TokenHostRequest::NotRequested,
         })
@@ -2617,6 +2623,7 @@ mod tests {
             attack_request,
             sacrifice_at: None,
             source_id: ObjectId(1),
+            creator: None,
             controller: PlayerId(0),
             attach_to: TokenHostRequest::NotRequested,
         }
@@ -2646,6 +2653,7 @@ mod tests {
             attack_request,
             sacrifice_at: None,
             source_id: ObjectId(1),
+            creator: None,
             controller: PlayerId(0),
             donor: None,
             double_faced: None,

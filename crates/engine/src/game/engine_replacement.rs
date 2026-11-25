@@ -10510,6 +10510,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: ObjectId(1),
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10642,6 +10643,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: replacement_source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10808,6 +10810,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: replacement_source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -10990,6 +10993,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: replacement_source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -11148,6 +11152,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: jinnie_source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -11293,6 +11298,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id: jinnie_source,
+            creator: None,
             controller: PlayerId(0),
             attach_to: crate::types::proposed_event::TokenHostRequest::NotRequested,
         };
@@ -13318,6 +13324,7 @@ mod tests {
                 attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
                 sacrifice_at: None,
                 source_id: entering_aura,
+                creator: None,
                 controller: PlayerId(0),
                 // Test-only Treasure tail stages no donor; empty mods are stamp-proof.
                 donor: None,

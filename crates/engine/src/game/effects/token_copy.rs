@@ -295,6 +295,8 @@ pub fn resolve(
                 attack_request: attack_request.clone(),
                 sacrifice_at: ability.duration.clone(),
                 source_id: ability.source_id,
+                // CR 607.2c: the copy is created with the creating ability's source.
+                creator: super::token::token_creator_ref(state, ability),
                 controller: ability.controller,
                 // CR 608.2h + CR 707.9b: carry the donor incarnation Step 1
                 // bound so donor-referential exceptions halve donor values.
@@ -1286,6 +1288,7 @@ fn apply_copy_token_batch_on_board(
         attack_request,
         sacrifice_at,
         source_id,
+        creator,
         controller,
         donor,
         double_faced,
@@ -1400,6 +1403,7 @@ fn apply_copy_token_batch_on_board(
                 attack_request: attack_request.clone(),
                 sacrifice_at: sacrifice_at.clone(),
                 source_id,
+                creator,
                 controller,
                 donor,
                 double_faced: double_faced.clone(),
@@ -1533,6 +1537,7 @@ fn apply_copy_token_batch_on_board(
             attack_request: attack_request.clone(),
             sacrifice_at: sacrifice_at.clone(),
             source_id,
+            creator,
             controller,
             donor,
             double_faced: double_faced.clone(),
@@ -3209,6 +3214,7 @@ mod tests {
             },
             sacrifice_at: None,
             source_id,
+            creator: None,
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
@@ -3326,6 +3332,7 @@ mod tests {
             },
             sacrifice_at: None,
             source_id,
+            creator: None,
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
@@ -7848,6 +7855,7 @@ mod tests {
             attack_request: crate::types::proposed_event::TokenAttackRequest::Unspecified,
             sacrifice_at: None,
             source_id,
+            creator: None,
             controller: PlayerId(0),
             donor: None,
         };
