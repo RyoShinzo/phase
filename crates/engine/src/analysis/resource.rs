@@ -9705,6 +9705,10 @@ fn project_out_resources(state: &GameState) -> ResourceProjectedFrame {
     // boundary advances it every period.
     s.instruction_boundary_marks.clear();
     s.battlefield_entries_this_turn.clear();
+    // CR 403.3 + CR 608.2i: the previous turn's latched entries are the same
+    // journal one turn later; a loop that spans turns pumps it every period,
+    // as the player last-turn tallies are projected out too.
+    s.battlefield_entries_last_turn.clear();
     s.created_tokens_this_turn.clear();
     s.players_who_created_token_this_turn.clear();
     s.sacrificed_permanents_this_turn.clear();
