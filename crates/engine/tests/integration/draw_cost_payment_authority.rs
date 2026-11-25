@@ -2981,6 +2981,7 @@ fn checked_restore_refuses_a_tap_creatures_prompt_whose_creatures_left() {
         filter: TypedFilter::creature()
             .controller(ControllerRef::You)
             .into(),
+        direction: engine::types::ability::TapStateChange::Tap,
     });
     checked_round_trip(runner.state()).expect("reach guard: the tap prompt restores");
     let edited = save_with_listed_objects_exiled(&runner, |waiting| match waiting {
@@ -3217,6 +3218,7 @@ fn lent_creature_tap_prompt(
                     filter: TypedFilter::creature()
                         .controller(ControllerRef::You)
                         .into(),
+                    direction: engine::types::ability::TapStateChange::Tap,
                 },
             ],
         }),

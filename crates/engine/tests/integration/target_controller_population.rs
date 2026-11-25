@@ -893,7 +893,8 @@ fn split_reflexive_population(change_controller: bool) {
     assert_eq!(
         *kind,
         PayCostKind::TapCreatures {
-            mode: TapCreaturesSelectionMode::Fixed
+            mode: TapCreaturesSelectionMode::Fixed,
+            direction: engine::types::ability::TapStateChange::Tap,
         }
     );
     assert!(matches!(resume, CostResume::Resolution));

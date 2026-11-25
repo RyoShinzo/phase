@@ -1319,7 +1319,8 @@ mod tests {
         );
         assert_eq!(
             delta(PayCostKind::TapCreatures {
-                mode: TapCreaturesSelectionMode::Fixed
+                mode: TapCreaturesSelectionMode::Fixed,
+                direction: engine::types::ability::TapStateChange::Tap,
             }),
             0.0
         );

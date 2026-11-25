@@ -16693,6 +16693,13 @@ pub enum PayCostKind {
     /// collapsing into one indistinguishable `None`.
     TapCreatures {
         mode: TapCreaturesSelectionMode,
+        /// CR 701.26a + CR 701.26b: whether the chosen permanents are tapped or
+        /// untapped to pay, carried from `AbilityCost::TapCreatures::direction`.
+        #[serde(
+            default,
+            skip_serializing_if = "crate::types::ability::TapStateChange::is_tap"
+        )]
+        direction: crate::types::ability::TapStateChange,
     },
     Behold {
         action: BeholdCostAction,
@@ -56484,6 +56491,7 @@ mod tests {
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::Fixed,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: vec![ObjectId(1)],
             count: 1,
@@ -56565,6 +56573,7 @@ mod tests {
                 player: PlayerId(0),
                 kind: PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Fixed,
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
                 choices: vec![ObjectId(1)],
                 count: 1,
@@ -68110,6 +68119,7 @@ Go for the Goal! — {3}, {T}: Until end of turn, target creature gains \"Whenev
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::Fixed,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: vec![ObjectId(1)],
             count: 1,

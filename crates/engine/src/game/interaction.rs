@@ -4551,7 +4551,10 @@ fn pay_cost_intent(kind: &PayCostKind) -> InteractionIntentCode {
         | PayCostKind::ExileAggregate { .. } => InteractionIntentCode::Exile,
         PayCostKind::UnattachFrom { .. } => InteractionIntentCode::Choose,
         PayCostKind::RemoveCounter { .. } => InteractionIntentCode::Pay,
-        PayCostKind::TapCreatures { .. } => InteractionIntentCode::Tap,
+        PayCostKind::TapCreatures { direction, .. } => match direction {
+            crate::types::ability::TapStateChange::Tap => InteractionIntentCode::Tap,
+            crate::types::ability::TapStateChange::Untap => InteractionIntentCode::Untap,
+        },
     }
 }
 
@@ -4747,6 +4750,7 @@ fn selection_projection(
             let constraint = match kind {
                 PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                    ..
                 } => match aggregate.stat {
                     TapCreaturesAggregateStat::TotalPower => SelectionConstraint::Aggregate {
                         function: InteractionAggregateFunction::Sum,
@@ -4772,6 +4776,7 @@ fn selection_projection(
                 // already encoded in the bounds the registration site published.
                 PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Fixed | TapCreaturesSelectionMode::VariableX,
+                    ..
                 }
                 | PayCostKind::Discard
                 | PayCostKind::Reveal { shared_quality: _ }

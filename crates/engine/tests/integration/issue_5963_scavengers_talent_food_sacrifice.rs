@@ -134,6 +134,7 @@ fn tap_another_mana_ability_any_color() -> AbilityDefinition {
                         .controller(ControllerRef::You)
                         .properties(vec![FilterProp::Another]),
                 ),
+                direction: engine::types::ability::TapStateChange::Tap,
             },
         ],
     })

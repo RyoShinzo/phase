@@ -36306,6 +36306,7 @@ pub mod tests {
                         collective: true,
                     },
                     filter: TargetFilter::TriggeringPlayer,
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
                 scale: None,
                 payer: TargetFilter::TriggeringPlayer,

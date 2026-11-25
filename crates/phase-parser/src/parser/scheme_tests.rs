@@ -920,6 +920,7 @@ fn bow_to_my_command_end_step_enforces_total_power_eight() {
     let AbilityCost::TapCreatures {
         requirement,
         filter,
+        direction: crate::types::ability::TapStateChange::Tap,
     } = cost
     else {
         panic!("Bow: cost must be TapCreatures, got {cost:?}");

@@ -3000,6 +3000,7 @@ pub(super) fn lower_targeted_action_ast(ast: TargetedImperativeAst) -> Effect {
             cost: AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::total_power_at_least(power),
                 filter: target,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             scale: None,
             payer: TargetFilter::Controller,

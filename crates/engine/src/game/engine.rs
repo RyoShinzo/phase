@@ -13638,7 +13638,7 @@ fn apply_non_priority_pass_action(
                         &chosen,
                         &mut events,
                     )?,
-                    PayCostKind::TapCreatures { mode } => {
+                    PayCostKind::TapCreatures { mode, direction } => {
                         engine_casting::handle_tap_creatures_for_spell_cost(
                             state,
                             *player,
@@ -13646,6 +13646,7 @@ fn apply_non_priority_pass_action(
                             *min_count,
                             *count,
                             *mode,
+                            *direction,
                             choices,
                             &chosen,
                             paid_cost,
@@ -13676,7 +13677,9 @@ fn apply_non_priority_pass_action(
             } => match kind {
                 // CR 605.1a: the aggregate form never resumes a mana ability;
                 // fixed-count and X-sentinel forms both do.
-                PayCostKind::TapCreatures { mode } => {
+                // The tap or untap direction is read from the cost when the
+                // chosen creatures pay it (`pay_mana_ability_cost_component`).
+                PayCostKind::TapCreatures { mode, .. } => {
                     engine_casting::handle_tap_creatures_for_mana_ability(
                         state,
                         *min_count,
@@ -13750,12 +13753,13 @@ fn apply_non_priority_pass_action(
                         &mut events,
                     )?
                 }
-                PayCostKind::TapCreatures { mode } => {
+                PayCostKind::TapCreatures { mode, direction } => {
                     casting_costs::pay_tap_creatures_selection(
                         state,
                         *min_count,
                         *count,
                         *mode,
+                        *direction,
                         choices,
                         &chosen,
                         &mut events,

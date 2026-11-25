@@ -2703,6 +2703,7 @@ fn normalize_escalate_cost(cost: AbilityCost) -> AbilityCost {
             } => AbilityCost::TapCreatures {
                 requirement: crate::types::ability::TapCreaturesRequirement::count(1),
                 filter: target,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             effect => AbilityCost::EffectCost {
                 effect: Box::new(effect),

@@ -2577,6 +2577,7 @@ Trample";
                     Some(AbilityCost::TapCreatures {
                         ref requirement,
                         ref filter,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     }),
                 condition: None,
             } => {

@@ -6643,6 +6643,7 @@ fn parse_unless_tap_untapped_cost(rest: &str) -> Option<AbilityCost> {
     Some(AbilityCost::TapCreatures {
         requirement: TapCreaturesRequirement::count(count),
         filter,
+        direction: crate::types::ability::TapStateChange::Tap,
     })
 }
 

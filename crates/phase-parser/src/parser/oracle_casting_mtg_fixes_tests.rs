@@ -39,6 +39,7 @@ fn alt_cost_mana_and_tap_creatures_composite() {
     let AbilityCost::TapCreatures {
         ref requirement,
         filter: TargetFilter::Typed(ref typed),
+        direction: crate::types::ability::TapStateChange::Tap,
     } = costs[1]
     else {
         panic!("expected TapCreatures, got {:?}", costs[1]);

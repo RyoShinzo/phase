@@ -2908,7 +2908,7 @@ pub(super) fn advance_mana_ability_activation(
     // "unanswered" from the collection's cardinality re-surfaces this same
     // prompt forever. Matches the already-correct `chosen_x.is_none()` gate.
     if pending.chosen_tappers.is_none() {
-        if let Some((min_count, max_count, creatures, mode)) =
+        if let Some((min_count, max_count, creatures, mode, direction)) =
             tap_creature_cost_choice(state, pending.player, pending.source_id, &ability_def)
         {
             // CR 601.2h: partial payment is refused for the fixed-count form
@@ -2921,7 +2921,7 @@ pub(super) fn advance_mana_ability_activation(
             }
             return Ok(WaitingFor::PayCost {
                 player: pending.player,
-                kind: PayCostKind::TapCreatures { mode },
+                kind: PayCostKind::TapCreatures { mode, direction },
                 choices: creatures,
                 count: max_count,
                 min_count,
@@ -5335,6 +5335,7 @@ where
         Some(AbilityCost::TapCreatures {
             requirement,
             filter,
+            direction,
         }) => {
             // CR 605.1a: the aggregate "total power N" form is reserved for
             // Crew/Saddle/Teamwork, which are never mana abilities; fixed-count
@@ -5373,6 +5374,7 @@ where
                     player,
                     chosen_id,
                     filter,
+                    *direction,
                     granter,
                     cost_has_source_tap_component(cost),
                     events,
@@ -6455,9 +6457,16 @@ fn tap_creature_cost_choice(
     player: PlayerId,
     source_id: ObjectId,
     ability: &AbilityDefinition,
-) -> Option<(usize, usize, Vec<ObjectId>, TapCreaturesSelectionMode)> {
+) -> Option<(
+    usize,
+    usize,
+    Vec<ObjectId>,
+    TapCreaturesSelectionMode,
+    crate::types::ability::TapStateChange,
+)> {
     let cost = &ability.cost;
-    let (requirement, filter) = super::casting::find_tap_creatures_cost(cost.as_ref()?)?;
+    let (requirement, filter, direction) =
+        super::casting::find_tap_creatures_cost(cost.as_ref()?)?;
     // CR 605.1a: the aggregate form is never a valid mana-ability tap cost;
     // fixed-count and X-sentinel forms both are. `fixed_count()` returning `None`
     // is the aggregate rejection.
@@ -6474,7 +6483,11 @@ fn tap_creature_cost_choice(
             let Some(obj) = state.objects.get(&id) else {
                 return false;
             };
-            if obj.zone != Zone::Battlefield || obj.controller != player || obj.tapped {
+            // CR 701.26a + CR 701.26b: the tapped status the direction needs.
+            if obj.zone != Zone::Battlefield
+                || obj.controller != player
+                || !direction.can_change(obj.tapped)
+            {
                 return false;
             }
             matches_target_filter(
@@ -6493,7 +6506,7 @@ fn tap_creature_cost_choice(
     // `u32::MAX`. A fixed (non-X) count degrades to `(count, count)`, preserving
     // the CR 601.2h exact-payment requirement for every existing card.
     let (min_count, max_count) = super::casting::sacrifice_cost_bounds(count, creatures.len());
-    Some((min_count, max_count, creatures, mode))
+    Some((min_count, max_count, creatures, mode, direction))
 }
 
 fn discard_cost_choice(
@@ -6697,6 +6710,7 @@ fn tap_selected_creature_for_mana_cost(
     player: PlayerId,
     chosen_id: ObjectId,
     filter: &TargetFilter,
+    direction: crate::types::ability::TapStateChange,
     granter: Option<ObjectIncarnationRef>,
     exclude_source: bool,
     events: &mut Vec<GameEvent>,
@@ -6711,9 +6725,14 @@ fn tap_selected_creature_for_mana_cost(
         .objects
         .get(&chosen_id)
         .ok_or_else(|| EngineError::InvalidAction("Selected creature not found".to_string()))?;
-    if obj.zone != Zone::Battlefield || obj.controller != player || obj.tapped {
+    // CR 701.26a + CR 701.26b: only untapped permanents can be tapped, and
+    // only tapped ones untapped.
+    if obj.zone != Zone::Battlefield
+        || obj.controller != player
+        || !direction.can_change(obj.tapped)
+    {
         return Err(EngineError::ActionNotAllowed(
-            "Selected creature is not an untapped creature you control".to_string(),
+            "Selected creature can't pay this tap or untap cost".to_string(),
         ));
     }
     if !matches_target_filter(
@@ -6731,8 +6750,9 @@ fn tap_selected_creature_for_mana_cost(
     }
 
     // CR 701.26a + CR 508.1f: route the tap-another-creature mana cost through the
-    // single authority so a "can't become tapped" creature is refused.
-    crate::game::restrictions::tap_permanent_for_cost(state, chosen_id, events)?;
+    // single authority so a "can't become tapped" creature is refused (CR 701.26b:
+    // an untap cost untaps it instead).
+    crate::game::restrictions::set_tap_state_for_cost(state, chosen_id, direction, events)?;
     Ok(())
 }
 
@@ -18448,6 +18468,7 @@ mod tests {
             let cost = Some(AbilityCost::TapCreatures {
                 requirement,
                 filter: TargetFilter::Typed(crate::types::ability::TypedFilter::creature()),
+                direction: crate::types::ability::TapStateChange::Tap,
             });
             let mut tap_iter = tappers.iter().copied();
             let mut discards = std::iter::empty();
@@ -18629,6 +18650,7 @@ mod tests {
             let aggregate = AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::total_power_at_least(5),
                 filter: TargetFilter::Typed(crate::types::ability::TypedFilter::creature()),
+                direction: crate::types::ability::TapStateChange::Tap,
             };
             // Positive reach guard: the fixture really is the aggregate mode, so
             // this cannot silently assert against the `Fixed` or `VariableX` arm.

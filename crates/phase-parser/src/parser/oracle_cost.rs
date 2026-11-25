@@ -33,7 +33,8 @@ use crate::types::ability::{
     AbilityCost, AggregateFunction, AttachmentReferent, BeholdCostAction, ChoiceType, Comparator,
     ControllerRef, CostReduction, CounterCostSelection, FilterProp, ObjectProperty, PlayerFilter,
     PlayerRelation, PlayerScope, QuantityExpr, QuantityRef, SacrificeCost, SacrificeRequirement,
-    TapCreaturesRequirement, TargetFilter, TypedFilter, EXILE_COST_X, REMOVE_COUNTER_COST_ALL,
+    TapCreaturesRequirement, TapStateChange, TargetFilter, TypedFilter, EXILE_COST_X,
+    REMOVE_COUNTER_COST_ALL,
     REMOVE_COUNTER_COST_ANY_NUMBER, REMOVE_COUNTER_COST_X,
 };
 use crate::types::counter::parse_counter_match;
@@ -469,7 +470,11 @@ fn fixup_bare_noun_continuations(costs: &mut [AbilityCost]) {
         Exile {
             zone: Option<Zone>,
         },
-        TapCreatures,
+        /// CR 701.26a + CR 701.26b: a continuation keeps the tap or untap
+        /// direction of the leg it continues.
+        TapCreatures {
+            direction: TapStateChange,
+        },
         /// CR 701.9a: a chosen hand-discard leg ("discard an Island card and
         /// another card"); its continuations use the article-anchored grammar in
         /// `parse_discard_continuation`.
@@ -484,7 +489,11 @@ fn fixup_bare_noun_continuations(costs: &mut [AbilityCost]) {
             AbilityCost::Exile { zone, .. } => {
                 last_verb = Some(PrecedingVerb::Exile { zone: *zone })
             }
-            AbilityCost::TapCreatures { .. } => last_verb = Some(PrecedingVerb::TapCreatures),
+            AbilityCost::TapCreatures { direction, .. } => {
+                last_verb = Some(PrecedingVerb::TapCreatures {
+                    direction: *direction,
+                })
+            }
             AbilityCost::Discard {
                 selection: crate::types::ability::CardSelectionMode::Chosen,
                 self_scope: crate::types::ability::DiscardSelfScope::FromHand,
@@ -536,9 +545,10 @@ fn fixup_bare_noun_continuations(costs: &mut [AbilityCost]) {
                                 zone: extract_filter_zone(&filter).or(zone),
                                 filter: Some(filter),
                             },
-                            PrecedingVerb::TapCreatures => AbilityCost::TapCreatures {
+                            PrecedingVerb::TapCreatures { direction } => AbilityCost::TapCreatures {
                                 requirement: TapCreaturesRequirement::count(count),
                                 filter,
+                                direction,
                             },
                             // Handled (and `continue`d) before this branch.
                             PrecedingVerb::Discard => continue,
@@ -574,9 +584,10 @@ fn fixup_bare_noun_continuations(costs: &mut [AbilityCost]) {
                         zone,
                         filter: Some(filter),
                     },
-                    PrecedingVerb::TapCreatures => AbilityCost::TapCreatures {
+                    PrecedingVerb::TapCreatures { direction } => AbilityCost::TapCreatures {
                         requirement: TapCreaturesRequirement::count(1),
                         filter,
+                        direction,
                     },
                     // Handled (and `continue`d) before this branch.
                     PrecedingVerb::Discard => continue,
@@ -1313,11 +1324,24 @@ fn parse_single_cost_in(text: &str, channel: CostChannel) -> AbilityCost {
         }
     }
 
-    // "Tap an untapped creature you control" / "Tap two untapped creatures you control"
-    // / "Tap another untapped creature you control" / "Tap X untapped [type] you control"
-    if let Some(((), tap_rest)) = nom_on_lower(text, &lower, |i| {
-        value((), alt((tag("tap "), tag("tapped ")))).parse(i)
+    // CR 701.26a + CR 701.26b: "Tap an untapped creature you control" / "Tap two untapped
+    // creatures you control" / "Tap another untapped creature you control" / "Tap X untapped
+    // [type] you control", and the untap mirror "Untap a tapped creature you control" /
+    // "Untap two tapped blue creatures you control" (Halo Fountain, Crackleburr). The verb sets
+    // the cost's direction, and the status word the cost names is the one that direction needs
+    // (only untapped permanents can be tapped, only tapped ones untapped), so it is consumed
+    // here and carried by `direction`, not by the filter.
+    if let Some((direction, tap_rest)) = nom_on_lower(text, &lower, |i| {
+        alt((
+            value(TapStateChange::Tap, alt((tag("tap "), tag("tapped ")))),
+            value(TapStateChange::Untap, tag("untap ")),
+        ))
+        .parse(i)
     }) {
+        let status = match direction {
+            TapStateChange::Tap => "untapped ",
+            TapStateChange::Untap => "tapped ",
+        };
         let tap_lower = tap_rest.to_lowercase();
         // The leading quantifier reports a typed `CountWord` alongside the
         // count. "Another"/"other" is not merely a quantity of one: it is the
@@ -1329,8 +1353,8 @@ fn parse_single_cost_in(text: &str, channel: CostChannel) -> AbilityCost {
         let (count, filter_text, count_word) = if let Some((word, r)) =
             nom_on_lower(tap_rest, &tap_lower, |i| {
                 alt((
-                    value(CountWord::SourceExclusion, tag("another untapped ")),
-                    value(CountWord::Plain, tag("an untapped ")),
+                    value(CountWord::SourceExclusion, (tag("another "), tag(status))),
+                    value(CountWord::Plain, (alt((tag("an "), tag("a "))), tag(status))),
                     value(CountWord::Plain, tag("an ")),
                 ))
                 .parse(i)
@@ -1339,8 +1363,8 @@ fn parse_single_cost_in(text: &str, channel: CostChannel) -> AbilityCost {
         } else if let Some((word, r)) = nom_on_lower(tap_rest, &tap_lower, |i| {
             // "X untapped [type]" — variable count, use u32::MAX as sentinel.
             alt((
-                value(CountWord::Plain, tag("x untapped ")),
-                value(CountWord::SourceExclusion, tag("x other untapped ")),
+                value(CountWord::Plain, (tag("x "), tag(status))),
+                value(CountWord::SourceExclusion, (tag("x other "), tag(status))),
             ))
             .parse(i)
         }) {
@@ -1349,12 +1373,12 @@ fn parse_single_cost_in(text: &str, channel: CostChannel) -> AbilityCost {
             let r = nom_on_lower(
                 &tap_rest[tap_lower.len() - r.len()..],
                 r.trim_start(),
-                |i| value((), tag("untapped ")).parse(i),
+                |i| value((), tag(status)).parse(i),
             )
             .map(|((), rest)| rest.to_lowercase())
             .unwrap_or_else(|| r.trim_start().to_string());
             // The numeric branch does NOT consume "other" ("tap two other
-            // untapped artifacts you control"): the `untapped ` tag fails on
+            // untapped artifacts you control"): the status tag fails on
             // the "other " lead, so the phrase reaches `parse_target` intact
             // and `parse_type_phrase_folding` supplies `FilterProp::Another` itself.
             // Nothing to re-apply here.
@@ -1376,6 +1400,7 @@ fn parse_single_cost_in(text: &str, channel: CostChannel) -> AbilityCost {
                 return AbilityCost::TapCreatures {
                     requirement: TapCreaturesRequirement::count(count),
                     filter,
+                    direction,
                 };
             }
         }
@@ -4009,6 +4034,7 @@ mod tests {
                     controller: Some(ControllerRef::You),
                     properties: Vec::new(),
                 }),
+                direction: TapStateChange::Tap,
             }
         );
     }
@@ -4570,6 +4596,7 @@ mod tests {
                 filter: TargetFilter::Typed(
                     TypedFilter::creature().controller(crate::types::ability::ControllerRef::You)
                 ),
+                direction: TapStateChange::Tap,
             }
         );
     }
@@ -6981,3 +7008,8 @@ mod tests {
         ));
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "oracle_cost_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

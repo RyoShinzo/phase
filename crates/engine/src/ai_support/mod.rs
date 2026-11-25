@@ -1003,6 +1003,7 @@ fn cheap_reject_candidate(state: &GameState, action: &GameAction) -> bool {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                        ..
                     },
                 choices,
                 ..
@@ -1023,6 +1024,7 @@ fn cheap_reject_candidate(state: &GameState, action: &GameAction) -> bool {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Fixed | TapCreaturesSelectionMode::VariableX,
+                        ..
                     },
                 choices,
                 count,
@@ -4949,6 +4951,7 @@ mod tests {
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::VariableX,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: choices.clone(),
             count: 2,
@@ -5000,6 +5003,7 @@ mod tests {
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::Fixed,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: choices.clone(),
             count: 2,

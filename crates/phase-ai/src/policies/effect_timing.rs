@@ -708,6 +708,7 @@ mod tests {
                 filter: TargetFilter::Typed(
                     TypedFilter::new(TypeFilter::Artifact).controller(ControllerRef::You),
                 ),
+                direction: engine::types::ability::TapStateChange::Tap,
             },
         )
     }

@@ -988,6 +988,7 @@ fn tapped_relic_can_use_a_new_legend_to_pay_a_second_creature_spell() {
                         value: Supertype::Legendary,
                     }])
                     .into(),
+                direction: crate::types::ability::TapStateChange::Tap,
             }),
         );
     }
@@ -26306,6 +26307,7 @@ fn modal_escalate_pays_tap_creature_cost_for_extra_mode() {
             .push(Keyword::Escalate(AbilityCost::TapCreatures {
                 requirement: crate::types::ability::TapCreaturesRequirement::count(1),
                 filter: TargetFilter::Typed(TypedFilter::creature()),
+                direction: crate::types::ability::TapStateChange::Tap,
             }));
     }
     add_mana(&mut state, PlayerId(0), ManaType::Red, 1);
@@ -60053,6 +60055,7 @@ mod x_sentinel_tap_creatures_activation_cost {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::VariableX,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 choices,
                 count,
@@ -60111,6 +60114,7 @@ mod x_sentinel_tap_creatures_activation_cost {
                     WaitingFor::PayCost {
                         kind: PayCostKind::TapCreatures {
                             mode: TapCreaturesSelectionMode::VariableX,
+                            direction: crate::types::ability::TapStateChange::Tap,
                         },
                         ..
                     }
@@ -60369,6 +60373,7 @@ mod x_sentinel_tap_creatures_activation_cost {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::VariableX,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 choices,
                 count,
@@ -60429,6 +60434,7 @@ mod x_sentinel_tap_creatures_activation_cost {
                                 controller: Some(ControllerRef::You),
                                 properties: vec![],
                             }),
+                            direction: crate::types::ability::TapStateChange::Tap,
                         },
                     ],
                 }),
@@ -60476,6 +60482,7 @@ mod x_sentinel_tap_creatures_activation_cost {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Fixed,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 count,
                 min_count,
@@ -60669,6 +60676,7 @@ mod aggregate_tap_cost_does_not_clobber_chosen_x {
                     kind:
                         PayCostKind::TapCreatures {
                             mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                            direction: crate::types::ability::TapStateChange::Tap,
                         },
                     choices,
                     min_count,
@@ -60815,7 +60823,7 @@ mod hazel_x_sentinel_mana_ability {
                 a.cost
                     .as_ref()
                     .and_then(crate::game::casting::find_tap_creatures_cost)
-                    .is_some_and(|(requirement, _)| {
+                    .is_some_and(|(requirement, _, _)| {
                         requirement.selection_mode() == TapCreaturesSelectionMode::VariableX
                     })
             })
@@ -60885,7 +60893,7 @@ mod hazel_x_sentinel_mana_ability {
         // Reach guard: the prompt really is the X-sentinel tap window with a
         // zero floor and the two eligible tokens on offer.
         let WaitingFor::PayCost {
-            kind: PayCostKind::TapCreatures { mode },
+            kind: PayCostKind::TapCreatures { mode, direction: crate::types::ability::TapStateChange::Tap, },
             count,
             min_count,
             ..
@@ -61007,7 +61015,7 @@ mod hazel_x_sentinel_mana_ability {
                 a.cost
                     .as_ref()
                     .and_then(crate::game::casting::find_tap_creatures_cost)
-                    .is_some_and(|(requirement, _)| {
+                    .is_some_and(|(requirement, _, _)| {
                         requirement.selection_mode() == TapCreaturesSelectionMode::Fixed
                             && requirement.fixed_count() == Some(2)
                     })
@@ -61079,7 +61087,8 @@ mod hazel_x_sentinel_mana_ability {
                 &runner.state().waiting_for,
                 WaitingFor::PayCost {
                     kind: PayCostKind::TapCreatures {
-                        mode: TapCreaturesSelectionMode::VariableX
+                        mode: TapCreaturesSelectionMode::VariableX,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                     min_count: 0,
                     ..
@@ -61204,6 +61213,7 @@ mod battle_screech_flashback_partial_payment {
                 AbilityCost::TapCreatures {
                     requirement: TapCreaturesRequirement::count(3),
                     filter: TargetFilter::Typed(TypedFilter::creature()),
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
             )));
         obj.keywords = obj.base_keywords.clone();
@@ -61243,6 +61253,7 @@ mod battle_screech_flashback_partial_payment {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Fixed,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 choices,
                 count,
@@ -61446,7 +61457,7 @@ mod fixed_mana_ability_tap_cost_rejects_partial_payment {
                 a.cost
                     .as_ref()
                     .and_then(crate::game::casting::find_tap_creatures_cost)
-                    .is_some_and(|(requirement, _)| {
+                    .is_some_and(|(requirement, _, _)| {
                         requirement.selection_mode() == TapCreaturesSelectionMode::Fixed
                     })
             })
@@ -61475,6 +61486,7 @@ mod fixed_mana_ability_tap_cost_rejects_partial_payment {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Fixed,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 min_count,
                 count,

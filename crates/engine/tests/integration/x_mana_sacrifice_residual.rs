@@ -2815,6 +2815,7 @@ fn run_targeted_tap_creatures_sibling(bulk: bool) {
                     filter: TypedFilter::creature()
                         .controller(ControllerRef::You)
                         .into(),
+                    direction: engine::types::ability::TapStateChange::Tap,
                 },
             ],
         }))

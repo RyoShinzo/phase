@@ -2506,6 +2506,7 @@ pub fn candidate_actions_broad_with_probe(
             kind:
                 PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                    ..
                 },
             choices,
             ..
@@ -2528,6 +2529,7 @@ pub fn candidate_actions_broad_with_probe(
             kind:
                 PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Fixed | TapCreaturesSelectionMode::VariableX,
+                    ..
                 },
             choices,
             count,
@@ -9219,6 +9221,7 @@ mod tests {
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::VariableX,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: choices.clone(),
             count: 2,
@@ -9251,6 +9254,7 @@ mod tests {
             player: PlayerId(0),
             kind: PayCostKind::TapCreatures {
                 mode: TapCreaturesSelectionMode::Fixed,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             choices: choices.clone(),
             count: 3,

@@ -664,6 +664,7 @@ fn assert_glacian_tap_x_prompt(state: &GameState, board: &GlacianBoard, count: u
         kind:
             engine::types::game_state::PayCostKind::TapCreatures {
                 mode: engine::types::ability::TapCreaturesSelectionMode::VariableX,
+                direction: engine::types::ability::TapStateChange::Tap,
             },
         choices,
         count: published_count,

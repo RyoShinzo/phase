@@ -322,7 +322,8 @@ fn bow_end_step_at_eight_taps_and_abandons() {
                     matches!(
                         kind,
                         PayCostKind::TapCreatures {
-                            mode: TapCreaturesSelectionMode::Aggregate(_)
+                            mode: TapCreaturesSelectionMode::Aggregate(_),
+                            direction: engine::types::ability::TapStateChange::Tap,
                         }
                     ),
                     "expected Aggregate selection semantics, got {kind:?}"
@@ -516,7 +517,8 @@ fn bow_end_step_split_power_across_heroes_abandons() {
                     matches!(
                         kind,
                         PayCostKind::TapCreatures {
-                            mode: TapCreaturesSelectionMode::VariableX
+                            mode: TapCreaturesSelectionMode::VariableX,
+                            direction: engine::types::ability::TapStateChange::Tap,
                         }
                     ),
                     "each hero taps any subset of their own creatures, got {kind:?}"
@@ -1318,7 +1320,8 @@ fn bow_end_step_partial_selection_below_eight_taps_nothing() {
                     matches!(
                         kind,
                         PayCostKind::TapCreatures {
-                            mode: TapCreaturesSelectionMode::VariableX
+                            mode: TapCreaturesSelectionMode::VariableX,
+                            direction: engine::types::ability::TapStateChange::Tap,
                         }
                     ),
                     "each hero taps any subset of their own creatures, got {kind:?}"
@@ -1435,7 +1438,8 @@ fn bow_end_step_negative_power_counts_against_the_total() {
                     matches!(
                         kind,
                         PayCostKind::TapCreatures {
-                            mode: TapCreaturesSelectionMode::Aggregate(_)
+                            mode: TapCreaturesSelectionMode::Aggregate(_),
+                            direction: engine::types::ability::TapStateChange::Tap,
                         }
                     ),
                     "expected Aggregate selection semantics, got {kind:?}"

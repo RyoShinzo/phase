@@ -9531,6 +9531,7 @@ fn springleaf_drum_prompts_for_creature_then_adds_mana() {
                         filter: crate::types::ability::TypedFilter::creature()
                             .controller(crate::types::ability::ControllerRef::You)
                             .into(),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 ],
             }),
@@ -10031,6 +10032,7 @@ fn holdout_settlement_second_mana_ability_prompts_for_creature_then_adds_mana() 
                         filter: TypedFilter::creature()
                             .controller(ControllerRef::You)
                             .into(),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 ],
             }),
@@ -10145,6 +10147,7 @@ fn non_mana_activation_tap_creatures_cost_prompts_then_pays() {
                             .with_type(TypeFilter::Subtype("Elf".to_string()))
                             .controller(ControllerRef::You)
                             .into(),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 ],
             }),
@@ -10253,6 +10256,7 @@ fn non_mana_activation_tap_creatures_cost_rejects_tapped_source_before_prompt() 
                             .with_type(TypeFilter::Subtype("Elf".to_string()))
                             .controller(ControllerRef::You)
                             .into(),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 ],
             }),

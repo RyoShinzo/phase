@@ -108,7 +108,8 @@ fn run_trigger(pick: usize, cost_x_paid: Option<u32>) -> Outcome {
                 assert_eq!(
                     kind,
                     PayCostKind::TapCreatures {
-                        mode: TapCreaturesSelectionMode::VariableX
+                        mode: TapCreaturesSelectionMode::VariableX,
+                        direction: engine::types::ability::TapStateChange::Tap,
                     }
                 );
                 assert!(matches!(resume, CostResume::Resolution));
@@ -295,7 +296,7 @@ fn run_chain_inside(
     r.act(GameAction::DecideOptionalEffect { accept: true })
         .expect("optional prompt accepted");
     let WaitingFor::PayCost {
-        kind: PayCostKind::TapCreatures { mode },
+        kind: PayCostKind::TapCreatures { mode, direction: engine::types::ability::TapStateChange::Tap, },
         choices,
         resume,
         ..

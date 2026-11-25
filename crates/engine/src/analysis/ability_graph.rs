@@ -1754,11 +1754,20 @@ fn fold_cost(acc: &mut NodeAcc, cost: &AbilityCost) {
         AbilityCost::Waterbend { cost } => sink_mana_cost(acc, cost),
         AbilityCost::NinjutsuFamily { mana_cost, .. } => sink_mana_cost(acc, mana_cost),
         // CR 701.26a/b: tap costs consume / untap costs produce untapped state.
-        AbilityCost::Tap | AbilityCost::TapCreatures { .. } => {
+        AbilityCost::Tap
+        | AbilityCost::TapCreatures {
+            direction: crate::types::ability::TapStateChange::Tap,
+            ..
+        } => {
             acc.requires.insert(AxisKey::Tap);
         }
-        // {Q} — the untap-cost producer that closes the {Q}-untap engine class.
-        AbilityCost::Untap => {
+        // {Q} — the untap-cost producer that closes the {Q}-untap engine class;
+        // "untap a tapped creature you control" produces untapped state too.
+        AbilityCost::Untap
+        | AbilityCost::TapCreatures {
+            direction: crate::types::ability::TapStateChange::Untap,
+            ..
+        } => {
             acc.produces.insert(AxisKey::Tap);
         }
         // CR 306.5b: a planeswalker loyalty cost is sign-aware (R3-COUNTER-COST-SYMMETRY).

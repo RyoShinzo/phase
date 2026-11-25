@@ -1080,6 +1080,50 @@ pub(crate) fn tap_permanent_for_cost(
     Ok(())
 }
 
+/// CR 701.26b: Untap `id` to pay a cost ({Q}, "untap a tapped creature you
+/// control"). Only a tapped permanent can be untapped, so an untapped one can't
+/// pay; the choice layer offers only tapped permanents, and this is the
+/// backstop. The untap counterpart of [`tap_permanent_for_cost`].
+pub(crate) fn untap_permanent_for_cost(
+    state: &mut crate::types::game_state::GameState,
+    id: ObjectId,
+    events: &mut Vec<GameEvent>,
+) -> Result<(), EngineError> {
+    if !state.objects.get(&id).is_some_and(|obj| obj.tapped) {
+        return Err(EngineError::ActionNotAllowed(
+            "Only a tapped permanent can be untapped to pay a cost".to_string(),
+        ));
+    }
+    if crate::game::object_state::resolve_and_apply_object_edit(
+        state,
+        id,
+        crate::types::resolved_commands::ResolvedObjectStatus::Tapped,
+        false,
+    )
+    .map_err(|error| EngineError::InvalidAction(error.to_string()))?
+    {
+        events.push(GameEvent::PermanentUntapped { object_id: id });
+    }
+    Ok(())
+}
+
+/// CR 701.26a + CR 701.26b: Tap or untap `id` to pay a cost whose direction is
+/// `direction` (`AbilityCost::TapCreatures`), through the single authority for
+/// each direction.
+pub(crate) fn set_tap_state_for_cost(
+    state: &mut crate::types::game_state::GameState,
+    id: ObjectId,
+    direction: crate::types::ability::TapStateChange,
+    events: &mut Vec<GameEvent>,
+) -> Result<(), EngineError> {
+    match direction {
+        crate::types::ability::TapStateChange::Tap => tap_permanent_for_cost(state, id, events),
+        crate::types::ability::TapStateChange::Untap => {
+            untap_permanent_for_cost(state, id, events)
+        }
+    }
+}
+
 /// CR 602.5b: If an activated ability has a restriction on its use (e.g., "Activate only once
 /// each turn"), the restriction continues to apply even if its controller changes.
 ///

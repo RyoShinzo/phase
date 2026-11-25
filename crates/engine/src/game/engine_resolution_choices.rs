@@ -11434,7 +11434,7 @@ pub(crate) fn paused_payment_x_announcement(
     }
     match waiting_for {
         WaitingFor::PayCost {
-            kind: PayCostKind::TapCreatures { mode },
+            kind: PayCostKind::TapCreatures { mode, .. },
             resume: CostResume::Resolution,
             ..
         } => match mode {

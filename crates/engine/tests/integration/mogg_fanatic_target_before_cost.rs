@@ -164,6 +164,7 @@ fn targeted_activation_surfaces_tap_creatures_cost_after_target_selection() {
             .cost(AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::count(1),
                 filter: TargetFilter::Typed(TypedFilter::creature()),
+                direction: engine::types::ability::TapStateChange::Tap,
             }),
         )
         .id();
@@ -180,7 +181,8 @@ fn targeted_activation_surfaces_tap_creatures_cost_after_target_selection() {
     assert_eq!(
         kind,
         PayCostKind::TapCreatures {
-            mode: TapCreaturesSelectionMode::Fixed
+            mode: TapCreaturesSelectionMode::Fixed,
+            direction: engine::types::ability::TapStateChange::Tap,
         }
     );
     assert!(choices.contains(&payment));

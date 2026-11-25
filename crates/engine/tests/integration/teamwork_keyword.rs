@@ -270,6 +270,7 @@ fn team_tactics_with_teamwork_grants_double_strike_and_trample() {
             kind:
                 PayCostKind::TapCreatures {
                     mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                    direction: engine::types::ability::TapStateChange::Tap,
                 },
             choices,
             ..

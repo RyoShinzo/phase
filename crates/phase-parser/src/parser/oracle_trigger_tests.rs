@@ -19840,6 +19840,7 @@ fn trigger_unless_you_tap_untapped_creature() {
         AbilityCost::TapCreatures {
             requirement,
             filter,
+            direction: crate::types::ability::TapStateChange::Tap,
         } => {
             assert_eq!(requirement.fixed_count(), Some(1));
             let is_creature = match filter {
@@ -19879,6 +19880,7 @@ fn trigger_unless_you_tap_untapped_permanent() {
         AbilityCost::TapCreatures {
             requirement,
             filter: _,
+            direction: crate::types::ability::TapStateChange::Tap,
         } => {
             assert_eq!(requirement.fixed_count(), Some(1));
         }
@@ -19902,6 +19904,7 @@ fn trigger_unless_you_tap_two_untapped_creatures() {
         AbilityCost::TapCreatures {
             requirement,
             filter,
+            direction: crate::types::ability::TapStateChange::Tap,
         } => {
             assert_eq!(requirement.fixed_count(), Some(2));
             let has_creature = match filter {
@@ -23472,6 +23475,7 @@ fn kitt_kanto_reflexive_tap_two_cost_targets_active_player_creature() {
                 AbilityCost::TapCreatures {
                     requirement,
                     filter,
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
             payer,
             ..

@@ -5149,30 +5149,34 @@ fn commit_deferred_spell_taps(
         // CR 601.2h: the selection must still pay its cost now: each creature
         // still matches the cost's filter, untapped under the payer's control,
         // and an aggregate total still meets its threshold (CR 208.1).
-        let still_payable = super::casting::find_tap_creatures_cost(&tap.cost).is_some_and(
-            |(requirement, filter)| {
-                let eligible = super::casting::find_eligible_tap_creatures_for_cost(
-                    state,
-                    player,
-                    pending.object_id,
-                    pending.ability.context.granting_object,
-                    &tap.cost,
-                    filter,
-                );
-                let n = tap.object_ids.len();
-                let mode = requirement.selection_mode();
-                validate_tap_creatures_selection(state, n, n, mode, &eligible, &tap.object_ids)
-                    .is_ok()
-            },
+        let Some((requirement, filter, direction)) =
+            super::casting::find_tap_creatures_cost(&tap.cost)
+        else {
+            return Err(EngineError::ActionNotAllowed(
+                "The creatures selected to pay this spell's tap cost can no longer pay it"
+                    .to_string(),
+            ));
+        };
+        let eligible = super::casting::find_eligible_tap_creatures_for_cost(
+            state,
+            player,
+            pending.object_id,
+            pending.ability.context.granting_object,
+            &tap.cost,
+            filter,
+            direction,
         );
-        if !still_payable {
+        let n = tap.object_ids.len();
+        let mode = requirement.selection_mode();
+        if validate_tap_creatures_selection(state, n, n, mode, &eligible, &tap.object_ids).is_err()
+        {
             return Err(EngineError::ActionNotAllowed(
                 "The creatures selected to pay this spell's tap cost can no longer pay it"
                     .to_string(),
             ));
         }
         for id in tap.object_ids {
-            super::restrictions::tap_permanent_for_cost(state, id, events)?;
+            super::restrictions::set_tap_state_for_cost(state, id, direction, events)?;
         }
     }
     Ok(())
@@ -7386,15 +7390,17 @@ pub(crate) fn pay_tap_creatures_selection(
     min_count: usize,
     count: usize,
     mode: TapCreaturesSelectionMode,
+    direction: crate::types::ability::TapStateChange,
     legal_creatures: &[ObjectId],
     chosen: &[ObjectId],
     events: &mut Vec<GameEvent>,
 ) -> Result<(), EngineError> {
     validate_tap_creatures_selection(state, min_count, count, mode, legal_creatures, chosen)?;
     // CR 701.26a + CR 508.1f: Tap each chosen creature, routed through the single
-    // authority so a "can't become tapped" creature is refused.
+    // authority so a "can't become tapped" creature is refused. CR 701.26b: an
+    // untap cost untaps each one instead.
     for &id in chosen {
-        crate::game::restrictions::tap_permanent_for_cost(state, id, events)?;
+        crate::game::restrictions::set_tap_state_for_cost(state, id, direction, events)?;
     }
     Ok(())
 }
@@ -7497,6 +7503,7 @@ pub(crate) fn handle_tap_creatures_for_spell_cost(
     min_count: usize,
     count: usize,
     mode: TapCreaturesSelectionMode,
+    direction: crate::types::ability::TapStateChange,
     legal_creatures: &[ObjectId],
     chosen: &[ObjectId],
     paid_cost: Option<SpellCostPayment<'_>>,
@@ -7521,6 +7528,7 @@ pub(crate) fn handle_tap_creatures_for_spell_cost(
             min_count,
             count,
             mode,
+            direction,
             legal_creatures,
             chosen,
             events,
@@ -8939,7 +8947,7 @@ fn surface_next_interactive_activation_cost_leg(
         }));
     }
 
-    if let Some((requirement, filter)) = super::casting::find_tap_creatures_cost(cost) {
+    if let Some((requirement, filter, direction)) = super::casting::find_tap_creatures_cost(cost) {
         // CR 107.3a: compute the selection semantics once from the
         // requirement and carry them verbatim to the completion handler.
         let mode = requirement.selection_mode();
@@ -8955,6 +8963,7 @@ fn surface_next_interactive_activation_cost_leg(
             granting_object,
             cost,
             filter,
+            direction,
         );
         // CR 107.3a + CR 601.2b: mirror the adjacent Sacrifice arm above —
         // a "Tap X untapped [type] you control" cost uses the u32::MAX
@@ -8976,7 +8985,7 @@ fn surface_next_interactive_activation_cost_leg(
         );
         return Ok(Some(WaitingFor::PayCost {
             player,
-            kind: PayCostKind::TapCreatures { mode },
+            kind: PayCostKind::TapCreatures { mode, direction },
             choices: eligible,
             count: max_count,
             min_count,
@@ -13214,11 +13223,11 @@ fn pay_additional_cost_with_source(
         AbilityCost::TapCreatures {
             ref requirement,
             ref filter,
+            direction,
         } => {
-            // CR 601.2b: Tap untapped creatures matching filter as a cost. The
-            // source is eligible unless a {T} cost is also present in the
-            // activation cost (in which case the source was already tapped, so
-            // !obj.tapped naturally excludes it).
+            // CR 601.2b: Tap untapped creatures matching filter as a cost
+            // (CR 701.26b: or untap tapped ones, by `direction`). The source is
+            // eligible unless a {T} cost is also present in the activation cost.
             let eligible = super::casting::find_eligible_tap_creatures_for_cost(
                 state,
                 player,
@@ -13226,6 +13235,7 @@ fn pay_additional_cost_with_source(
                 pending.ability.context.granting_object,
                 &cost,
                 filter,
+                direction,
             );
             // CR 601.2h: creatures already selected for another of this
             // spell's deferred tap costs are held for that payment. Before
@@ -13257,7 +13267,7 @@ fn pay_additional_cost_with_source(
                             "Not enough eligible creatures to tap".into(),
                         ));
                     }
-                    (PayCostKind::TapCreatures { mode }, max_count, min_count)
+                    (PayCostKind::TapCreatures { mode, direction }, max_count, min_count)
                 }
                 crate::types::ability::TapCreaturesRequirement::Aggregate {
                     stat,
@@ -13286,7 +13296,7 @@ fn pay_additional_cost_with_source(
                     // — any subset satisfying the power threshold is a complete
                     // payment — which is precisely why `min_count == 0` is not a
                     // usable X signal downstream; `mode` carries that distinction.
-                    (PayCostKind::TapCreatures { mode }, eligible.len(), 0)
+                    (PayCostKind::TapCreatures { mode, direction }, eligible.len(), 0)
                 }
             };
             // CR 601.2h: a deferred selection keeps the cost it pays, so the
@@ -14064,6 +14074,7 @@ pub(super) fn effective_conspire_additional_cost(
             cost: AbilityCost::TapCreatures {
                 requirement: crate::types::ability::TapCreaturesRequirement::count(2),
                 filter: crate::database::synthesis::conspire_tap_filter(),
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
         })
@@ -14114,6 +14125,7 @@ pub(super) fn effective_teamwork_additional_cost_instances(
                                 n as i32,
                             ),
                         filter: crate::database::synthesis::teamwork_tap_filter(),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                     repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
                 },
@@ -23540,6 +23552,7 @@ mod tests {
             AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::Count { count: u32::MAX },
                 filter: TargetFilter::Typed(TypedFilter::creature()),
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             AbilityCost::PayLife {
                 amount: x_sentinel.clone(),
@@ -26410,6 +26423,7 @@ mod tests {
                         AbilityCost::TapCreatures {
                             requirement,
                             filter,
+                            direction: crate::types::ability::TapStateChange::Tap,
                         },
                     repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
                 } => {
@@ -35353,6 +35367,7 @@ its replicate cost was paid.)\nDraw a card.";
                 AbilityCost::TapCreatures {
                     requirement: TapCreaturesRequirement::Count { count: 1 },
                     filter: creature.clone(),
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
             ),
             (
@@ -35869,6 +35884,7 @@ its replicate cost was paid.)\nDraw a card.";
                     AbilityCost::TapCreatures {
                         requirement: TapCreaturesRequirement::Count { count: 1 },
                         filter: creature,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 ],
             }

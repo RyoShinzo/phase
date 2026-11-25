@@ -174,6 +174,7 @@ fn find_eligible_tap_creatures_targets(
     player: PlayerId,
     ability: &ResolvedAbility,
     filter: &TargetFilter,
+    direction: crate::types::ability::TapStateChange,
 ) -> Vec<ObjectId> {
     let ctx = FilterContext::from_ability(ability);
     state
@@ -182,8 +183,10 @@ fn find_eligible_tap_creatures_targets(
         .copied()
         .filter(|id| {
             state.objects.get(id).is_some_and(|obj| {
+                // CR 701.26a + CR 701.26b: only untapped permanents can be
+                // tapped, and only tapped ones untapped.
                 obj.controller == player
-                    && !obj.tapped
+                    && direction.can_change(obj.tapped)
                     && super::filter::matches_target_filter(state, obj.id, filter, &ctx)
             })
         })
@@ -278,6 +281,7 @@ fn pay_collective_tap_creatures_cost(
         player: hero,
         kind: PayCostKind::TapCreatures {
             mode: crate::types::ability::TapCreaturesSelectionMode::VariableX,
+            direction: crate::types::ability::TapStateChange::Tap,
         },
         count: choices.len(),
         min_count: 0,
@@ -330,6 +334,7 @@ pub(crate) fn handle_team_tap_payment_selection(
         kind,
         PayCostKind::TapCreatures {
             mode: crate::types::ability::TapCreaturesSelectionMode::VariableX,
+            direction: crate::types::ability::TapStateChange::Tap,
         }
     ) {
         return Err(EngineError::InvalidAction(
@@ -374,6 +379,7 @@ pub(crate) fn handle_team_tap_payment_selection(
             player: next_hero,
             kind: PayCostKind::TapCreatures {
                 mode: crate::types::ability::TapCreaturesSelectionMode::VariableX,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             count: choices.len(),
             min_count: 0,
@@ -461,6 +467,7 @@ pub(crate) fn reconcile_team_tap_payment_after_departure(
         kind:
             PayCostKind::TapCreatures {
                 mode: crate::types::ability::TapCreaturesSelectionMode::VariableX,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
         resume:
             CostResume::TeamTapPayment {
@@ -529,6 +536,7 @@ pub(crate) fn reconcile_team_tap_payment_after_departure(
             player: next_hero,
             kind: PayCostKind::TapCreatures {
                 mode: crate::types::ability::TapCreaturesSelectionMode::VariableX,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             count: choices.len(),
             min_count: 0,
@@ -1595,17 +1603,7 @@ fn pay_ability_cost_inner(
                     "Cannot pay untap cost: permanent is already untapped".to_string(),
                 ));
             }
-            let untapped = crate::game::object_state::resolve_and_apply_object_edit(
-                state,
-                source_id,
-                crate::types::resolved_commands::ResolvedObjectStatus::Tapped,
-                false,
-            )
-            .map_err(|error| EngineError::InvalidAction(error.to_string()))?;
-            debug_assert!(untapped, "preflighted untap cost must transition status");
-            events.push(GameEvent::PermanentUntapped {
-                object_id: source_id,
-            });
+            crate::game::restrictions::untap_permanent_for_cost(state, source_id, events)?;
         }
         AbilityCost::Mana { cost } => match scope {
             // CR 601.2g: Activation pays through the mana-ability window. CR
@@ -2162,11 +2160,14 @@ fn pay_ability_cost_inner(
         AbilityCost::TapCreatures {
             requirement,
             filter,
+            direction,
         } if matches!(scope, PaymentScope::Resolution { .. }) => {
             let PaymentScope::Resolution { ability, .. } = scope else {
                 unreachable!("guarded above");
             };
-            let eligible = find_eligible_tap_creatures_targets(state, player, ability, filter);
+            let direction = *direction;
+            let eligible =
+                find_eligible_tap_creatures_targets(state, player, ability, filter, direction);
             // CR 107.3a + CR 118.3 + CR 601.2h: Resolution-time TapCreatures costs
             // use the same `u32::MAX` X-sentinel encoding as activation-time costs,
             // so the payable range must come from the single bounds authority
@@ -2190,7 +2191,7 @@ fn pay_ability_cost_inner(
                     if eligible.len() < min_count {
                         return Ok(payment_failed("not enough creatures to tap"));
                     }
-                    (PayCostKind::TapCreatures { mode }, max_count, min_count)
+                    (PayCostKind::TapCreatures { mode, direction }, max_count, min_count)
                 }
                 crate::types::ability::TapCreaturesRequirement::Aggregate {
                     stat,
@@ -2207,7 +2208,8 @@ fn pay_ability_cost_inner(
                     // team — but only when the team actually holds several
                     // seats. A one-seat team pays through the ordinary single
                     // prompt below, so solo formats never observe the session.
-                    if *collective {
+                    // The team session taps (Crew-like costs); no untap cost is collective.
+                    if *collective && direction.is_tap() {
                         let members = super::topology::team_members(state, player);
                         if members.len() > 1 {
                             return pay_collective_tap_creatures_cost(
@@ -2229,7 +2231,7 @@ fn pay_ability_cost_inner(
                     // stays 0. `pay_tap_creatures_selection`'s `Aggregate(_)`
                     // branch validates the comparator instead of the
                     // `[min_count, count]` range.
-                    (PayCostKind::TapCreatures { mode }, eligible.len(), 0)
+                    (PayCostKind::TapCreatures { mode, direction }, eligible.len(), 0)
                 }
             };
             if count == 0 {
@@ -4350,20 +4352,25 @@ fn can_pay_resolution(
         AbilityCost::TapCreatures {
             requirement,
             filter,
+            direction,
         } => {
             // CR 805.6: a collective cost is payable when the TEAM-wide
             // eligible set meets the threshold — the same population the
             // payment path gates, so the optional-feasibility probe and the
-            // payment gate can never disagree.
-            let collective = matches!(
-                requirement,
-                crate::types::ability::TapCreaturesRequirement::Aggregate { collective: true, .. }
-            );
+            // payment gate can never disagree. No untap cost is collective.
+            let collective = direction.is_tap()
+                && matches!(
+                    requirement,
+                    crate::types::ability::TapCreaturesRequirement::Aggregate {
+                        collective: true,
+                        ..
+                    }
+                );
             let eligible = if collective {
                 let members = super::topology::team_members(state, payer);
                 find_eligible_team_tap_creatures_targets(state, &members, ability, filter)
             } else {
-                find_eligible_tap_creatures_targets(state, payer, ability, filter)
+                find_eligible_tap_creatures_targets(state, payer, ability, filter, *direction)
             };
             match requirement {
                 crate::types::ability::TapCreaturesRequirement::Count { count } => {
@@ -5067,6 +5074,7 @@ mod tests {
             AbilityCost::TapCreatures { .. } => AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::count(1),
                 filter: TargetFilter::Any,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             AbilityCost::RemoveCounter { .. } => AbilityCost::RemoveCounter {
                 count: 1,
@@ -5191,6 +5199,7 @@ mod tests {
             AbilityCost::TapCreatures {
                 requirement: TapCreaturesRequirement::count(0),
                 filter: TargetFilter::Any,
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             AbilityCost::RemoveCounter {
                 count: 0,
@@ -5671,6 +5680,7 @@ mod tests {
         let cost = AbilityCost::TapCreatures {
             requirement: TapCreaturesRequirement::count(2),
             filter: TargetFilter::Typed(TypedFilter::creature()),
+            direction: crate::types::ability::TapStateChange::Tap,
         };
         // Only the source creature is present (1 < 2).
         assert!(
@@ -7141,6 +7151,7 @@ mod tests {
         let cost = AbilityCost::TapCreatures {
             requirement,
             filter: TargetFilter::Typed(TypedFilter::creature()),
+            direction: crate::types::ability::TapStateChange::Tap,
         };
         pay_ability_cost_inner(
             state,
@@ -7231,6 +7242,7 @@ mod tests {
             min_count,
             count,
             TapCreaturesSelectionMode::Fixed,
+            crate::types::ability::TapStateChange::Tap,
             &choices,
             &partial,
             &mut Vec::new(),
@@ -7281,6 +7293,7 @@ mod tests {
             min_count,
             count,
             TapCreaturesSelectionMode::Fixed,
+            crate::types::ability::TapStateChange::Tap,
             &choices,
             &choices,
             &mut Vec::new(),
@@ -7325,6 +7338,7 @@ mod tests {
             min_count,
             count,
             TapCreaturesSelectionMode::Fixed,
+            crate::types::ability::TapStateChange::Tap,
             &choices,
             &[],
             &mut Vec::new(),
@@ -7354,6 +7368,7 @@ mod tests {
             min_count,
             count,
             TapCreaturesSelectionMode::Fixed,
+            crate::types::ability::TapStateChange::Tap,
             &choices,
             &choices[..1],
             &mut Vec::new(),
@@ -7394,6 +7409,7 @@ mod tests {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 count,
                 min_count,
@@ -7437,7 +7453,7 @@ mod tests {
         let (min_count, count, choices) = emitted_tap_cost_window(&scenario.state);
         let mode = match &scenario.state.waiting_for {
             WaitingFor::PayCost {
-                kind: PayCostKind::TapCreatures { mode },
+                kind: PayCostKind::TapCreatures { mode, direction: crate::types::ability::TapStateChange::Tap, },
                 ..
             } => *mode,
             other => panic!("expected a TapCreatures PayCost prompt, got {other:?}"),
@@ -7477,6 +7493,7 @@ mod tests {
             min_count,
             count,
             mode,
+            crate::types::ability::TapStateChange::Tap,
             &choices,
             &duplicated,
             &mut Vec::new(),
@@ -7549,6 +7566,7 @@ mod tests {
         let x_sentinel = AbilityCost::TapCreatures {
             requirement: TapCreaturesRequirement::Count { count: u32::MAX },
             filter: TargetFilter::Typed(TypedFilter::creature()),
+            direction: crate::types::ability::TapStateChange::Tap,
         };
 
         // Positive reach guard: prove the eligible set really is empty, so the
@@ -7559,6 +7577,7 @@ mod tests {
                 P0,
                 &ability,
                 &TargetFilter::Typed(TypedFilter::creature()),
+                crate::types::ability::TapStateChange::Tap,
             )
             .is_empty(),
             "reach guard: the fixture must have zero eligible creatures"
@@ -7579,6 +7598,7 @@ mod tests {
                 &AbilityCost::TapCreatures {
                     requirement: TapCreaturesRequirement::count(1),
                     filter: TargetFilter::Typed(TypedFilter::creature()),
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
                 &ability,
             ),

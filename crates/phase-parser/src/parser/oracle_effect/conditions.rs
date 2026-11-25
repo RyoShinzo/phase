@@ -4796,6 +4796,7 @@ fn cost_category_binds_cost_paid_object(category: CostCategory) -> bool {
         | CostCategory::Discards
         | CostCategory::ExilesCards
         | CostCategory::TapsOtherCreatures
+        | CostCategory::UntapsOtherCreatures
         | CostCategory::RemovesCounters
         | CostCategory::ReturnsToHand
         | CostCategory::Unattaches

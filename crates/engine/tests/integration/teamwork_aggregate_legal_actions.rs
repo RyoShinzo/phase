@@ -76,6 +76,7 @@ fn cast_and_reach_tap_paycost(runner: &mut GameRunner, spell: ObjectId) -> i32 {
                 kind:
                     PayCostKind::TapCreatures {
                         mode: TapCreaturesSelectionMode::Aggregate(aggregate),
+                        direction: engine::types::ability::TapStateChange::Tap,
                     },
                 ..
             } => return aggregate.value,

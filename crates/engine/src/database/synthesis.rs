@@ -2900,6 +2900,7 @@ pub fn synthesize_conspire(face: &mut CardFace) {
             cost: AbilityCost::TapCreatures {
                 requirement: crate::types::ability::TapCreaturesRequirement::count(2),
                 filter: conspire_tap_filter(),
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
         });
@@ -3002,6 +3003,7 @@ pub fn synthesize_teamwork(face: &mut CardFace) {
                     n as i32,
                 ),
                 filter: teamwork_tap_filter(),
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
         });
@@ -20836,6 +20838,7 @@ mod conspire_synthesis_tests {
                     AbilityCost::TapCreatures {
                         requirement,
                         filter,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                 repeatability: crate::types::ability::AdditionalCostRepeatability::Once,
             } => {

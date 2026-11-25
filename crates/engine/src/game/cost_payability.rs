@@ -1410,6 +1410,7 @@ impl AbilityCostPayability for AbilityCost {
                     AbilityCost::TapCreatures {
                         requirement,
                         filter,
+                        direction,
                     } if has_tap => has_enough_tap_creatures(
                         state,
                         player,
@@ -1417,6 +1418,7 @@ impl AbilityCostPayability for AbilityCost {
                         granter,
                         requirement,
                         filter,
+                        *direction,
                         true,
                         purpose,
                     ),
@@ -1496,6 +1498,7 @@ impl AbilityCostPayability for AbilityCost {
                     AbilityCost::TapCreatures {
                         requirement,
                         filter,
+                        direction,
                     } if has_tap => has_enough_tap_creatures(
                         state,
                         player,
@@ -1503,6 +1506,7 @@ impl AbilityCostPayability for AbilityCost {
                         None,
                         requirement,
                         filter,
+                        *direction,
                         true,
                         ManaActivationPurpose::Planning,
                     ),
@@ -1773,6 +1777,7 @@ impl AbilityCostLegPayability for AbilityCost {
             AbilityCost::TapCreatures {
                 requirement,
                 filter,
+                direction,
             } => has_enough_tap_creatures(
                 state,
                 player,
@@ -1780,6 +1785,7 @@ impl AbilityCostLegPayability for AbilityCost {
                 granting_object,
                 requirement,
                 filter,
+                *direction,
                 false,
                 purpose,
             ),
@@ -1985,6 +1991,7 @@ impl AbilityCostLegPayability for AbilityCost {
                     AbilityCost::TapCreatures {
                         requirement,
                         filter,
+                        direction,
                     } if has_tap => has_enough_tap_creatures(
                         state,
                         player,
@@ -1992,6 +1999,7 @@ impl AbilityCostLegPayability for AbilityCost {
                         granting_object,
                         requirement,
                         filter,
+                        *direction,
                         true,
                         purpose,
                     ),
@@ -2209,6 +2217,7 @@ fn has_enough_tap_creatures(
     granting_object: Option<ObjectIncarnationRef>,
     requirement: &TapCreaturesRequirement,
     filter: &TargetFilter,
+    direction: crate::types::ability::TapStateChange,
     exclude_source: bool,
     purpose: ManaActivationPurpose,
 ) -> bool {
@@ -2218,6 +2227,7 @@ fn has_enough_tap_creatures(
         source,
         granting_object,
         filter,
+        direction,
         exclude_source,
         purpose,
     );
@@ -2252,13 +2262,16 @@ fn has_enough_tap_creatures(
 }
 
 /// CR 601.2b: the untapped, filter-matching permanents `player` controls that a
-/// `TapCreatures` cost can tap. "You" in a cost is the cost's payer (CR 109.5).
+/// `TapCreatures` cost can tap, or for an untap cost the tapped ones it can
+/// untap (CR 701.26b). "You" in a cost is the cost's payer (CR 109.5).
+#[allow(clippy::too_many_arguments)]
 fn tap_creature_candidates<'a>(
     state: &'a GameState,
     player: PlayerId,
     source: ObjectId,
     granting_object: Option<ObjectIncarnationRef>,
     filter: &'a TargetFilter,
+    direction: crate::types::ability::TapStateChange,
     exclude_source: bool,
     purpose: ManaActivationPurpose,
 ) -> impl Iterator<Item = ObjectId> + 'a {
@@ -2272,7 +2285,7 @@ fn tap_creature_candidates<'a>(
         }
         state.objects.get(&id).is_some_and(|o| {
             o.controller == player
-                && !o.tapped
+                && direction.can_change(o.tapped)
                 && !purpose.excludes_held(state, id)
                 && matches_target_filter(state, id, filter, &ctx)
         })
@@ -2303,9 +2316,13 @@ pub(super) fn reservable_battlefield_legs(
 ) -> Vec<ReservableLeg> {
     let mut reservable = Vec::new();
     for leg in legs {
+        // CR 601.2g: an untap leg needs its creatures tapped, which tapping
+        // them for mana first only helps (Halo Fountain's ruling), so only a
+        // tap leg holds its creatures beside the mana payment.
         if let AbilityCost::TapCreatures {
             requirement: TapCreaturesRequirement::Count { count },
             filter,
+            direction: crate::types::ability::TapStateChange::Tap,
         } = leg
         {
             if *count != u32::MAX {
@@ -2318,6 +2335,7 @@ pub(super) fn reservable_battlefield_legs(
                         source,
                         None,
                         filter,
+                        crate::types::ability::TapStateChange::Tap,
                         false,
                         ManaActivationPurpose::Planning,
                     )
@@ -2978,6 +2996,7 @@ mod tests {
         let cost = AbilityCost::TapCreatures {
             requirement: TapCreaturesRequirement::count(3),
             filter: elf_filter(),
+            direction: crate::types::ability::TapStateChange::Tap,
         };
         // Place exactly 3 Elves controlled by P0 — including the source.
         let src = scenario.add_creature(P0, "Morcant", 4, 4).id();
@@ -3012,6 +3031,7 @@ mod tests {
                 AbilityCost::TapCreatures {
                     requirement: TapCreaturesRequirement::count(2),
                     filter: elf_filter(),
+                    direction: crate::types::ability::TapStateChange::Tap,
                 },
             ],
         };

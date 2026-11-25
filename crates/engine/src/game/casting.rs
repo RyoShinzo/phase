@@ -28493,14 +28493,21 @@ pub(super) fn find_craft_materials_cost(
     }
 }
 
+/// The first `TapCreatures` leg of `cost`: its requirement, its filter and its
+/// tap/untap direction (CR 701.26a + CR 701.26b).
 pub(super) fn find_tap_creatures_cost(
     cost: &AbilityCost,
-) -> Option<(&TapCreaturesRequirement, &TargetFilter)> {
+) -> Option<(
+    &TapCreaturesRequirement,
+    &TargetFilter,
+    crate::types::ability::TapStateChange,
+)> {
     match cost {
         AbilityCost::TapCreatures {
             requirement,
             filter,
-        } => Some((requirement, filter)),
+            direction,
+        } => Some((requirement, filter, *direction)),
         AbilityCost::Composite { costs } => costs.iter().find_map(find_tap_creatures_cost),
         _ => None,
     }
@@ -29275,11 +29282,14 @@ pub(super) fn find_eligible_tap_creatures_for_cost(
     granting_object: Option<ObjectIncarnationRef>,
     cost: &AbilityCost,
     filter: &TargetFilter,
+    direction: crate::types::ability::TapStateChange,
 ) -> Vec<ObjectId> {
     // "You" in a cost is the cost's payer (CR 109.5 when paying for a spell or an
     // activated ability).
     let ctx = super::filter::FilterContext::from_source_with_controller(source, player)
         .with_granting_object(granting_object);
+    // CR 601.2h: a source committed to a {T} cost isn't offered to the same
+    // cost's tap or untap leg as well.
     let exclude_source = requires_untapped(cost);
     state
         .battlefield
@@ -29290,8 +29300,10 @@ pub(super) fn find_eligible_tap_creatures_for_cost(
                 return false;
             }
             state.objects.get(&id).is_some_and(|obj| {
+                // CR 701.26a + CR 701.26b: only untapped permanents can be
+                // tapped, and only tapped ones untapped.
                 obj.controller == player
-                    && !obj.tapped
+                    && direction.can_change(obj.tapped)
                     && super::filter::matches_target_filter(state, id, filter, &ctx)
             })
         })
@@ -33588,7 +33600,7 @@ fn activate_with_cost_carrier(
             // Deliberately left behaviorally as-is: its bounds are *not* corrected
             // for the CR 107.3a X-sentinel, because an unreachable branch cannot
             // carry a non-vacuous regression test.
-            if let Some((requirement, filter)) = find_tap_creatures_cost(cost) {
+            if let Some((requirement, filter, direction)) = find_tap_creatures_cost(cost) {
                 // CR 602.1a: Activated-ability tap costs are fixed-count today
                 // (Convoke-style). The aggregate "total power N" form is reserved for
                 // Crew/Saddle/Teamwork, which are not dispatched through this path.
@@ -33605,6 +33617,7 @@ fn activate_with_cost_carrier(
                     ability_def.granting_object,
                     cost,
                     filter,
+                    direction,
                 );
                 if eligible.len() < count as usize {
                     return Err(EngineError::ActionNotAllowed(
@@ -33623,7 +33636,7 @@ fn activate_with_cost_carrier(
                 pending_tap.activation_cost = Some(cost.clone());
                 return Ok(WaitingFor::PayCost {
                     player,
-                    kind: PayCostKind::TapCreatures { mode },
+                    kind: PayCostKind::TapCreatures { mode, direction },
                     choices: eligible,
                     count: count as usize,
                     min_count: 0,

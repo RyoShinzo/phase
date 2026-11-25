@@ -12298,14 +12298,35 @@ pub enum ReassembleControlMode {
 
 /// CR 701.26a (tap) / CR 701.26b (untap): Direction of an `Effect::SetTapState`.
 /// Parameterizes the tap/untap axis so a single effect variant covers both
-/// keyword actions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// keyword actions. It is also the direction of an
+/// `AbilityCost::TapCreatures` cost ("tap two untapped creatures you control" /
+/// "untap a tapped creature you control").
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum TapStateChange {
     /// CR 701.26a: Turn the permanent sideways (tap it).
+    #[default]
     Tap,
     /// CR 701.26b: Rotate the permanent upright (untap it).
     Untap,
+}
+
+impl TapStateChange {
+    /// CR 701.26a: only untapped permanents can be tapped. CR 701.26b: only
+    /// tapped permanents can be untapped. Whether a permanent whose tapped
+    /// status is `tapped` can change in this direction.
+    pub fn can_change(self, tapped: bool) -> bool {
+        match self {
+            Self::Tap => !tapped,
+            Self::Untap => tapped,
+        }
+    }
+
+    /// Serde helper: the tap direction is the default and is not serialized,
+    /// so every tap cost keeps its wire and card-data shape.
+    pub fn is_tap(&self) -> bool {
+        matches!(self, Self::Tap)
+    }
 }
 
 /// CR 709.5f-g: Operation an [`Effect::SetRoomDoorLock`] performs on a door
@@ -20246,6 +20267,13 @@ pub enum AbilityCost {
     /// constraint (Crew CR 702.122a / Saddle CR 702.171a / Teamwork). Legacy JSON
     /// that carries a bare `count` field (no `requirement` discriminant)
     /// deserializes into `Count { count }` via `deserialize_tap_creatures_requirement`.
+    ///
+    /// CR 701.26a + CR 701.26b: `direction` is the tap/untap axis. `Tap` is
+    /// "tap N untapped [permanents] you control"; `Untap` is "untap N tapped
+    /// [permanents] you control" (Halo Fountain, Crackleburr), the same choice of
+    /// permanents paid by untapping them. The filter carries neither "untapped"
+    /// nor "tapped": the direction is the single authority for which tapped
+    /// status a permanent needs to pay.
     TapCreatures {
         #[serde(
             default,
@@ -20254,6 +20282,8 @@ pub enum AbilityCost {
         )]
         requirement: TapCreaturesRequirement,
         filter: TargetFilter,
+        #[serde(default, skip_serializing_if = "TapStateChange::is_tap")]
+        direction: TapStateChange,
     },
     /// CR 122.1 + CR 601.2h: Remove `count` counters matching `counter_type`
     /// as an additional cost. `CounterMatch::Any` is the untyped "remove a
@@ -20617,6 +20647,9 @@ pub enum CostCategory {
     Discards,
     ExilesCards,
     TapsOtherCreatures,
+    /// CR 701.26b: untaps other permanents it chooses ("untap a tapped creature
+    /// you control", Halo Fountain).
+    UntapsOtherCreatures,
     RemovesCounters,
     PaysEnergy,
     PaysSpeed,
@@ -21291,7 +21324,10 @@ impl AbilityCost {
             AbilityCost::CollectEvidence { .. } => vec![CostCategory::ExilesCards],
             // CR 117.1: `ExileWithAggregate` exiles other cards from a zone.
             AbilityCost::ExileWithAggregate { .. } => vec![CostCategory::ExilesCards],
-            AbilityCost::TapCreatures { .. } => vec![CostCategory::TapsOtherCreatures],
+            AbilityCost::TapCreatures { direction, .. } => match direction {
+                TapStateChange::Tap => vec![CostCategory::TapsOtherCreatures],
+                TapStateChange::Untap => vec![CostCategory::UntapsOtherCreatures],
+            },
             AbilityCost::RemoveCounter { .. } => vec![CostCategory::RemovesCounters],
             AbilityCost::PayEnergy { .. } => vec![CostCategory::PaysEnergy],
             AbilityCost::PaySpeed { .. } => vec![CostCategory::PaysSpeed],
@@ -50563,6 +50599,7 @@ mod tests {
                 filter: TypedFilter::creature()
                     .controller(ControllerRef::You)
                     .into(),
+                direction: crate::types::ability::TapStateChange::Tap,
             },
             AbilityCost::Sacrifice(SacrificeCost::count(
                 TypedFilter::new(TypeFilter::Artifact).into(),
@@ -52081,6 +52118,7 @@ mod tests {
                     AbilityCost::TapCreatures {
                         requirement: TapCreaturesRequirement::count(2),
                         filter: TargetFilter::Any,
+                        direction: crate::types::ability::TapStateChange::Tap,
                     },
                     vec![CostCategory::TapsOtherCreatures],
                 ),
