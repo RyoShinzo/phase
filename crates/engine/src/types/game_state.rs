@@ -30962,6 +30962,14 @@ declare_game_state! {
     /// CR 403.3: Battlefield entry snapshots this turn, enabling data-driven ETB queries.
     #[serde(default, skip_serializing_if = "im::Vector::is_empty")]
     pub battlefield_entries_this_turn: im::Vector<BattlefieldEntryRecord>,
+    /// CR 403.3 + CR 608.2i: The previous turn's battlefield entry snapshots,
+    /// latched from `battlefield_entries_this_turn` at the turn boundary
+    /// (`turns.rs::begin_next_turn`) before that ledger is cleared. Read by
+    /// `QuantityRef::BattlefieldEntriesThisTurn { window: LastTurn }` ("if you
+    /// had another creature enter the battlefield under your control last
+    /// turn", Ephara, God of the Polis).
+    #[serde(default, skip_serializing_if = "im::Vector::is_empty")]
+    pub battlefield_entries_last_turn: im::Vector<BattlefieldEntryRecord>,
     /// CR 120.1: Damage records this turn for "was dealt damage by" condition queries.
     /// Backed by `im::Vector` so `GameState::clone()` structurally shares the
     /// `DamageRecord` snapshots (each holds a `String` + several `Vec`s) instead
@@ -39035,6 +39043,18 @@ impl GameState {
         })
     }
 
+    /// CR 403.3 + CR 608.2i: the battlefield-entry snapshots of `window`: the
+    /// turn in progress, or the previous turn as latched at the turn boundary.
+    pub(crate) fn battlefield_entries(
+        &self,
+        window: crate::types::ability::TurnWindow,
+    ) -> &im::Vector<BattlefieldEntryRecord> {
+        match window {
+            crate::types::ability::TurnWindow::ThisTurn => &self.battlefield_entries_this_turn,
+            crate::types::ability::TurnWindow::LastTurn => &self.battlefield_entries_last_turn,
+        }
+    }
+
     /// The battlefield-entry ledger is appended in the same order as the
     /// battlefield subset of the zone-change ledger.
     pub(crate) fn battlefield_entry_zone_changes(&self) -> impl Iterator<Item = &ZoneChangeRecord> {
@@ -41230,6 +41250,7 @@ impl GameState {
             instruction_boundary_marks: Vec::new(),
             batched_zone_change_trigger_fired: im::HashSet::new(),
             battlefield_entries_this_turn: im::Vector::new(),
+            battlefield_entries_last_turn: im::Vector::new(),
             damage_dealt_this_turn: im::Vector::new(),
             creatures_exploited_this_turn: im::Vector::new(),
             assassin_or_commander_dealt_combat_damage_this_turn: HashSet::new(),
@@ -45191,6 +45212,7 @@ impl GameState {
             cards_discarded_this_turn_by_player: _,
             players_who_sacrificed_artifact_this_turn: _,
             battlefield_entries_this_turn: _,
+            battlefield_entries_last_turn: _,
             creatures_exploited_this_turn: _,
             assassin_or_commander_dealt_combat_damage_this_turn: _,
             creature_types_dealt_combat_damage_this_turn: _,
@@ -46833,6 +46855,7 @@ fn _gamestate_partition_is_total(s: &GameState) {
         instruction_boundary_marks: _,
         batched_zone_change_trigger_fired: _,
         battlefield_entries_this_turn: _,
+        battlefield_entries_last_turn: _,
         damage_dealt_this_turn: _,
         creatures_exploited_this_turn: _,
         assassin_or_commander_dealt_combat_damage_this_turn: _,
@@ -47558,6 +47581,7 @@ impl PartialEq for GameState {
             && self.instruction_boundary_marks == other.instruction_boundary_marks
             && self.batched_zone_change_trigger_fired == other.batched_zone_change_trigger_fired
             && self.battlefield_entries_this_turn == other.battlefield_entries_this_turn
+            && self.battlefield_entries_last_turn == other.battlefield_entries_last_turn
             && self.damage_dealt_this_turn == other.damage_dealt_this_turn
             && self.creatures_exploited_this_turn == other.creatures_exploited_this_turn
             && self.assassin_or_commander_dealt_combat_damage_this_turn

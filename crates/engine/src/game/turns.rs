@@ -2211,7 +2211,9 @@ fn begin_next_turn(state: &mut GameState, events: &mut Vec<GameEvent>) {
     state.battlefield_entry_observations.clear();
     state.instruction_boundary_marks.clear();
     state.batched_zone_change_trigger_fired.clear();
-    state.battlefield_entries_this_turn.clear();
+    // CR 403.3 + CR 608.2i: latch the ending turn's entries for "… enter the
+    // battlefield under your control last turn" before the ledger restarts.
+    state.battlefield_entries_last_turn = std::mem::take(&mut state.battlefield_entries_this_turn);
     // CR 514.2 + CR 400.7: the cleanup step is where "this turn" state ends, which is the authority
     // for this reset; CR 400.7 names the two ledgers above that it defends. Defence in depth only —
     // a parked token battlefield entry is realized within the action that settles, and every

@@ -31827,6 +31827,7 @@ fn bbfu10_ledger_variant_reaches_filter_prop_scan() {
 
     let pred = |p: &FilterProp| matches!(p, FilterProp::IsChosenCreatureType);
     let with_prop = QuantityRef::BattlefieldEntriesThisTurn {
+        window: crate::types::ability::TurnWindow::ThisTurn,
         player: PlayerScope::Controller,
         filter: TargetFilter::Typed(TypedFilter {
             type_filters: vec![TypeFilter::Creature],
@@ -31835,6 +31836,7 @@ fn bbfu10_ledger_variant_reaches_filter_prop_scan() {
         }),
     };
     let without_prop = QuantityRef::BattlefieldEntriesThisTurn {
+        window: crate::types::ability::TurnWindow::ThisTurn,
         player: PlayerScope::Controller,
         filter: TargetFilter::Typed(TypedFilter {
             type_filters: vec![TypeFilter::Creature],

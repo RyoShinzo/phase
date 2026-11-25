@@ -106679,6 +106679,7 @@ fn issue_634_gyome_quantity_keeps_this_turn_and_activation_duration() {
         count,
         &QuantityExpr::Ref {
             qty: QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Typed(
                     TypedFilter::creature().properties(vec![FilterProp::NonToken])
@@ -106730,6 +106731,7 @@ fn issue_634_emergent_sequence_counter_uses_historical_land_count() {
         count,
         &QuantityExpr::Ref {
             qty: QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Typed(TypedFilter::land()),
             },

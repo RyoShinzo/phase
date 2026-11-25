@@ -6201,6 +6201,7 @@ impl TokenEntryBatchBoard {
             object_counter_placement_count_this_turn,
             zone_changes_this_turn,
             battlefield_entries_this_turn,
+            battlefield_entries_last_turn,
             battlefield_entry_observations,
             last_created_token_ids,
             last_effect_amount,
@@ -14679,6 +14680,7 @@ mod tests {
         let attribute = PlayerFilter::PlayerAttribute {
             relation: crate::types::ability::PlayerRelation::All,
             attr: Box::new(QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::ParentObjectTarget {
                     possession: crate::types::ability::PossessionAxis::Controller,
                 },
@@ -14849,6 +14851,7 @@ mod tests {
             let attribute = PlayerFilter::PlayerAttribute {
                 relation: crate::types::ability::PlayerRelation::All,
                 attr: Box::new(QuantityRef::BattlefieldEntriesThisTurn {
+                    window: crate::types::ability::TurnWindow::ThisTurn,
                     player: PlayerScope::Controller,
                     filter: TargetFilter::Typed(TypedFilter::creature().properties(vec![
                         FilterProp::Cmc {

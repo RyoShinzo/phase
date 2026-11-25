@@ -10826,13 +10826,16 @@ fn parse_you_had_starting_deck_count(input: &str) -> OracleResult<'_, StaticCond
     ))
 }
 
-/// Parse "[N or more / a / an] [type] entered the battlefield under your control this turn".
+/// Parse "[N or more / a / an] [type] entered the battlefield under your control
+/// this turn", and the "you had … enter the battlefield under your control
+/// [this | last] turn" auxiliary surface.
 ///
 /// Unifies the count variant ("two or more creatures entered...") and the singular
-/// variant ("a creature entered...") into one combinator.
+/// variant ("a creature entered...") into one combinator. The turn word after the
+/// suffix is the `TurnWindow` axis (`parse_entry_turn_window`).
 fn parse_entered_this_turn(input: &str) -> OracleResult<'_, StaticCondition> {
-    let entered_suffix = "entered the battlefield under your control this turn";
-    let had_enter_suffix = "enter the battlefield under your control this turn";
+    let entered_suffix = "entered the battlefield under your control ";
+    let had_enter_suffix = "enter the battlefield under your control ";
 
     if let Ok((rest, _)) = tag::<_, _, OracleError<'_>>("you had ").parse(input) {
         // CR 103.2a: "you had N or more cards in your starting deck" (Whtz,
@@ -10883,6 +10886,7 @@ fn parse_entered_this_turn(input: &str) -> OracleResult<'_, StaticCondition> {
     {
         let (rest, type_text) = take_until(entered_suffix).parse(rest)?;
         let (rest, _) = tag(entered_suffix).parse(rest)?;
+        let (rest, window) = parse_entry_turn_window(rest)?;
         let (filter, _) = parse_type_phrase_folding(type_text.trim());
         return Ok((
             rest,
@@ -10890,6 +10894,7 @@ fn parse_entered_this_turn(input: &str) -> OracleResult<'_, StaticCondition> {
                 QuantityRef::BattlefieldEntriesThisTurn {
                     player: PlayerScope::Controller,
                     filter,
+                    window,
                 },
                 1,
             ),
@@ -10933,14 +10938,32 @@ fn parse_or_more_entered_count<'a>(
     let (type_and_rest, _) = tag("or more ").parse(after_n.trim_start())?;
     let (rest, type_text) = take_until(suffix).parse(type_and_rest)?;
     let (rest, _) = tag(suffix).parse(rest)?;
+    let (rest, window) = parse_entry_turn_window(rest)?;
     let (filter, _) = parse_type_phrase_folding(type_text.trim());
     Ok((
         rest,
         make_quantity_ge(
-            QuantityRef::BattlefieldEntriesThisTurn { player, filter },
+            QuantityRef::BattlefieldEntriesThisTurn {
+                player,
+                filter,
+                window,
+            },
             n,
         ),
     ))
+}
+
+/// CR 403.3 + CR 608.2i: the turn an entry tally looks back over — "this turn"
+/// reads the turn in progress, "last turn" the previous turn, latched at the
+/// turn boundary (Ephara, God of the Polis: "if you had another creature enter
+/// the battlefield under your control last turn"). Shared by every
+/// entered-under-control suffix, which ends just before the turn word.
+fn parse_entry_turn_window(input: &str) -> OracleResult<'_, TurnWindow> {
+    alt((
+        value(TurnWindow::ThisTurn, tag("this turn")),
+        value(TurnWindow::LastTurn, tag("last turn")),
+    ))
+    .parse(input)
 }
 
 fn parse_entered_this_turn_subject<'a>(
@@ -10951,6 +10974,7 @@ fn parse_entered_this_turn_subject<'a>(
 ) -> OracleResult<'a, StaticCondition> {
     let (rest, type_text) = take_until(suffix).parse(input)?;
     let (rest, _) = tag(suffix).parse(rest)?;
+    let (rest, window) = parse_entry_turn_window(rest)?;
     let type_text = type_text.trim();
     let _ = alt((parse_article, value((), tag("another ")))).parse(type_text)?;
     let (filter, _) = parse_type_phrase_folding(type_text.trim());
@@ -10966,7 +10990,11 @@ fn parse_entered_this_turn_subject<'a>(
             // filter carries no controller of its own — mirroring
             // parse_or_more_entered_count, the count-shape sibling, which likewise
             // omits inject_controller_you.
-            QuantityRef::BattlefieldEntriesThisTurn { player, filter },
+            QuantityRef::BattlefieldEntriesThisTurn {
+                player,
+                filter,
+                window,
+            },
             count,
         ),
     ))
@@ -10999,7 +11027,7 @@ fn parse_entered_this_turn_subject<'a>(
 /// `Min` for its existential "an".)
 fn parse_opponent_had_entered_this_turn(input: &str) -> OracleResult<'_, StaticCondition> {
     let (rest, _) = tag("an opponent had ").parse(input)?;
-    let suffix = "enter the battlefield under their control this turn";
+    let suffix = "enter the battlefield under their control ";
     let player = PlayerScope::Opponent {
         aggregate: AggregateFunction::Max,
     };
@@ -11035,8 +11063,8 @@ fn parse_entered_this_turn_under_opponent_control(
         aggregate: AggregateFunction::Max,
     };
     for suffix in [
-        "entered the battlefield under an opponent's control this turn",
-        "entered the battlefield under an opponent\u{2019}s control this turn",
+        "entered the battlefield under an opponent's control ",
+        "entered the battlefield under an opponent\u{2019}s control ",
     ] {
         if let Ok(result) = parse_or_more_entered_count(input, suffix, player.clone()) {
             return Ok(result);
@@ -18922,6 +18950,7 @@ mod tests {
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player: PlayerScope::Controller,
                                 filter: TargetFilter::Typed(filter),
                             },
@@ -18960,6 +18989,7 @@ mod tests {
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player:
                                     PlayerScope::Opponent {
                                         aggregate: AggregateFunction::Max,
@@ -19022,6 +19052,7 @@ mod tests {
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player: PlayerScope::Controller,
                                 filter: TargetFilter::Typed(filter),
                             },
@@ -19058,6 +19089,7 @@ mod tests {
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player: PlayerScope::Controller,
                                 filter: TargetFilter::Typed(filter),
                             },
@@ -28971,6 +29003,7 @@ mod tests {
         let entered = StaticCondition::QuantityComparison {
             lhs: QuantityExpr::Ref {
                 qty: QuantityRef::BattlefieldEntriesThisTurn {
+                    window: crate::types::ability::TurnWindow::ThisTurn,
                     player: PlayerScope::Controller,
                     filter: TargetFilter::Typed(TypedFilter::land()),
                 },
@@ -29407,3 +29440,8 @@ fn unrestricted_cycling_guard_requires_a_complete_current_turn_minimum() {
         assert!(parse_inner_condition(guard).is_err(), "{guard}");
     }
 }
+
+// The fork's own tests (RyoShinzo/phase, mtg-fixes).
+#[cfg(test)]
+#[path = "condition_mtg_fixes_tests.rs"]
+mod mtg_fixes_tests;

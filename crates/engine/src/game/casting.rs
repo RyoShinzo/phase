@@ -35102,7 +35102,7 @@ fn quantity_ref_reads_target_object(qty: &QuantityRef, read: TargetRead) -> bool
             player_scope_reads_chosen_target(player, read)
         }
         QuantityRef::SacrificedThisTurn { player, filter }
-        | QuantityRef::BattlefieldEntriesThisTurn { player, filter }
+        | QuantityRef::BattlefieldEntriesThisTurn { player, filter, .. }
         | QuantityRef::TokensCreatedThisTurn { player, filter } => {
             player_scope_reads_chosen_target(player, read)
                 || target_filter_reads_chosen_target(filter, read)

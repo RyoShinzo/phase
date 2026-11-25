@@ -18534,7 +18534,7 @@ fn quantity_ref_binding_diverges(qty: &QuantityRef) -> bool {
         }
         QuantityRef::SacrificedThisTurn { player, filter }
         | QuantityRef::TokensCreatedThisTurn { player, filter }
-        | QuantityRef::BattlefieldEntriesThisTurn { player, filter } => {
+        | QuantityRef::BattlefieldEntriesThisTurn { player, filter, .. } => {
             player_scope_unbound_at_fire_time(player) || filter_binding_diverges(filter)
         }
         QuantityRef::LandsPlayedThisTurn { player, .. }

@@ -13359,7 +13359,7 @@ fn quantity_ref_has_unsupported_selected_ref(qty: &QuantityRef) -> bool {
             player_scope_is_selected_dependent(player)
         }
         QuantityRef::SacrificedThisTurn { player, filter }
-        | QuantityRef::BattlefieldEntriesThisTurn { player, filter }
+        | QuantityRef::BattlefieldEntriesThisTurn { player, filter, .. }
         | QuantityRef::TokensCreatedThisTurn { player, filter } => {
             player_scope_is_selected_dependent(player)
                 || target_filter_has_unsupported_selected_ref(filter, true)
@@ -14951,16 +14951,21 @@ pub enum QuantityRef {
     /// meaningful (each player tracks their own window); other scopes resolve
     /// through the generic aggregate path without special semantics.
     OpponentSpellsCastSinceLastTurn { player: PlayerScope },
-    /// CR 403.3 + CR 608.2h + CR 608.2i: Count of battlefield entries this turn by
-    /// the scoped player matching `filter`, using `battlefield_entries_this_turn`
-    /// snapshots. CR 608.2i is the look-back exception that makes a departed
-    /// permanent still count (lands that entered and later left still count).
-    /// Smuggler's Share class:
-    /// "for each opponent who had two or more lands enter the battlefield under
-    /// their control this turn."
+    /// CR 403.3 + CR 608.2h + CR 608.2i: Count of battlefield entries by the
+    /// scoped player matching `filter` during `window`, using the
+    /// `battlefield_entries_this_turn` snapshots for the turn in progress and
+    /// `battlefield_entries_last_turn`, latched at the turn boundary, for the
+    /// previous turn. CR 608.2i is the look-back exception that makes a
+    /// departed permanent still count (lands that entered and later left still
+    /// count). Smuggler's Share class: "for each opponent who had two or more
+    /// lands enter the battlefield under their control this turn"; Ephara, God
+    /// of the Polis: "if you had another creature enter the battlefield under
+    /// your control last turn".
     BattlefieldEntriesThisTurn {
         player: PlayerScope,
         filter: TargetFilter,
+        #[serde(default, skip_serializing_if = "TurnWindow::is_this_turn")]
+        window: TurnWindow,
     },
     /// CR 305.2a + CR 603.4: Count of lands played by the scoped player this turn.
     /// `from_zones: None` uses `Player::lands_played_this_turn`; `Some` reads the

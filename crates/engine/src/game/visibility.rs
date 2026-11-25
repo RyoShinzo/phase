@@ -5317,7 +5317,11 @@ fn redact_hidden_identity_side_tables(state: &mut GameState, hidden_ids: &HashSe
         }
     }
 
-    for record in state.battlefield_entries_this_turn.iter_mut() {
+    for record in state
+        .battlefield_entries_this_turn
+        .iter_mut()
+        .chain(state.battlefield_entries_last_turn.iter_mut())
+    {
         if hidden_ids.contains(&record.object_id) {
             redact_battlefield_entry_record(record);
         }

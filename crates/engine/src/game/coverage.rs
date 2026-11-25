@@ -2182,8 +2182,13 @@ fn fmt_quantity_ref(qty: &QuantityRef) -> String {
                 fmt_player_scope(player)
             )
         }
-        QuantityRef::BattlefieldEntriesThisTurn { player, filter } => format!(
-            "battlefield entries this turn ({}, {})",
+        QuantityRef::BattlefieldEntriesThisTurn {
+            player,
+            filter,
+            window,
+        } => format!(
+            "battlefield entries {} ({}, {})",
+            fmt_turn_window(*window),
             fmt_target(filter),
             fmt_player_scope(player)
         ),
@@ -24709,6 +24714,7 @@ have been revealed, Aggressive Detective deals 2 damage to each opponent.";
     #[test]
     fn ledger_ref_feature_is_unhandled_when_filter_is_unevaluable() {
         let ledger = |properties: Vec<FilterProp>| QuantityRef::BattlefieldEntriesThisTurn {
+            window: crate::types::ability::TurnWindow::ThisTurn,
             player: PlayerScope::Controller,
             filter: TargetFilter::Typed(TypedFilter {
                 type_filters: vec![TypeFilter::Creature],
@@ -24753,6 +24759,7 @@ have been revealed, Aggressive Detective deals 2 damage to each opponent.";
         };
         assert_eq!(
             quantity_ref_feature(&QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Or {
                     filters: vec![bare, tapped]
@@ -24775,6 +24782,7 @@ have been revealed, Aggressive Detective deals 2 damage to each opponent.";
         };
         let feature = |filter| {
             quantity_ref_feature(&QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter,
             })

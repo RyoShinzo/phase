@@ -1932,6 +1932,7 @@ fn parse_battlefield_entries_attr_clause(input: &str) -> OracleResult<'_, (Quant
             QuantityRef::BattlefieldEntriesThisTurn {
                 player: PlayerScope::ScopedPlayer,
                 filter,
+                window: TurnWindow::ThisTurn,
             },
             n as i32,
         ),

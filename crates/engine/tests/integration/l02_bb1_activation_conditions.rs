@@ -399,6 +399,7 @@ fn s4_masters_parse_entered_this_turn_no_another() {
                 QuantityExpr::Ref {
                     qty:
                         QuantityRef::BattlefieldEntriesThisTurn {
+                            window: engine::types::ability::TurnWindow::ThisTurn,
                             player: PlayerScope::Controller,
                             filter,
                         },
@@ -978,6 +979,7 @@ fn bbfu1_gargoyle_flock_parse_count_form_migrated_to_ledger() {
         QuantityExpr::Ref {
             qty:
                 QuantityRef::BattlefieldEntriesThisTurn {
+                    window: engine::types::ability::TurnWindow::ThisTurn,
                     player: PlayerScope::Controller,
                     filter: TargetFilter::Typed(tf),
                 },

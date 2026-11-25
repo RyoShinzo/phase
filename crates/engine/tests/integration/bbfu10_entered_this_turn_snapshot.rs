@@ -227,6 +227,7 @@ fn parse_card(
 fn ledger_typed(type_filters: Vec<TypeFilter>, properties: Vec<FilterProp>) -> QuantityExpr {
     QuantityExpr::Ref {
         qty: QuantityRef::BattlefieldEntriesThisTurn {
+            window: engine::types::ability::TurnWindow::ThisTurn,
             player: PlayerScope::Controller,
             filter: TargetFilter::Typed(TypedFilter {
                 type_filters,
@@ -358,6 +359,7 @@ fn bbfu10_cloudspire_or_filter_counts_mount_and_vehicle() {
     let QuantityExpr::Ref {
         qty:
             QuantityRef::BattlefieldEntriesThisTurn {
+                window: engine::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Or { ref filters },
             },
@@ -918,6 +920,7 @@ fn assert_lilypad_condition_shape(req: &[ActivationRestriction]) {
     let QuantityExpr::Ref {
         qty:
             QuantityRef::BattlefieldEntriesThisTurn {
+                window: engine::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Or { filters },
             },

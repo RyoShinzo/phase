@@ -2800,7 +2800,10 @@ fn quantity_ref_uses_object_count(qty: &QuantityRef) -> bool {
         // it (Kinbinding) must force the incremental-flush escalation scan in
         // `active_effects_force_incremental_escalation` or a plain token entry
         // leaves PRE-EXISTING recipients stale.
-        | QuantityRef::BattlefieldEntriesThisTurn { .. }
+        | QuantityRef::BattlefieldEntriesThisTurn {
+            window: TurnWindow::ThisTurn,
+            ..
+        }
         | QuantityRef::CommanderManaValue { .. } => true,
         // A distinct-characteristic count reads battlefield population ONLY when
         // its source names a live object census; zone / linked-exile /
@@ -2874,6 +2877,12 @@ fn quantity_ref_uses_object_count(qty: &QuantityRef) -> bool {
         | QuantityRef::CardsDrawnThisTurn { .. }
         | QuantityRef::DilemmasFacedThisTurn { .. }
         | QuantityRef::CardsDrawnLastTurn { .. }
+        // CR 608.2i: the previous turn's latched entries; an entry now joins
+        // only this turn's ledger.
+        | QuantityRef::BattlefieldEntriesThisTurn {
+            window: TurnWindow::LastTurn,
+            ..
+        }
         | QuantityRef::OpponentSpellsCastSinceLastTurn { .. }
         | QuantityRef::LandsPlayedThisTurn { .. }
         | QuantityRef::TurnsTaken
@@ -3421,9 +3430,11 @@ fn entered_object_perturbs_quantity_ref(
         // 1 `HasColor`, 1 `FaceDown`), which is 16 property-bearing LEAVES (the one
         // `Or` contributes 4). The upgrade is a plain `=> true` if either divergence
         // case becomes reachable.
-        | QuantityRef::BattlefieldEntriesThisTurn { filter, .. } => {
-            entered_object_joins_population(state, entered, ctx, filter)
-        }
+        | QuantityRef::BattlefieldEntriesThisTurn {
+            filter,
+            window: TurnWindow::ThisTurn,
+            ..
+        } => entered_object_joins_population(state, entered, ctx, filter),
         QuantityRef::DistinctCardTypes { source }
         | QuantityRef::SharedCardTypes { source }
         | QuantityRef::DistinctSubtypes { source, .. }
@@ -3519,6 +3530,12 @@ fn entered_object_perturbs_quantity_ref(
         | QuantityRef::CardsDrawnThisTurn { .. }
         | QuantityRef::DilemmasFacedThisTurn { .. }
         | QuantityRef::CardsDrawnLastTurn { .. }
+        // CR 608.2i: the previous turn's latched entries; an entry now joins
+        // only this turn's ledger.
+        | QuantityRef::BattlefieldEntriesThisTurn {
+            window: TurnWindow::LastTurn,
+            ..
+        }
         | QuantityRef::OpponentSpellsCastSinceLastTurn { .. }
         | QuantityRef::LandsPlayedThisTurn { .. }
         | QuantityRef::TurnsTaken
@@ -6866,7 +6883,11 @@ fn resolve_ref(
         // CR 403.3 + CR 608.2h + CR 608.2i: Battlefield entries this turn for the
         // scoped player. CR 608.2i is the look-back exception that makes a
         // departed permanent still count.
-        QuantityRef::BattlefieldEntriesThisTurn { player, ref filter } => {
+        QuantityRef::BattlefieldEntriesThisTurn {
+            player,
+            ref filter,
+            window,
+        } => {
             resolve_per_player_scalar(
                 state,
                 player,
@@ -6877,7 +6898,7 @@ fn resolve_ref(
                 |scoped_player| {
                     usize_to_i32_saturating(
                         state
-                            .battlefield_entries_this_turn
+                            .battlefield_entries(*window)
                             .iter()
                             .filter(|record| {
                                 record.controller == scoped_player.id
@@ -13376,6 +13397,7 @@ mod tests {
                 filter: other(),
             },
             QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: recipient.clone(),
                 filter: other(),
             },
@@ -13571,6 +13593,7 @@ mod tests {
                 filter: other(),
             },
             QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: other(),
             },
@@ -13909,6 +13932,7 @@ mod tests {
             ),
             (
                 QuantityRef::BattlefieldEntriesThisTurn {
+                    window: crate::types::ability::TurnWindow::ThisTurn,
                     player: PlayerScope::Controller,
                     filter: filter.clone(),
                 },

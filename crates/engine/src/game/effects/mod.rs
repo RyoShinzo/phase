@@ -923,10 +923,10 @@ pub(crate) fn candidate_player_scalar_with_state(
             };
             Some(crate::game::arithmetic::usize_to_i32_saturating(len))
         }
-        QuantityRef::BattlefieldEntriesThisTurn { filter, .. } => {
+        QuantityRef::BattlefieldEntriesThisTurn { filter, window, .. } => {
             Some(crate::game::arithmetic::usize_to_i32_saturating(
                 state
-                    .battlefield_entries_this_turn
+                    .battlefield_entries(*window)
                     .iter()
                     .filter(|record| {
                         record.controller == candidate.id
@@ -36874,6 +36874,7 @@ mod tests {
                         player: crate::types::ability::PlayerScope::Controller,
                     },
                     QuantityRef::BattlefieldEntriesThisTurn {
+                        window: crate::types::ability::TurnWindow::ThisTurn,
                         filter: filter.clone(),
                         player: crate::types::ability::PlayerScope::Controller,
                     },
@@ -37547,6 +37548,7 @@ mod tests {
             },
         ]));
         let attr = QuantityRef::BattlefieldEntriesThisTurn {
+            window: crate::types::ability::TurnWindow::ThisTurn,
             player: PlayerScope::ParentObjectTarget {
                 possession: PossessionAxis::Controller,
             },
@@ -37599,6 +37601,7 @@ mod tests {
         let nested = PlayerFilter::PlayerAttribute {
             relation: PlayerRelation::All,
             attr: Box::new(QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Target,
                 filter: TargetFilter::Typed(TypedFilter::creature().properties(vec![
                     FilterProp::Cmc {
@@ -38034,6 +38037,7 @@ mod tests {
                     player: player.clone(),
                 },
                 QuantityRef::BattlefieldEntriesThisTurn {
+                    window: crate::types::ability::TurnWindow::ThisTurn,
                     player: player.clone(),
                     filter: TargetFilter::Any,
                 },

@@ -83,6 +83,7 @@ fn lictor_condition_is_opponent_scoped_entry_tally() {
                 QuantityExpr::Ref {
                     qty:
                         QuantityRef::BattlefieldEntriesThisTurn {
+                            window: engine::types::ability::TurnWindow::ThisTurn,
                             player:
                                 PlayerScope::Opponent {
                                     aggregate: AggregateFunction::Max,

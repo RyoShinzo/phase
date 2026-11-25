@@ -454,6 +454,7 @@ fn land_entered_this_turn() -> TriggerCondition {
     TriggerCondition::QuantityComparison {
         lhs: QuantityExpr::Ref {
             qty: QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player: PlayerScope::Controller,
                 filter: TargetFilter::Typed(TypedFilter::land()),
             },

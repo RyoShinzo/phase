@@ -3867,7 +3867,7 @@ fn scan_quantity_ref(x: &QuantityRef, mode: ScanMode) -> Axes<'_> {
             acc = acc.or(scan_player_scope(player));
             acc
         }
-        QuantityRef::BattlefieldEntriesThisTurn { player, filter } => {
+        QuantityRef::BattlefieldEntriesThisTurn { player, filter, .. } => {
             // CR 732.2a: axis-2 self-assertion. `record_battlefield_entry`
             // (game/restrictions.rs) APPENDS to `battlefield_entries_this_turn` on every
             // battlefield entry, so this tally is a board-derived AGGREGATE that a
@@ -13879,6 +13879,7 @@ mod tests {
     #[test]
     fn bbfu10_ledger_ref_is_sibling_mutable_in_both_scan_modes() {
         let ledger = ability_def_with_amount(QuantityRef::BattlefieldEntriesThisTurn {
+            window: crate::types::ability::TurnWindow::ThisTurn,
             player: PlayerScope::Controller,
             filter: creature_filter(),
         });
@@ -13929,6 +13930,7 @@ mod tests {
         assert!(
             resolved_ability_axes(
                 &ability_with_amount(QuantityRef::BattlefieldEntriesThisTurn {
+                    window: crate::types::ability::TurnWindow::ThisTurn,
                     player: PlayerScope::Controller,
                     filter: creature_filter(),
                 }),

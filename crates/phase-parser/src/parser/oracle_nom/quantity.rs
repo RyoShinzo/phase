@@ -7047,7 +7047,11 @@ fn parse_entered_this_turn_ref(input: &str) -> OracleResult<'_, QuantityRef> {
                     nom::error::ErrorKind::Fail,
                 )));
             }
-            QuantityRef::BattlefieldEntriesThisTurn { player, filter }
+            QuantityRef::BattlefieldEntriesThisTurn {
+                player,
+                filter,
+                window: TurnWindow::ThisTurn,
+            }
         }
         // CR 608.2h: any controller came from the subject noun and is
         // present-tense, so this names the current battlefield population
@@ -14071,6 +14075,7 @@ mod tests {
     ) {
         match q {
             QuantityRef::BattlefieldEntriesThisTurn {
+                window: crate::types::ability::TurnWindow::ThisTurn,
                 player,
                 filter:
                     TargetFilter::Typed(TypedFilter {

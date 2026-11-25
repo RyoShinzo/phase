@@ -25404,6 +25404,7 @@ mod tests {
         });
 
         let ledger = QuantityRef::BattlefieldEntriesThisTurn {
+            window: crate::types::ability::TurnWindow::ThisTurn,
             player: PlayerScope::Controller,
             filter: filter.clone(),
         };

@@ -2839,6 +2839,7 @@ Trample";
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player:
                                     PlayerScope::Opponent {
                                         aggregate: AggregateFunction::Max,
@@ -2872,6 +2873,7 @@ Trample";
                     QuantityExpr::Ref {
                         qty:
                             QuantityRef::BattlefieldEntriesThisTurn {
+                                window: crate::types::ability::TurnWindow::ThisTurn,
                                 player:
                                     PlayerScope::Opponent {
                                         aggregate: AggregateFunction::Max,
