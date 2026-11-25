@@ -704,6 +704,7 @@ pub fn apply_debug_action(
                 script_name: characteristics.display_name.clone(),
                 characteristics,
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters,
                 tapped: false,
                 enters_attacking: false,
@@ -1283,6 +1284,7 @@ fn route_debug_token_to_battlefield(
         // The debug sandbox stages one printed face as a token; no copy effect creates
         // it (CR 707.8a).
         double_faced: None,
+        enter_with_grants: None,
     };
     let mut token = super::game_object::GameObject::new(
         object_id,
@@ -1332,6 +1334,7 @@ fn route_debug_token_to_battlefield(
         enter_with_counters: intrinsic_counters,
         enter_with_choices: None,
         applied: HashSet::new(),
+        enter_with_grants: None,
     };
     match mode {
         TokenEntryMode::Standard => {

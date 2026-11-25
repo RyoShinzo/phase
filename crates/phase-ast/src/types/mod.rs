@@ -9,6 +9,7 @@ pub mod counter;
 pub mod definitions;
 pub mod deterministic_serde;
 pub mod dungeon;
+pub mod entry_grant;
 pub mod event_kinds;
 pub mod format;
 pub mod game_state_kinds;

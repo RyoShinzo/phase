@@ -21,6 +21,7 @@ use super::phase::Phase;
 use super::player::{PlayerCounterKind, PlayerId};
 use super::zones::Zone;
 
+pub use super::entry_grant::{EnterWithGrant, EnterWithGrants};
 pub use super::token_spec::{
     TokenAttackRequest, TokenCharacteristics, TokenHostRequest, TokenSpec,
 };
@@ -529,6 +530,17 @@ pub struct CopyTokenSpec {
     /// an effect creating a token copy (each states why at its literal).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub double_faced: Option<CopiedDoubleFaces>,
+    /// CR 614.1c + CR 611.2a: the batch's entry grants (`TokenSpec::
+    /// enter_with_grants`) when its tokens are copies, moved here as the
+    /// batch is delivered so every entrant of the copy route gets them as it
+    /// enters. Not a copiable value (CR 707.2): `None` wherever a copy spec
+    /// is built from a source.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "EnterWithGrants::deserialize_nonempty"
+    )]
+    pub enter_with_grants: Option<Box<EnterWithGrants>>,
 }
 
 /// CR 707.8a: the faces of a token copy of a double-faced permanent, or of a
@@ -1054,6 +1066,17 @@ pub enum ProposedEvent {
         /// continuation through this field.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         enter_with_choices: Option<Box<EntryChoices>>,
+        /// CR 614.1c + CR 611.2a + CR 616.1: the "and with …" / "and as a …"
+        /// entry grants the applied replacements folded onto this entrant
+        /// (Master Biomancer: a copy token enters as a Mutant), mirroring the
+        /// ZoneChange field; installed as the entry commits. Appended only
+        /// through [`EnterWithGrants::append`], so `Some` is never empty.
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "EnterWithGrants::deserialize_nonempty"
+        )]
+        enter_with_grants: Option<Box<EnterWithGrants>>,
         #[serde(serialize_with = "crate::types::deterministic_serde::hash_set")]
         applied: HashSet<AppliedReplacementKey>,
     },
@@ -1341,58 +1364,6 @@ impl CoEntrants {
             && self.0.iter().any(|member| {
                 member.object_id == host.id && *member != ObjectIncarnationRef::from_object(host)
             })
-    }
-}
-
-/// CR 614.1c + CR 611.2a: one "and with …" entry grant riding a battlefield
-/// entry (`ZoneChange::enter_with_grants`). The grant is a single stripped
-/// chain link — a `GenericEffect` carrying only `static_abilities` with
-/// `Duration::UntilHostLeavesPlay` for `SelfRef`, no `sub_ability` or
-/// `else_ability` — plus the granting replacement's controller (CR 109.5),
-/// so delivery installs exactly what the post-entry drain would have, for
-/// every applicable same-entry replacement instead of just the first.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct EnterWithGrant {
-    pub grant: crate::types::ability::AbilityDefinition,
-    pub controller: PlayerId,
-}
-
-/// CR 614.1c + CR 611.2a + CR 616.1: the entry grants riding one battlefield entry
-/// (`ZoneChange::enter_with_grants`), in application order. Never empty: an entry with no
-/// grant carries `None`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(transparent)]
-pub struct EnterWithGrants(Vec<EnterWithGrant>);
-
-impl EnterWithGrants {
-    /// The single authority that adds grants to an entry: appends `grants` in order, creating
-    /// the box on the first one, so `Some` is never empty.
-    pub fn append(
-        slot: &mut Option<Box<EnterWithGrants>>,
-        grants: impl IntoIterator<Item = EnterWithGrant>,
-    ) {
-        let mut grants = grants.into_iter().peekable();
-        if grants.peek().is_some() {
-            slot.get_or_insert_with(|| Box::new(Self(Vec::new())))
-                .0
-                .extend(grants);
-        }
-    }
-
-    /// The carried grants of an entry, in application order (`[]` when it carries none).
-    pub fn of(grants: &Option<Box<EnterWithGrants>>) -> &[EnterWithGrant] {
-        grants.as_deref().map_or(&[], |grants| grants.0.as_slice())
-    }
-
-    /// Wire reader for `ZoneChange::enter_with_grants`: an empty list reads as `None`, the same
-    /// as an absent key, so a decoded `Some` is never empty either.
-    fn deserialize_nonempty<'de, D>(deserializer: D) -> Result<Option<Box<Self>>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Option::<Vec<EnterWithGrant>>::deserialize(deserializer)?
-            .filter(|grants| !grants.is_empty())
-            .map(|grants| Box::new(Self(grants))))
     }
 }
 
@@ -2425,6 +2396,7 @@ mod tests {
             },
             script_name: name.to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -2617,6 +2589,7 @@ mod tests {
             },
             script_name: "Goblin".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: true,
             enters_attacking: true,
@@ -2657,6 +2630,7 @@ mod tests {
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
+            enter_with_grants: None,
         }
     }
 

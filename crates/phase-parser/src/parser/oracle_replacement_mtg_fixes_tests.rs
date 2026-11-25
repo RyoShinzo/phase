@@ -131,3 +131,116 @@ fn counter_replacement_without_player_leg_reaches_no_player() {
         assert_eq!(def.counter_player_recipient, None, "{name}: no player leg");
     }
 }
+
+/// Every `PutCounter` in an execute chain (outer link first), as upstream's
+/// helper of the same name.
+fn put_counters_in_chain(def: &ReplacementDefinition) -> Vec<(CounterType, QuantityExpr)> {
+    let mut found = Vec::new();
+    let mut cursor = def.execute.as_deref();
+    while let Some(node) = cursor {
+        if let Effect::PutCounter {
+            counter_type,
+            count,
+            ..
+        } = &*node.effect
+        {
+            found.push((counter_type.clone(), count.clone()));
+        }
+        cursor = node.sub_ability.as_deref();
+    }
+    found
+}
+
+/// The modifications of the self-affecting entry grant an enters-with
+/// replacement carries in its execute chain, and the counters it places.
+fn entry_grant_modifications(def: &ReplacementDefinition) -> Vec<ContinuousModification> {
+    let mut link = def.execute.as_deref();
+    let mut out = Vec::new();
+    while let Some(ability) = link {
+        if let Effect::GenericEffect {
+            static_abilities, ..
+        } = &*ability.effect
+        {
+            for static_def in static_abilities {
+                assert_eq!(static_def.affected, Some(TargetFilter::SelfRef));
+                out.extend(static_def.modifications.iter().cloned());
+            }
+        }
+        link = ability.sub_ability.as_deref();
+    }
+    out
+}
+
+fn mutant() -> ContinuousModification {
+    ContinuousModification::AddSubtype {
+        subtype: "Mutant".to_string(),
+    }
+}
+
+/// CR 614.1c + CR 205.1b + CR 122.6: Master Biomancer. "and as a Mutant in
+/// addition to its other types" is a rider of the enters-with clause: the
+/// counters are counted by the source's power, and the entrant gains the
+/// Mutant subtype as it enters, for every other creature its controller controls.
+#[test]
+fn enters_with_counters_and_as_a_type_rider() {
+    let def = parse_replacement_line(
+        "Each other creature you control enters with a number of additional +1/+1 counters on it equal to this creature's power and as a Mutant in addition to its other types.",
+        "Master Biomancer",
+    )
+    .expect("Master Biomancer parses");
+    assert_eq!(def.event, ReplacementEvent::ChangeZone);
+    assert_eq!(def.destination_zone, Some(Zone::Battlefield));
+    let Some(TargetFilter::Typed(typed)) = &def.valid_card else {
+        panic!("expected a typed subject, got {:?}", def.valid_card);
+    };
+    assert_eq!(typed.controller, Some(ControllerRef::You));
+    assert!(typed.properties.contains(&FilterProp::Another));
+    assert_eq!(entry_grant_modifications(&def), vec![mutant()]);
+    let counters = put_counters_in_chain(&def);
+    assert!(
+        matches!(
+            counters.as_slice(),
+            [(
+                CounterType::Plus1Plus1,
+                QuantityExpr::Ref {
+                    qty: QuantityRef::Power { .. }
+                }
+            )]
+        ),
+        "got {counters:?}"
+    );
+}
+
+/// CR 614.1c + CR 205.1b: the rider after a printed count is read too, not
+/// dropped, and a line without the rider grants no type.
+#[test]
+fn enters_with_type_rider_after_printed_count() {
+    let def = parse_replacement_line(
+        "Each other creature you control enters with an additional +1/+1 counter on it and as a Mutant in addition to its other types.",
+        "Test Card",
+    )
+    .expect("parses");
+    assert_eq!(entry_grant_modifications(&def), vec![mutant()]);
+    assert_eq!(
+        put_counters_in_chain(&def),
+        vec![(CounterType::Plus1Plus1, QuantityExpr::Fixed { value: 1 })]
+    );
+
+    let plain = parse_replacement_line(
+        "Each other creature you control enters with a number of additional +1/+1 counters on it equal to this creature's power.",
+        "Test Card",
+    )
+    .expect("parses");
+    assert!(entry_grant_modifications(&plain).is_empty());
+}
+
+/// CR 614.1c: a rider that is present but whose descriptor reads no type
+/// fails the clause closed instead of claiming the counters alone.
+#[test]
+fn enters_with_unreadable_type_rider_fails_closed() {
+    assert!(parse_replacement_line(
+        "Each other creature you control enters with an additional +1/+1 counter on it and as a in addition to its other types.",
+        "Test Card",
+    )
+    .is_none());
+}

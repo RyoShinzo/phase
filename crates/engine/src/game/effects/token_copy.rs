@@ -23,7 +23,7 @@ use crate::types::identifiers::{CardId, ObjectId, ObjectIncarnationRef};
 use crate::types::keywords::Keyword;
 use crate::types::player::PlayerId;
 use crate::types::proposed_event::{
-    CopiedDoubleFaces, CopyTokenSpec, CounterCause, EtbTapState, ProposedEvent,
+    CopiedDoubleFaces, CopyTokenSpec, CounterCause, EnterWithGrants, EtbTapState, ProposedEvent,
     TokenCharacteristics, TokenSpec,
 };
 use crate::types::resolution::ChildStackDepth;
@@ -302,6 +302,7 @@ pub fn resolve(
                 // bound so donor-referential exceptions halve donor values.
                 donor: Some(source.incarnation),
                 double_faced,
+                enter_with_grants: None,
             }),
         });
     }
@@ -1292,6 +1293,7 @@ fn apply_copy_token_batch_on_board(
         controller,
         donor,
         double_faced,
+        enter_with_grants,
     } = copy;
     let name = values.name.clone();
     // CR 508.4: a resume carries the earlier ids so they are republished, but a
@@ -1407,6 +1409,7 @@ fn apply_copy_token_batch_on_board(
                 controller,
                 donor,
                 double_faced: double_faced.clone(),
+                enter_with_grants: enter_with_grants.clone(),
             });
             // CR 707.9b/9c: this seam only runs when every exception is
             // stampable onto copiable values before entry, so the body is
@@ -1464,6 +1467,7 @@ fn apply_copy_token_batch_on_board(
                 enter_with_counters: Vec::new(),
                 enter_with_choices: None,
                 applied: std::collections::HashSet::new(),
+                enter_with_grants: None,
             };
             let has_own_entry_replacements = state
                 .liminal_entries
@@ -1541,6 +1545,7 @@ fn apply_copy_token_batch_on_board(
             controller,
             donor,
             double_faced: double_faced.clone(),
+            enter_with_grants: enter_with_grants.clone(),
         });
         // CR 707.9: unlike the liminal seam, this one applies its exceptions
         // AFTER the birth through `apply_token_modifications`, which is pausable,
@@ -2055,6 +2060,16 @@ fn finish_non_liminal_copy_token_entry(
     }
 
     finalize_copied_token(state, source_id, token_id);
+
+    // CR 614.1c + CR 611.2a: the batch's "and with …" / "and as a …" entry
+    // grants (Master Biomancer: it enters as a Mutant), installed as the copy
+    // enters, ahead of its counters as on the zone-change delivery.
+    crate::game::zone_pipeline::install_entry_grants(
+        state,
+        token_id,
+        EnterWithGrants::of(&copy_spec.enter_with_grants),
+        events,
+    );
 
     // CR 614.1c + CR 122.6a: ETB-counter replacement mutations are carried
     // on the accepted CreateToken spec, even for copy tokens whose full
@@ -3218,6 +3233,7 @@ mod tests {
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
+            enter_with_grants: None,
         };
         let mut events = Vec::new();
         let status = apply_copy_token_after_replacement(
@@ -3336,6 +3352,7 @@ mod tests {
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
+            enter_with_grants: None,
         }
     }
 
@@ -7858,6 +7875,7 @@ mod tests {
             creator: None,
             controller: PlayerId(0),
             donor: None,
+            enter_with_grants: None,
         };
         let mut events = Vec::new();
         let status = apply_copy_token_after_replacement_with_created_ids(

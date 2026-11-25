@@ -1725,6 +1725,7 @@ mod tests {
                 enter_with_counters: Vec::new(),
                 enter_with_choices: None,
                 applied: Default::default(),
+                enter_with_grants: None,
             }
         ));
         for (accounted, count) in [(false, 0u32), (true, 1u32)] {

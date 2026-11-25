@@ -133,6 +133,7 @@ fn squirrel_spec() -> TokenSpec {
         },
         script_name: "Squirrel".to_string(),
         static_abilities: Vec::new(),
+        enter_with_grants: None,
         enter_with_counters: Vec::new(),
         tapped: false,
         enters_attacking: false,

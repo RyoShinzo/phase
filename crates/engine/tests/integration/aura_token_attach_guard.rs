@@ -385,6 +385,7 @@ fn a_replacement_that_leaves_a_non_aura_entrant_still_creates_the_token() {
         },
         script_name: "Spirit".to_string(),
         static_abilities: vec![],
+        enter_with_grants: None,
         enter_with_counters: vec![],
         tapped: false,
         enters_attacking: false,

@@ -49354,6 +49354,7 @@ mod tests {
             controller: PlayerId(0),
             donor: None,
             double_faced: None,
+            enter_with_grants: None,
         });
         check(
             |attack_destination| CopyTokenEntryTail {
@@ -49403,6 +49404,7 @@ mod tests {
             },
             script_name: "Squirrel".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -49675,6 +49677,7 @@ mod tests {
                         donor: None,
                         // Single-faced fixture values: no other face to carry.
                         double_faced: None,
+                        enter_with_grants: None,
                     }),
                 }]),
                 effect_kind: EffectKind::CopyTokenOf,

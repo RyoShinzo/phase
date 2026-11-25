@@ -18709,6 +18709,7 @@ mod tests {
             },
             script_name: "Goblin".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: true,

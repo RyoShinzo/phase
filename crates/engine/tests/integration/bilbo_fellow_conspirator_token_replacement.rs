@@ -61,6 +61,7 @@ fn artifact_token_spec(subtype: &str, controller: PlayerId) -> TokenSpec {
         },
         script_name: subtype.to_string(),
         static_abilities: Vec::new(),
+        enter_with_grants: None,
         enter_with_counters: Vec::new(),
         tapped: false,
         enters_attacking: false,

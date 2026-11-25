@@ -38,8 +38,8 @@ use crate::types::identifiers::{LogicalZoneChangeGroupId, ObjectId, ObjectIncarn
 use crate::types::keywords::Keyword;
 use crate::types::player::PlayerId;
 use crate::types::proposed_event::{
-    AppliedReplacementKey, CoEntrants, EnterWithGrants, EntrantAbilities, ProposedEvent,
-    WithEntryEffect,
+    AppliedReplacementKey, CoEntrants, EnterWithGrant, EnterWithGrants, EntrantAbilities,
+    ProposedEvent, WithEntryEffect,
 };
 use crate::types::resolution::RetainedBatchOwner;
 use crate::types::zones::{EtbTapState, Zone};
@@ -5742,6 +5742,46 @@ fn finalize_staged_pending_outcome_on(
 }
 
 /// Test/diagnostic wrapper: finalize the top staged owner in place.
+/// CR 614.1c + CR 611.2a + CR 616.1: install every "and with …" / "and as a …"
+/// entry grant the applied replacements folded onto an entry, in application
+/// order, on the object that entered: a permanent's zone change
+/// (`ZoneChange::enter_with_grants`) or a created token (`TokenSpec::
+/// enter_with_grants`). The post-entry drain holds a single ready
+/// continuation, so resolving them here, through the same chain authority the
+/// drain uses, is what preserves the second and later same-entry riders.
+/// Callers gate it on a battlefield arrival, like the entry counters.
+pub(crate) fn install_entry_grants(
+    state: &mut GameState,
+    object_id: ObjectId,
+    grants: &[EnterWithGrant],
+    events: &mut Vec<GameEvent>,
+) {
+    for grant in grants {
+        // The source-as-SelfRef hook, mirroring the drain's Template
+        // dispatch: the grant binds the entering object.
+        let resolved = crate::game::ability_utils::build_resolved_from_def_with_targets(
+            &grant.grant,
+            object_id,
+            grant.controller,
+            vec![TargetRef::Object(object_id)],
+        );
+        // Entry-grant links are prompt-free by construction (pure
+        // static registration — `effects::effect` performs no
+        // `waiting_for` write), so a prompt here is unreachable; the
+        // resolver reports one rather than installing it, keeping the
+        // invariant explicit.
+        let prompt = crate::game::engine_replacement::resolve_post_replacement_chain(
+            state, &resolved, events,
+        );
+        if prompt.is_some() {
+            debug_assert!(false, "entry-grant install must not prompt: {prompt:?}");
+        }
+    }
+    if !grants.is_empty() {
+        crate::game::layers::mark_layers_full(state);
+    }
+}
+
 #[cfg(test)]
 pub(crate) fn finalize_staged_pending_outcome(
     state: &mut GameState,
@@ -10023,31 +10063,12 @@ fn deliver_replaced_batch_member(
         // same-entry riders. Gated on a battlefield arrival like the counters
         // below; a redirected entry drops its grants with them.
         if entered_battlefield {
-            let grants = EnterWithGrants::of(&enter_with_grants);
-            for grant in grants {
-                // The source-as-SelfRef hook, mirroring the drain's Template
-                // dispatch: the grant binds the entering object.
-                let resolved = crate::game::ability_utils::build_resolved_from_def_with_targets(
-                    &grant.grant,
-                    object_id,
-                    grant.controller,
-                    vec![TargetRef::Object(object_id)],
-                );
-                // Entry-grant links are prompt-free by construction (pure
-                // static registration — `effects::effect` performs no
-                // `waiting_for` write), so a prompt here is unreachable; the
-                // resolver reports one rather than installing it, keeping the
-                // invariant explicit.
-                let prompt = crate::game::engine_replacement::resolve_post_replacement_chain(
-                    state, &resolved, events,
-                );
-                if prompt.is_some() {
-                    debug_assert!(false, "entry-grant install must not prompt: {prompt:?}");
-                }
-            }
-            if !grants.is_empty() {
-                crate::game::layers::mark_layers_full(state);
-            }
+            install_entry_grants(
+                state,
+                object_id,
+                EnterWithGrants::of(&enter_with_grants),
+                events,
+            );
         }
         // CR 712.14a: A permanent put onto the battlefield transformed enters back face up.
         if should_transform && to == Zone::Battlefield {

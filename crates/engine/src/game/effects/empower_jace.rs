@@ -124,6 +124,7 @@ fn jace_token_spec(
         },
         script_name: "Jace".to_string(),
         static_abilities: vec![],
+        enter_with_grants: None,
         enter_with_counters: vec![],
         tapped: false,
         enters_attacking: false,

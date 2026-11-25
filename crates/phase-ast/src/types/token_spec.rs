@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::ability::{Duration, EntryAttackDestination, StaticDefinition};
 use super::card_type::{CoreType, Supertype};
 use super::counter::CounterType;
+use super::entry_grant::EnterWithGrants;
 use super::identifiers::{ObjectId, ObjectIncarnationRef};
 use super::keywords::Keyword;
 use super::mana::ManaColor;
@@ -63,6 +64,19 @@ pub struct TokenSpec {
     /// CR 122.6a: Counters placed on the token as it enters the battlefield
     /// (resolved from `QuantityExpr` at propose time).
     pub enter_with_counters: Vec<(CounterType, u32)>,
+    /// CR 614.1c + CR 611.2a + CR 616.1: the "and with …" / "and as a …"
+    /// entry grants the applied replacements folded onto this batch
+    /// (Master Biomancer: "enters … as a Mutant in addition to its other
+    /// types"), in application order. Each created token gets every one as it
+    /// enters, like `enter_with_counters`; a redirected entry drops them.
+    /// `None` when there are none; appended only through
+    /// [`EnterWithGrants::append`], so `Some` is never empty.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "EnterWithGrants::deserialize_nonempty"
+    )]
+    pub enter_with_grants: Option<Box<EnterWithGrants>>,
     /// CR 614.1: Token enters tapped.
     pub tapped: bool,
     /// CR 508.4: Token enters the battlefield attacking (not declared as

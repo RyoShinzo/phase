@@ -4353,6 +4353,7 @@ pub(super) fn handle_resolution_choice(
                                         // member that is double-faced by `transform::stored_double_face`, so no
                                         // minted member has an other face for CR 707.8a to carry.
                                         double_faced: None,
+                                        enter_with_grants: None,
                                     }),
                                 };
                                 crate::game::effects::token_copy::drive_copy_token_batches(

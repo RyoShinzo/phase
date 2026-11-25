@@ -1102,6 +1102,7 @@ fn reveal_library_token(
         characteristics,
         script_name: obj.name.clone(),
         static_abilities: Vec::new(),
+        enter_with_grants: None,
         enter_with_counters: Vec::new(),
         tapped: false,
         enters_attacking: false,

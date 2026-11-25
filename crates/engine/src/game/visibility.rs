@@ -9354,6 +9354,7 @@ mod tests {
                     enter_with_counters: Vec::new(),
                     enter_with_choices: None,
                     applied: std::collections::HashSet::new(),
+                    enter_with_grants: None,
                 },
             });
 

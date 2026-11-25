@@ -15870,6 +15870,7 @@ mod tests {
                 controller: PlayerId(0),
                 // Test-only enter-as-copy fixture stages no donor.
                 donor: None,
+                enter_with_grants: None,
             }));
         }
         assert_projection_reads(
@@ -28557,6 +28558,7 @@ mod tests {
                 donor: None,
                 // Single-faced fixture values: no other face to carry.
                 double_faced: None,
+                enter_with_grants: None,
             }));
             *face_down_profile = Some(Box::new(FaceDownProfile::vanilla_2_2()));
         } else {

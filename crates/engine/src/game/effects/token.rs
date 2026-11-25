@@ -38,8 +38,8 @@ use crate::types::mana::{ManaColor, ManaCost};
 use crate::types::phase::Phase;
 use crate::types::player::PlayerId;
 use crate::types::proposed_event::{
-    CopiedFaceUp, CopyTokenSpec, CounterCause, EntryChoices, ProposedEvent, TokenAttackRequest,
-    TokenHostRequest, TokenSpec,
+    CopiedFaceUp, CopyTokenSpec, CounterCause, EnterWithGrants, EntryChoices, ProposedEvent,
+    TokenAttackRequest, TokenHostRequest, TokenSpec,
 };
 use crate::types::resolution::{ChildStackDepth, ResolutionFrame};
 use crate::types::resolved_commands::{
@@ -1154,6 +1154,7 @@ fn build_token_spec(
         },
         script_name: script_name.to_string(),
         static_abilities,
+        enter_with_grants: None,
         enter_with_counters,
         tapped,
         enters_attacking,
@@ -1627,7 +1628,7 @@ fn deliver_token_event_positions(
                 let status = super::token_copy::apply_copy_token_after_replacement_with_created_ids(
                     state,
                     batch.owner,
-                    *copy,
+                    copy_with_batch_grants(*copy, &batch.spec),
                     batch.enter_tapped,
                     batch.spec.enter_with_counters,
                     batch.count,
@@ -1825,6 +1826,17 @@ fn token_entry_counter_additions(
         )
         .collect()
 }
+/// CR 614.1c + CR 611.2a: a copy batch's tokens are built from its copy spec,
+/// not its token spec, so the entry grants the batch's replacements folded onto
+/// the token spec (`TokenSpec::enter_with_grants`) move to the copy spec, which
+/// rides every entrant and continuation of the copy route.
+fn copy_with_batch_grants(mut copy: CopyTokenSpec, spec: &TokenSpec) -> CopyTokenSpec {
+    EnterWithGrants::append(
+        &mut copy.enter_with_grants,
+        EnterWithGrants::of(&spec.enter_with_grants).iter().cloned(),
+    );
+    copy
+}
 
 /// CR 122.6a + CR 508.4 + CR 608.2c: park the rest of one token's entry and of its
 /// batch behind a pending choice (a counter replacement or the token's attack
@@ -1924,7 +1936,7 @@ fn apply_create_token_batch(
             super::token_copy::apply_copy_token_after_replacement_with_created_ids(
                 state,
                 owner,
-                *copy,
+                copy_with_batch_grants(*copy, &spec),
                 enter_tapped,
                 spec.enter_with_counters.clone(),
                 final_count,
@@ -2065,6 +2077,18 @@ fn apply_create_token_batch(
             );
             continue;
         }
+
+        // CR 614.1c + CR 611.2a: the "and with …" / "and as a …" grants the
+        // batch's replacements folded onto it, installed as the token enters
+        // (Master Biomancer: it enters as a Mutant), ahead of its counters as on
+        // the zone-change delivery. Installed before a pause below, so a resume
+        // of the entry does not install them again.
+        crate::game::zone_pipeline::install_entry_grants(
+            state,
+            obj_id,
+            EnterWithGrants::of(&spec.enter_with_grants),
+            events,
+        );
 
         // CR 508.4: Token enters attacking — not declared as attacker. With no
         // destination named and several legal, its controller chooses; the rest
@@ -3117,6 +3141,7 @@ pub(crate) fn commit_liminal_token_entry_with_replacement_state(
         enter_tapped,
         enter_with_counters,
         enter_with_choices,
+        enter_with_grants,
         ..
     } = event
     else {
@@ -3338,6 +3363,20 @@ pub(crate) fn commit_liminal_token_entry_with_replacement_state(
             .resolved_rules_journal
             .record_token_creation(command)
             .expect("resolved copy-token creation must have a live journal cause");
+    }
+
+    // CR 614.1c + CR 611.2a + CR 616.1: the "and with …" / "and as a …"
+    // entry grants (Master Biomancer: the copy enters as a Mutant), installed
+    // as the token enters, ahead of its counters and of a host-choice pause,
+    // so a resume does not install them again: first those the batch's
+    // replacements folded onto its copy spec, then those this entrant's own
+    // entry replacements folded onto the event, in application order.
+    let batch_grants = entry
+        .copy_resume
+        .as_deref()
+        .map_or(&[][..], |copy| EnterWithGrants::of(&copy.enter_with_grants));
+    for grants in [batch_grants, EnterWithGrants::of(&enter_with_grants)] {
+        crate::game::zone_pipeline::install_entry_grants(state, entry_ref, grants, events);
     }
 
     match mode {
@@ -4515,6 +4554,7 @@ pub(crate) fn copy_probe_spec_for(
         },
         script_name: values.name.clone(),
         static_abilities: vec![],
+        enter_with_grants: None,
         enter_with_counters: vec![],
         tapped: false,
         enters_attacking: false,
@@ -6484,6 +6524,7 @@ mod tests {
             },
             script_name: "Goblin".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: true,
             enters_attacking: true,
@@ -8539,6 +8580,7 @@ mod tests {
             },
             script_name: "Gingerbrute".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -8948,6 +8990,7 @@ mod tests {
             },
             script_name: "Pest".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -9057,6 +9100,7 @@ mod tests {
                 creator: None,
                 controller: PlayerId(0),
                 donor: None,
+                enter_with_grants: None,
             };
             let spec = copy_probe_spec_for(voice, PlayerId(0), None, &copy.values);
             let delivery = PendingTokenEventDelivery {
@@ -9154,6 +9198,7 @@ mod tests {
             },
             script_name: name.to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -9237,6 +9282,7 @@ mod tests {
             },
             script_name: "Treasure".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -9311,6 +9357,7 @@ mod tests {
             },
             script_name: "Royal".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -9394,6 +9441,7 @@ mod tests {
             },
             script_name: "Monster Role".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -9591,6 +9639,7 @@ mod tests {
             },
             script_name: "Monster Role".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10157,6 +10206,7 @@ mod tests {
             },
             script_name: "Construct".to_string(),
             static_abilities: vec![boost],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10227,6 +10277,7 @@ mod tests {
             },
             script_name: "Stoneforged Blade".to_string(),
             static_abilities: vec![equip_static],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10288,6 +10339,7 @@ mod tests {
             },
             script_name: "Probe Curse".to_string(),
             static_abilities: statics,
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10443,6 +10495,7 @@ mod tests {
             },
             script_name: "Conditional Blade".to_string(),
             static_abilities: vec![conditional_equip],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10523,6 +10576,7 @@ mod tests {
             },
             script_name: "Meteorite".to_string(),
             static_abilities: vec![grant_static],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10582,6 +10636,7 @@ mod tests {
             },
             script_name: "c_1_1_hero".to_string(),
             static_abilities: vec![],
+            enter_with_grants: None,
             enter_with_counters: vec![],
             tapped: false,
             enters_attacking: false,
@@ -10845,6 +10900,7 @@ mod tests {
                     enter_with_counters: Vec::new(),
                     enter_with_choices: None,
                     applied: std::collections::HashSet::new(),
+                    enter_with_grants: None,
                 },
                 &mut events,
                 TokenEntryEventEmission::Emit,
@@ -10955,6 +11011,7 @@ mod tests {
                     enter_with_counters: Vec::new(),
                     enter_with_choices: None,
                     applied: std::collections::HashSet::new(),
+                    enter_with_grants: None,
                 },
                 &mut events,
                 TokenEntryEventEmission::Emit,
@@ -11078,6 +11135,7 @@ mod tests {
                     donor: None,
                     // Single-faced fixture values: no other face to carry.
                     double_faced: None,
+                    enter_with_grants: None,
                 })),
                 spec_resume: None,
                 enter_tapped: EtbTapState::Unspecified,
@@ -11094,6 +11152,7 @@ mod tests {
             enter_with_counters: vec![(CounterType::Plus1Plus1, 1)],
             enter_with_choices: None,
             applied: HashSet::new(),
+            enter_with_grants: None,
         };
         let mut events = Vec::new();
         assert!(

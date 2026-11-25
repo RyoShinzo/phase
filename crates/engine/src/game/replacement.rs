@@ -6777,6 +6777,7 @@ fn create_entry_copy_spec_for_replacement(
         // CR 707.8 + CR 707.8a: a token that enters as a copy of a double-faced object
         // through a replacement effect takes only the face that's up.
         double_faced: None,
+        enter_with_grants: None,
     })
 }
 
@@ -13213,12 +13214,24 @@ fn apply_single_replacement(
                 // only the first stashed continuation. Decline branches,
                 // optional accepts (stashed whole downstream), and non-entry
                 // events keep today's behavior exactly.
+                // CR 111.1 + CR 614.1c: a token batch's creation is its
+                // battlefield entry, so its grants ride the batch's spec like
+                // its entry counters, and a copy token's own entry
+                // (`TokenEntry`) carries them like the ZoneChange field. Left in the chain, a grant link is a
+                // non-token substitute (zeroing the batch below) and its
+                // continuation binds the replacement's host instead.
                 let stripped_entry_grants = (branch == ReplacementBranch::Execute
                     && matches!(repl_def.mode, ReplacementMode::Mandatory)
                     && matches!(
                         proposed,
                         ProposedEvent::ZoneChange {
                             to: Zone::Battlefield,
+                            ..
+                        } | ProposedEvent::CreateToken {
+                            redirected_to: None,
+                            ..
+                        } | ProposedEvent::TokenEntry {
+                            redirected_to: None,
                             ..
                         }
                     ))
@@ -13885,11 +13898,24 @@ fn apply_single_replacement(
                 // CR 400.7's reset (and drops them with the counters when
                 // the entry never reaches the battlefield).
                 if !entry_grants.is_empty() {
-                    if let ProposedEvent::ZoneChange {
-                        enter_with_grants, ..
-                    } = &mut new_event
-                    {
-                        EnterWithGrants::append(enter_with_grants, entry_grants.iter().cloned());
+                    match &mut new_event {
+                        ProposedEvent::ZoneChange {
+                            enter_with_grants, ..
+                        } => {
+                            EnterWithGrants::append(enter_with_grants, entry_grants.iter().cloned())
+                        }
+                        // CR 111.1 + CR 614.1c: each token of the batch gets the
+                        // grants as it enters (`effects::token`).
+                        ProposedEvent::CreateToken { spec, .. } => EnterWithGrants::append(
+                            &mut spec.enter_with_grants,
+                            entry_grants.iter().cloned(),
+                        ),
+                        ProposedEvent::TokenEntry {
+                            enter_with_grants, ..
+                        } => {
+                            EnterWithGrants::append(enter_with_grants, entry_grants.iter().cloned())
+                        }
+                        _ => {}
                     }
                 }
                 // CR 614.5 + CR 609.7b: a `Modified` result that left the
@@ -18681,6 +18707,7 @@ mod tests {
             controller: PlayerId(0),
             // Test-only enter-as-copy fixture stages no donor.
             donor: None,
+            enter_with_grants: None,
         };
         for (entrant_abilities, expected) in [
             (
@@ -20089,6 +20116,7 @@ mod tests {
                 enter_with_counters: Vec::new(),
                 enter_with_choices: None,
                 applied: HashSet::new(),
+                enter_with_grants: None,
             },
             &mut events,
         );
@@ -20226,6 +20254,7 @@ mod tests {
                     enter_with_counters: Vec::new(),
                     enter_with_choices: None,
                     applied: HashSet::new(),
+                    enter_with_grants: None,
                 },
                 vec![ReplacementEvent::ChangeZone, ReplacementEvent::Moved],
             ),
@@ -23430,6 +23459,7 @@ mod tests {
                 },
                 script_name: "Soldier".to_string(),
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters: Vec::new(),
                 tapped: false,
                 enters_attacking: false,
@@ -25527,6 +25557,7 @@ mod tests {
             },
             script_name: "w_1_1_soldier".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -25774,6 +25805,7 @@ mod tests {
                 enter_with_counters: Vec::new(),
                 enter_with_choices: None,
                 applied: HashSet::new(),
+                enter_with_grants: None,
             },
             source,
             &state
@@ -30007,6 +30039,7 @@ mod tests {
             },
             script_name: "Squirrel".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -30037,6 +30070,7 @@ mod tests {
             },
             script_name: "Plant".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -30114,6 +30148,7 @@ mod tests {
                 },
                 script_name: name.to_string(),
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters: Vec::new(),
                 tapped: false,
                 enters_attacking: false,
@@ -30207,6 +30242,7 @@ mod tests {
             },
             script_name: name.to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -30438,6 +30474,7 @@ mod tests {
             },
             script_name: "Food".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -30781,6 +30818,7 @@ mod tests {
             },
             script_name: name.to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -31037,6 +31075,7 @@ mod tests {
             },
             script_name: "Soldier".to_string(),
             static_abilities: Vec::new(),
+            enter_with_grants: None,
             enter_with_counters: Vec::new(),
             tapped: false,
             enters_attacking: false,
@@ -31574,6 +31613,7 @@ mod tests {
                 },
                 script_name: name.to_string(),
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters: Vec::new(),
                 tapped: false,
                 enters_attacking: false,
@@ -31697,6 +31737,7 @@ mod tests {
                 },
                 script_name: name.to_string(),
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters: Vec::new(),
                 tapped: false,
                 enters_attacking: false,
@@ -31883,6 +31924,7 @@ mod tests {
                 },
                 script_name: "Token".to_string(),
                 static_abilities: Vec::new(),
+                enter_with_grants: None,
                 enter_with_counters: Vec::new(),
                 tapped: false,
                 enters_attacking: false,

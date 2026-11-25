@@ -5035,6 +5035,14 @@ fn enters_with_counters_outcome(
         return Err(decline);
     }
 
+    // CR 614.1c + CR 205.1b: a trailing "… and as a <types> in addition to its
+    // other types" rider is part of THIS replacement (Master Biomancer). It is
+    // split off before any reader sees the clause, so the "equal to" quantity
+    // and the counter readers see only the counter clause, and its type grant
+    // rides the entry with the other "and with …" grants below.
+    let (rider_free_clause, type_grants) = split_enters_as_type_rider(norm_lower, original_text)?;
+    let norm_lower = rider_free_clause.as_deref().unwrap_or(norm_lower);
+
     let PeeledEntersWithGates {
         kicker_condition,
         unless_outcome,
@@ -5061,8 +5069,11 @@ fn enters_with_counters_outcome(
     // quoted-grant authority and compose onto the same execute chain below, so
     // they inherit the definition's gate. An unreadable rider fails the clause
     // closed rather than reviving the counters-only claim.
-    let quoted_riders =
+    let mut quoted_riders =
         parse_enters_with_quoted_riders(original_text).map_err(EntersWithDecline::FailsClosed)?;
+    // CR 614.1c + CR 205.1b: the "and as a <types>" rider's type grant is one
+    // more self-affecting modification the entering permanent enters with.
+    quoted_riders.extend(type_grants);
     // CR 614.1c + CR 611.2a: one keyword list per replacement — the leading
     // riders first, then the trailing "… and with <keyword>" riders. The trailing
     // scan visits every marker, so it re-reads leading chain members; dedupe.
@@ -6126,6 +6137,67 @@ const ENTERS_WITH_QUOTED_RIDER_MARKER: &str = " and with \"";
 /// The gate is inherited for free: this rides the SAME `ReplacementDefinition`
 /// as the counters, whose condition already carries the kicker requirement
 /// (CR 702.33d), so the grants apply exactly when the counters do.
+/// CR 614.1c + CR 205.1b: the trailing type rider of an enters-with clause,
+/// "and as a <types> in addition to its other types" at the end of the
+/// sentence. Returns the descriptor from its article through the marker.
+fn parse_enters_as_type_rider(input: &str) -> OracleResult<'_, &str> {
+    preceded(
+        tag("and as "),
+        terminated(
+            recognize(super::oracle_effect::animation::locate_in_addition_other_types_marker),
+            (opt(tag(".")), multispace0, eof),
+        ),
+    )
+    .parse(input)
+}
+
+/// CR 614.1c + CR 205.1b: split the "and as a <types> in addition to its other
+/// types" rider off an enters-with line ("Each other creature you control
+/// enters with a number of additional +1/+1 counters on it equal to this
+/// creature's power and as a Mutant in addition to its other types.").
+///
+/// Returns the clause without the rider (lowercase, with its period), or
+/// `None` when the line has no rider, and the rider's additive type
+/// modifications, read by the shared animation decomposer from the
+/// original-case descriptor, since a subtype's casing is load-bearing there.
+/// A rider that is present but unreadable fails the clause closed: claiming the
+/// counters alone would drop the type grant silently.
+fn split_enters_as_type_rider(
+    norm_lower: &str,
+    original_text: &str,
+) -> Result<(Option<String>, Vec<ContinuousModification>), EntersWithDecline> {
+    let Some((clause, _, _)) =
+        nom_primitives::scan_preceded(norm_lower, parse_enters_as_type_rider)
+    else {
+        return Ok((None, Vec::new()));
+    };
+    let fails_closed = EntersWithDecline::FailsClosed(EntersWithGap::Clause);
+    // The rider follows any self-reference, so it reads the same in the
+    // original text; locate it there to recover its casing.
+    let original_lower = original_text.to_lowercase();
+    let (before, descriptor_lower, _) =
+        nom_primitives::scan_preceded(&original_lower, parse_enters_as_type_rider)
+            .ok_or(fails_closed)?;
+    if original_lower.len() != original_text.len() {
+        return Err(fails_closed);
+    }
+    let start = before.len() + "and as ".len();
+    let descriptor = original_text
+        .get(start..start + descriptor_lower.len())
+        .ok_or(fails_closed)?;
+    let spec = super::oracle_effect::animation::parse_animation_spec(
+        descriptor,
+        &mut ParseContext::default(),
+    )
+    .ok_or(fails_closed)?;
+    // CR 205.1b: "in addition to its other types" — the grant is additive.
+    let modifications = super::oracle_effect::animation::animation_modifications(&spec);
+    if modifications.is_empty() {
+        return Err(fails_closed);
+    }
+    Ok((Some(format!("{}.", clause.trim_end())), modifications))
+}
+
 fn compose_enters_with_entry_grants(
     inner: AbilityDefinition,
     keywords: Vec<crate::types::keywords::Keyword>,
@@ -14611,6 +14683,7 @@ fn token_description_to_spec(
         },
         script_name: token.name.clone(),
         static_abilities: token.static_abilities.clone(),
+        enter_with_grants: None,
         enter_with_counters: Vec::new(),
         tapped: token.tapped,
         enters_attacking: false,
@@ -25725,13 +25798,13 @@ mod tests {
     /// instead of placing one counter (BASE: `Fixed 1`).
     #[test]
     fn enters_with_numberless_count_requires_equal_to_quantity() {
-        let master_biomancer = parse_replacement_line(
-            "Each other creature you control enters with a number of additional +1/+1 counters on it equal to this creature's power and as a Mutant in addition to its other types.",
-            "Master Biomancer",
+        let unreadable = parse_replacement_line(
+            "Each other creature you control enters with a number of additional +1/+1 counters on it equal to this creature's power and toughness.",
+            "Test Card",
         );
         assert!(
-            master_biomancer.is_none(),
-            "Master Biomancer: an unreadable equal-to count must fail closed, got {master_biomancer:?}"
+            unreadable.is_none(),
+            "an unreadable equal-to count must fail closed, got {unreadable:?}"
         );
 
         // Reach guards: readable equal-to quantities still parse.

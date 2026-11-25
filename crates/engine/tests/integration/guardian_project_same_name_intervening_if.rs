@@ -199,6 +199,7 @@ fn creature_token_spec(controller: PlayerId) -> TokenSpec {
         },
         script_name: "Zombie".to_string(),
         static_abilities: Vec::new(),
+        enter_with_grants: None,
         enter_with_counters: Vec::new(),
         tapped: false,
         enters_attacking: false,

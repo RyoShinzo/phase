@@ -163,6 +163,7 @@ fn printed_card_copy_token_spec() -> CopyTokenSpec {
         donor: None,
         // Single-faced synthetic values: no other face to carry.
         double_faced: None,
+        enter_with_grants: None,
     }
 }
 
